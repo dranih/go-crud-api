@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dranih/go-crud-api/pkg/handlers/apiserver"
+	"github.com/dranih/go-crud-api/pkg/apiserver"
 )
 
 func main() {
