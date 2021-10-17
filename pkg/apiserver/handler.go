@@ -20,6 +20,7 @@ func Handle() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/status/ping", getPing).Methods("GET")
+	router.HandleFunc("/records/{table}/{row}", read).Methods("GET")
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -61,4 +62,11 @@ func Handle() {
 func getPing(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "OK")
+}
+
+func read(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Table: %v\n", vars["table"])
+	fmt.Fprintf(w, "Row: %v\n", vars["row"])
 }
