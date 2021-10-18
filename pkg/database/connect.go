@@ -12,6 +12,6 @@ func Connect() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	
-	log.Println("Connected to %s", db )
+
+	log.Printf("Connected to %s", db.Config.Name())
 }
