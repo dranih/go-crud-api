@@ -11,16 +11,20 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 
 	"github.com/dranih/go-crud-api/pkg/database"
 )
+
+var dbClient database.Client
 
 func Handle() {
 	var wait time.Duration
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
+
+	//Try DB connection
 	connectDB()
+
 	router := mux.NewRouter()
 
 	router.HandleFunc("/status/ping", getPing).Methods("GET")
@@ -73,9 +77,16 @@ func read(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Table: %v\n", vars["table"])
 	fmt.Fprintf(w, "Row: %v\n", vars["row"])
+	m := make(map[string]interface{})
+	m["name"] = vars["row"]
+	var results []map[string]interface{}
+	dbClient.Client.Select("*").Where(m).Table(vars["table"]).Find(&results)
+	fmt.Fprintf(w, "Result: %v\n", results)
 }
 
-func connectDB() *gorm.DB {
-	db := database.Connect()
-	return db
+func connectDB() {
+	if err := dbClient.Connect(); err != nil {
+		log.Fatalf("Connection to database failed : %v", err)
+		os.Exit(1)
+	}
 }
