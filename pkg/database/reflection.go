@@ -109,8 +109,52 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 			}
 		}
 	}
-	for index, _ := range results {
+	for index := range results {
 		results[index]["TABLE_TYPE"] = mapArr[results[index]["TABLE_TYPE"].(string)]
+	}
+	return results
+}
+
+func (r *GenericReflection) GetTableColumns(tableName string, viewType string) []map[string]interface{} {
+	sql := r.getTableColumnsSQL()
+	var results []map[string]interface{}
+	r.client.Client.Raw(sql, tableName, r.database).First(&results)
+	if viewType == "view" {
+		for index := range results {
+			results[index]["IS_NULLABLE"] = false
+		}
+	}
+	if r.driver == "mysql" {
+		/*for index, result := range results {
+			// mysql does not properly reflect display width of types
+			preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+			result['DATA_TYPE'] = $matches[1];
+			if (!$result['CHARACTER_MAXIMUM_LENGTH']) {
+				if (isset($matches[3])) {
+					$result['NUMERIC_PRECISION'] = $matches[3];
+				}
+				if (isset($matches[5])) {
+					$result['NUMERIC_SCALE'] = $matches[5];
+				}
+			}
+		}*/
+	}
+	if r.driver == "sqlite" {
+		/*for index, result := range results {
+			// sqlite does not reflect types on view columns
+			preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
+			if (isset($matches[1])) {
+				$result['DATA_TYPE'] = $matches[1];
+			} else {
+				$result['DATA_TYPE'] = 'text';
+			}
+			if (isset($matches[5])) {
+				$result['NUMERIC_PRECISION'] = $matches[3];
+				$result['NUMERIC_SCALE'] = $matches[5];
+			} else if (isset($matches[3])) {
+				$result['CHARACTER_MAXIMUM_LENGTH'] = $matches[3];
+			}
+		}*/
 	}
 	return results
 }

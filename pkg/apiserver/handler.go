@@ -85,6 +85,8 @@ func read(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Result: %v\n", results)
 	dbTables := dbReflection.GetTables()
 	fmt.Fprintf(w, "Tables: %v\n", dbTables)
+	dbColumns := dbReflection.GetTableColumns("cows", "")
+	fmt.Fprintf(w, "Columns: %v\n", dbColumns)
 }
 
 func connectDB() {
