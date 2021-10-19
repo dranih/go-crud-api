@@ -16,6 +16,7 @@ import (
 )
 
 var dbClient database.Client
+var dbReflection database.GenericReflection
 
 func Handle() {
 	var wait time.Duration
@@ -82,6 +83,8 @@ func read(w http.ResponseWriter, r *http.Request) {
 	var results []map[string]interface{}
 	dbClient.Client.Select("*").Where(m).Table(vars["table"]).Find(&results)
 	fmt.Fprintf(w, "Result: %v\n", results)
+	dbTables := dbReflection.GetTables()
+	fmt.Fprintf(w, "Tables: %v\n", dbTables)
 }
 
 func connectDB() {
@@ -89,4 +92,5 @@ func connectDB() {
 		log.Fatalf("Connection to database failed : %v", err)
 		os.Exit(1)
 	}
+	dbReflection = *database.NewGenericReflection(dbClient, "", "sqlite", "test", map[string]bool{"sharks": true}, "")
 }
