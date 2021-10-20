@@ -1,16 +1,18 @@
 package database
 
+import "regexp"
+
 type GenericReflection struct {
 	client        Client
 	pdo           string
 	driver        string
 	database      string
 	tables        map[string]bool
-	typeConverter string
+	typeConverter *TypeConverter
 }
 
 func NewGenericReflection(client Client, pdo string, driver string, database string, tables map[string]bool, typeConverter string) *GenericReflection {
-	return &GenericReflection{client, pdo, driver, database, tables, typeConverter}
+	return &GenericReflection{client, pdo, driver, database, tables, NewTypeConverter(driver)}
 }
 
 func (r *GenericReflection) GetIgnoredTables() []string {
@@ -88,8 +90,7 @@ func (r *GenericReflection) GetDatabaseName() string {
 
 func (r *GenericReflection) GetTables() []map[string]interface{} {
 	sql := r.getTablesSQL()
-	var results []map[string]interface{}
-	r.client.Client.Raw(sql, r.database).First(&results)
+	results := r.query(sql, r.database)
 	tables := r.tables
 	mapArr := map[string]string{}
 	switch r.driver {
@@ -103,11 +104,13 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 		mapArr = map[string]string{`table`: `table`, `view`: `view`}
 	}
 	if len(tables) > 0 {
-		for index, result := range results {
-			if _, ok := tables[result["TABLE_NAME"].(string)]; !ok {
-				results = append(results[:index], results[index+1:]...)
+		_results := results
+		for _, result := range results {
+			if _, ok := tables[result["TABLE_NAME"].(string)]; ok {
+				_results = append(_results, result)
 			}
 		}
+		results = _results
 	}
 	for index := range results {
 		results[index]["TABLE_TYPE"] = mapArr[results[index]["TABLE_TYPE"].(string)]
@@ -117,44 +120,75 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 
 func (r *GenericReflection) GetTableColumns(tableName string, viewType string) []map[string]interface{} {
 	sql := r.getTableColumnsSQL()
-	var results []map[string]interface{}
-	r.client.Client.Raw(sql, tableName, r.database).First(&results)
+	results := r.query(sql, tableName, r.database)
 	if viewType == "view" {
 		for index := range results {
 			results[index]["IS_NULLABLE"] = false
 		}
 	}
 	if r.driver == "mysql" {
-		/*for index, result := range results {
+		for index, result := range results {
 			// mysql does not properly reflect display width of types
-			preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
-			result['DATA_TYPE'] = $matches[1];
-			if (!$result['CHARACTER_MAXIMUM_LENGTH']) {
-				if (isset($matches[3])) {
-					$result['NUMERIC_PRECISION'] = $matches[3];
+			re := regexp.MustCompile(`|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|`)
+			matches := re.FindStringSubmatch(result["DATA_TYPE"].(string))
+			results[index]["DATA_TYPE"] = matches[1]
+			if _, ok := results[index]["CHARACTER_MAXIMUM_LENGTH"]; ok {
+				if matches[3] != "" {
+					results[index]["NUMERIC_PRECISION"] = matches[3]
 				}
-				if (isset($matches[5])) {
-					$result['NUMERIC_SCALE'] = $matches[5];
+				if matches[5] != "" {
+					results[index]["NUMERIC_SCALE"] = matches[5]
 				}
 			}
-		}*/
+		}
 	}
 	if r.driver == "sqlite" {
-		/*for index, result := range results {
+		for index, result := range results {
 			// sqlite does not reflect types on view columns
-			preg_match('|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|', $result['DATA_TYPE'], $matches);
-			if (isset($matches[1])) {
-				$result['DATA_TYPE'] = $matches[1];
+			re := regexp.MustCompile(`|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|`)
+			matches := re.FindStringSubmatch(result["DATA_TYPE"].(string))
+			if matches[1] != "" {
+				results[index]["DATA_TYPE"] = matches[1]
 			} else {
-				$result['DATA_TYPE'] = 'text';
+				results[index]["DATA_TYPE"] = "text"
 			}
-			if (isset($matches[5])) {
-				$result['NUMERIC_PRECISION'] = $matches[3];
-				$result['NUMERIC_SCALE'] = $matches[5];
-			} else if (isset($matches[3])) {
-				$result['CHARACTER_MAXIMUM_LENGTH'] = $matches[3];
+			if matches[5] != "" {
+				results[index]["NUMERIC_PRECISION"] = matches[3]
+				results[index]["NUMERIC_SCALE"] = matches[5]
+			} else if matches[3] != "" {
+				results[index]["CHARACTER_MAXIMUM_LENGTH"] = matches[3]
 			}
-		}*/
+		}
 	}
+	return results
+}
+
+func (r *GenericReflection) GetTablePrimaryKeys(tableName string) []string {
+	sql := r.getTablePrimaryKeysSQL()
+	results := r.query(sql, tableName, r.database)
+	var primaryKeys []string
+	for _, result := range results {
+		primaryKeys = append(primaryKeys, result["COLUMN_NAME"].(string))
+	}
+	return primaryKeys
+}
+
+func (r *GenericReflection) GetTableForeignKeys(tableName string) map[string]string {
+	sql := r.getTableForeignKeysSQL()
+	results := r.query(sql, tableName, r.database)
+	foreignKeys := map[string]string{}
+	for _, result := range results {
+		foreignKeys[result["COLUMN_NAME"].(string)] = result["REFERENCED_TABLE_NAME"].(string)
+	}
+	return foreignKeys
+}
+
+func (r *GenericReflection) ToJdbcType(jdbcType string, size string) string {
+	return r.typeConverter.ToJdbc(jdbcType, size)
+}
+
+func (r *GenericReflection) query(sql string, parameters ...interface{}) []map[string]interface{} {
+	var results []map[string]interface{}
+	r.client.Client.Raw(sql, parameters...).First(&results)
 	return results
 }

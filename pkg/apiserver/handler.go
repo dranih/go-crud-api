@@ -87,6 +87,10 @@ func read(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Tables: %v\n", dbTables)
 	dbColumns := dbReflection.GetTableColumns("cows", "")
 	fmt.Fprintf(w, "Columns: %v\n", dbColumns)
+	dbPK := dbReflection.GetTablePrimaryKeys("cows")
+	fmt.Fprintf(w, "PK: %v\n", dbPK)
+	dbFK := dbReflection.GetTableForeignKeys("cows")
+	fmt.Fprintf(w, "FK: %v\n", dbFK)
 }
 
 func connectDB() {
