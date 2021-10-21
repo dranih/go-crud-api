@@ -3,16 +3,15 @@ package database
 import "regexp"
 
 type GenericReflection struct {
-	client        Client
-	pdo           string
+	pdo           *LazyPdo
 	driver        string
 	database      string
 	tables        map[string]bool
 	typeConverter *TypeConverter
 }
 
-func NewGenericReflection(client Client, pdo string, driver string, database string, tables map[string]bool, typeConverter string) *GenericReflection {
-	return &GenericReflection{client, pdo, driver, database, tables, NewTypeConverter(driver)}
+func NewGenericReflection(pdo *LazyPdo, driver string, database string, tables map[string]bool) *GenericReflection {
+	return &GenericReflection{pdo, driver, database, tables, NewTypeConverter(driver)}
 }
 
 func (r *GenericReflection) GetIgnoredTables() []string {
@@ -189,6 +188,6 @@ func (r *GenericReflection) ToJdbcType(jdbcType string, size string) string {
 
 func (r *GenericReflection) query(sql string, parameters ...interface{}) []map[string]interface{} {
 	var results []map[string]interface{}
-	r.client.Client.Raw(sql, parameters...).First(&results)
+	r.pdo.pdo.Raw(sql, parameters...).First(&results)
 	return results
 }

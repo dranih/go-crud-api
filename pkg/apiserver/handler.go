@@ -15,8 +15,7 @@ import (
 	"github.com/dranih/go-crud-api/pkg/database"
 )
 
-var dbClient database.Client
-var dbReflection database.GenericReflection
+var dbClient database.GenericDB
 
 func Handle() {
 	var wait time.Duration
@@ -81,22 +80,25 @@ func read(w http.ResponseWriter, r *http.Request) {
 	m := make(map[string]interface{})
 	m["name"] = vars["row"]
 	var results []map[string]interface{}
-	dbClient.Client.Select("*").Where(m).Table(vars["table"]).Find(&results)
+	log.Printf("%v", dbClient.PDO().PDO())
+	dbClient.PDO().PDO().Select("*").Where(m).Table(vars["table"]).Find(&results)
 	fmt.Fprintf(w, "Result: %v\n", results)
-	dbTables := dbReflection.GetTables()
+	/*dbTables := dbClient.Reflection().GetTables()
 	fmt.Fprintf(w, "Tables: %v\n", dbTables)
-	dbColumns := dbReflection.GetTableColumns("cows", "")
+	dbColumns := dbClient.Reflection().GetTableColumns("cows", "")
 	fmt.Fprintf(w, "Columns: %v\n", dbColumns)
-	dbPK := dbReflection.GetTablePrimaryKeys("cows")
+	dbPK := dbClient.Reflection().GetTablePrimaryKeys("cows")
 	fmt.Fprintf(w, "PK: %v\n", dbPK)
-	dbFK := dbReflection.GetTableForeignKeys("cows")
-	fmt.Fprintf(w, "FK: %v\n", dbFK)
+	dbFK := dbClient.Reflection().GetTableForeignKeys("cows")
+	fmt.Fprintf(w, "FK: %v\n", dbFK)*/
 }
 
 func connectDB() {
-	if err := dbClient.Connect(); err != nil {
+	dbClient = *database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
+	/*if err := dbClient.Connect(); err != nil {
 		log.Fatalf("Connection to database failed : %v", err)
 		os.Exit(1)
 	}
-	dbReflection = *database.NewGenericReflection(dbClient, "", "sqlite", "test", map[string]bool{"sharks": true}, "")
+	dbReflection = *database.NewGenericReflection(&dbClient, "sqlite", "test", map[string]bool{"sharks": true})
+	*/
 }
