@@ -12,7 +12,10 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/dranih/go-crud-api/pkg/column"
+	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/record"
 )
 
 var dbClient database.GenericDB
@@ -22,10 +25,9 @@ func Handle() {
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	//Try DB connection
-	connectDB()
-
 	router := mux.NewRouter()
+	//Try DB connection
+	connectDB(router)
 
 	router.HandleFunc("/status/ping", getPing).Methods("GET")
 	router.HandleFunc("/records/{table}/{row}", read).Methods("GET")
@@ -80,21 +82,24 @@ func read(w http.ResponseWriter, r *http.Request) {
 	m := make(map[string]interface{})
 	m["name"] = vars["row"]
 	var results []map[string]interface{}
-	log.Printf("%v", dbClient.PDO().PDO())
-	dbClient.PDO().PDO().Select("*").Where(m).Table(vars["table"]).Find(&results)
+	dbClient.PDO().PDO().Debug().Select("*").Where(m).Table(vars["table"]).Find(&results)
 	fmt.Fprintf(w, "Result: %v\n", results)
-	/*dbTables := dbClient.Reflection().GetTables()
+	dbTables := dbClient.Reflection().GetTables()
 	fmt.Fprintf(w, "Tables: %v\n", dbTables)
 	dbColumns := dbClient.Reflection().GetTableColumns("cows", "")
 	fmt.Fprintf(w, "Columns: %v\n", dbColumns)
 	dbPK := dbClient.Reflection().GetTablePrimaryKeys("cows")
 	fmt.Fprintf(w, "PK: %v\n", dbPK)
 	dbFK := dbClient.Reflection().GetTableForeignKeys("cows")
-	fmt.Fprintf(w, "FK: %v\n", dbFK)*/
+	fmt.Fprintf(w, "FK: %v\n", dbFK)
 }
 
-func connectDB() {
+func connectDB(router *mux.Router) {
 	dbClient = *database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
+	reflection := column.NewReflectionService(&dbClient, "", 0)
+	records := record.NewRecordService(&dbClient, reflection)
+	controller.NewRecordController(router, records)
+
 	/*if err := dbClient.Connect(); err != nil {
 		log.Fatalf("Connection to database failed : %v", err)
 		os.Exit(1)

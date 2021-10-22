@@ -1,6 +1,8 @@
 package database
 
-import "regexp"
+import (
+	"regexp"
+)
 
 type GenericReflection struct {
 	pdo           *LazyPdo
@@ -88,8 +90,7 @@ func (r *GenericReflection) GetDatabaseName() string {
 }
 
 func (r *GenericReflection) GetTables() []map[string]interface{} {
-	sql := r.getTablesSQL()
-	results := r.query(sql, r.database)
+	results := r.query(r.getTablesSQL(), r.database)
 	tables := r.tables
 	mapArr := map[string]string{}
 	switch r.driver {
@@ -188,6 +189,6 @@ func (r *GenericReflection) ToJdbcType(jdbcType string, size string) string {
 
 func (r *GenericReflection) query(sql string, parameters ...interface{}) []map[string]interface{} {
 	var results []map[string]interface{}
-	r.pdo.pdo.Raw(sql, parameters...).First(&results)
+	r.pdo.PDO().Raw(sql, parameters...).First(&results)
 	return results
 }

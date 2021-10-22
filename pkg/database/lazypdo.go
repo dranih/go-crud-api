@@ -142,7 +142,7 @@ func (l *LazyPdo) LastInsertId($name = null): string
 func (l *LazyPdo) Query(query string, fetchMode string, fetchModeArgs ...interface{}) []map[string]interface{} {
 	// fetchMode useful ?
 	var results []map[string]interface{}
-	l.pdo.Raw(query, fetchModeArgs...).First(&results)
+	l.pdo.Raw(query, fetchModeArgs...).Scan(&results)
 	return results
 }
 

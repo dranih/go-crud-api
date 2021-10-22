@@ -138,7 +138,214 @@ func (g *GenericDB) PDO() *LazyPdo {
 	return g.pdo
 }
 
-// To be removed
 func (g *GenericDB) Reflection() *GenericReflection {
 	return g.reflection
 }
+
+/*
+public function definition(): GenericDefinition
+{
+	return $this->definition;
+}
+
+public function beginTransaction()
+{
+	$this->pdo->beginTransaction();
+}
+
+public function commitTransaction()
+{
+	$this->pdo->commit();
+}
+
+public function rollBackTransaction()
+{
+	$this->pdo->rollBack();
+}
+
+private function addMiddlewareConditions(string $tableName, Condition $condition): Condition
+{
+	$condition1 = VariableStore::get("authorization.conditions.$tableName");
+	if ($condition1) {
+		$condition = $condition->_and($condition1);
+	}
+	$condition2 = VariableStore::get("multiTenancy.conditions.$tableName");
+	if ($condition2) {
+		$condition = $condition->_and($condition2);
+	}
+	return $condition;
+}
+
+public function createSingle(ReflectedTable $table, array $columnValues)
+{
+	$this->converter->convertColumnValues($table, $columnValues);
+	$insertColumns = $this->columns->getInsert($table, $columnValues);
+	$tableName = $table->getName();
+	$pkName = $table->getPk()->getName();
+	$parameters = array_values($columnValues);
+	$sql = 'INSERT INTO "' . $tableName . '" ' . $insertColumns;
+	$stmt = $this->query($sql, $parameters);
+	// return primary key value if specified in the input
+	if (isset($columnValues[$pkName])) {
+		return $columnValues[$pkName];
+	}
+	// work around missing "returning" or "output" in mysql
+	switch ($this->driver) {
+		case 'mysql':
+			$stmt = $this->query('SELECT LAST_INSERT_ID()', []);
+			break;
+		case 'sqlite':
+			$stmt = $this->query('SELECT LAST_INSERT_ROWID()', []);
+			break;
+	}
+	$pkValue = $stmt->fetchColumn(0);
+	if ($table->getPk()->getType() == 'bigint') {
+		return (int) $pkValue;
+	}
+	if (in_array($table->getPk()->getType(), ['integer', 'bigint'])) {
+		return (int) $pkValue;
+	}
+	return $pkValue;
+}
+
+public function selectSingle(ReflectedTable $table, array $columnNames, string $id)
+{
+	$selectColumns = $this->columns->getSelect($table, $columnNames);
+	$tableName = $table->getName();
+	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
+	$condition = $this->addMiddlewareConditions($tableName, $condition);
+	$parameters = array();
+	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	$sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
+	$stmt = $this->query($sql, $parameters);
+	$record = $stmt->fetch() ?: null;
+	if ($record === null) {
+		return null;
+	}
+	$records = array($record);
+	$this->converter->convertRecords($table, $columnNames, $records);
+	return $records[0];
+}
+
+public function selectMultiple(ReflectedTable $table, array $columnNames, array $ids): array
+{
+	if (count($ids) == 0) {
+		return [];
+	}
+	$selectColumns = $this->columns->getSelect($table, $columnNames);
+	$tableName = $table->getName();
+	$condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
+	$condition = $this->addMiddlewareConditions($tableName, $condition);
+	$parameters = array();
+	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	$sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
+	$stmt = $this->query($sql, $parameters);
+	$records = $stmt->fetchAll();
+	$this->converter->convertRecords($table, $columnNames, $records);
+	return $records;
+}
+
+public function selectCount(ReflectedTable $table, Condition $condition): int
+{
+	$tableName = $table->getName();
+	$condition = $this->addMiddlewareConditions($tableName, $condition);
+	$parameters = array();
+	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	$sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
+	$stmt = $this->query($sql, $parameters);
+	return $stmt->fetchColumn(0);
+}
+
+public function selectAll(ReflectedTable $table, array $columnNames, Condition $condition, array $columnOrdering, int $offset, int $limit): array
+{
+	if ($limit == 0) {
+		return array();
+	}
+	$selectColumns = $this->columns->getSelect($table, $columnNames);
+	$tableName = $table->getName();
+	$condition = $this->addMiddlewareConditions($tableName, $condition);
+	$parameters = array();
+	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	$orderBy = $this->columns->getOrderBy($table, $columnOrdering);
+	$offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
+	$sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . $orderBy . $offsetLimit;
+	$stmt = $this->query($sql, $parameters);
+	$records = $stmt->fetchAll();
+	$this->converter->convertRecords($table, $columnNames, $records);
+	return $records;
+}
+
+public function updateSingle(ReflectedTable $table, array $columnValues, string $id)
+{
+	if (count($columnValues) == 0) {
+		return 0;
+	}
+	$this->converter->convertColumnValues($table, $columnValues);
+	$updateColumns = $this->columns->getUpdate($table, $columnValues);
+	$tableName = $table->getName();
+	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
+	$condition = $this->addMiddlewareConditions($tableName, $condition);
+	$parameters = array_values($columnValues);
+	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	$sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
+	$stmt = $this->query($sql, $parameters);
+	return $stmt->rowCount();
+}
+
+public function deleteSingle(ReflectedTable $table, string $id)
+{
+	$tableName = $table->getName();
+	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
+	$condition = $this->addMiddlewareConditions($tableName, $condition);
+	$parameters = array();
+	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	$sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
+	$stmt = $this->query($sql, $parameters);
+	return $stmt->rowCount();
+}
+
+public function incrementSingle(ReflectedTable $table, array $columnValues, string $id)
+{
+	if (count($columnValues) == 0) {
+		return 0;
+	}
+	$this->converter->convertColumnValues($table, $columnValues);
+	$updateColumns = $this->columns->getIncrement($table, $columnValues);
+	$tableName = $table->getName();
+	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
+	$condition = $this->addMiddlewareConditions($tableName, $condition);
+	$parameters = array_values($columnValues);
+	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	$sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
+	$stmt = $this->query($sql, $parameters);
+	return $stmt->rowCount();
+}
+
+private function query(string $sql, array $parameters): \PDOStatement
+{
+	$stmt = $this->pdo->prepare($sql);
+	//echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
+	$stmt->execute($parameters);
+	return $stmt;
+}
+
+public function ping(): int
+{
+	$start = microtime(true);
+	$stmt = $this->pdo->prepare('SELECT 1');
+	$stmt->execute();
+	return intval((microtime(true) - $start) * 1000000);
+}
+
+public function getCacheKey(): string
+{
+	return md5(json_encode([
+		$this->driver,
+		$this->address,
+		$this->port,
+		$this->database,
+		$this->tables,
+		$this->username,
+	]));
+}
+}*/
