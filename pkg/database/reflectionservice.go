@@ -1,19 +1,15 @@
-package column
-
-import (
-	"github.com/dranih/go-crud-api/pkg/database"
-)
+package database
 
 type ReflectionService struct {
-	db       *database.GenericDB
+	db       *GenericDB
 	cache    string
 	ttl      int
 	database *ReflectedDatabase
-	tables   []string
+	tables   map[string]*ReflectedTable
 }
 
-func NewReflectionService(db *database.GenericDB, cache string, ttl int) *ReflectionService {
-	return &ReflectionService{db, cache, ttl, nil, []string{}}
+func NewReflectionService(db *GenericDB, cache string, ttl int) *ReflectionService {
+	return &ReflectionService{db, cache, ttl, nil, map[string]*ReflectedTable{}}
 }
 
 /*
@@ -47,11 +43,11 @@ func (r *ReflectionService) getDatabase() *ReflectedDatabase {
 */
 // to finish with cache
 func (r *ReflectionService) loadDatabase(useCache bool) *ReflectedDatabase {
-	database := FromReflection(r.db.Reflection())
+	database := NewReflectedDatabaseFromReflection(r.db.Reflection())
 	return database
 }
 
-/* to finish
+/*
    private function loadDatabase(bool $useCache): ReflectedDatabase
    {
        $key = sprintf('%s-ReflectedDatabase', $this->db->getCacheKey());
@@ -65,7 +61,15 @@ func (r *ReflectionService) loadDatabase(useCache bool) *ReflectedDatabase {
        }
        return $database;
    }
+*/
+// to finish with cache
+func (r *ReflectionService) loadTable(tableName string, useCache bool) *ReflectedTable {
+	tableType := r.getDatabase().GetType(tableName)
+	table := NewReflectedTableFromReflection(r.db.Reflection(), tableName, tableType)
+	return table
+}
 
+/*
    private function loadTable(string $tableName, bool $useCache): ReflectedTable
    {
        $key = sprintf('%s-ReflectedTable(%s)', $this->db->getCacheKey(), $tableName);
@@ -108,7 +112,10 @@ func (r *ReflectionService) HasTable(tableName string) bool {
    }
 */
 func (r *ReflectionService) GetTable(tableName string) *ReflectedTable {
-
+	if _, ok := r.tables[tableName]; !ok {
+		r.tables[tableName] = r.loadTable(tableName, true)
+	}
+	return r.tables[tableName]
 }
 
 /*

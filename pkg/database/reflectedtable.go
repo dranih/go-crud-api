@@ -1,11 +1,35 @@
-package column
+package database
 
 type ReflectedTable struct {
 	name      string
 	tableType string
-	columns   map[string]string
-	pk        map[string]string
+	columns   map[string]*ReflectedColumn
+	pk        *ReflectedColumn
 	fks       map[string]string
+}
+
+func NewReflectedTable(name, tableType string, columns map[string]*ReflectedColumn) *ReflectedTable {
+	r := &ReflectedTable{name, tableType, map[string]*ReflectedColumn{}, &ReflectedColumn{}, map[string]string{}}
+	// set columns
+	for _, column := range columns {
+		columnName := column.GetName()
+		r.columns[columnName] = column
+	}
+	// set primary key
+	for _, column := range columns {
+		if column.GetPk() {
+			r.pk = column
+		}
+	}
+	// set foreign keys
+	for _, column := range columns {
+		columnName := column.GetName()
+		referencedTableName := column.GetFk()
+		if referencedTableName != "" {
+			r.fks[columnName] = referencedTableName
+		}
+	}
+	return r
 }
 
 /*
@@ -36,7 +60,52 @@ public function __construct(string $name, string $type, array $columns)
 		}
 	}
 }
+*/
+// done
+func NewReflectedTableFromReflection(reflection *GenericReflection, name, viewType string) *ReflectedTable {
+	// set columns
+	columns := map[string]*ReflectedColumn{}
+	for _, tableColumn := range reflection.GetTableColumns(name, viewType) {
+		column := NewReflectedColumnFromReflection(reflection, tableColumn)
+		columns[column.GetName()] = column
+	}
+	// set primary key
+	columnName := ""
+	if viewType == "view" {
+		columnName = "id"
+	} else {
+		columnNames := reflection.GetTablePrimaryKeys(name)
+		if len(columnNames) == 1 {
+			columnName = columnNames[0]
+		}
+	}
+	if _, ok := columns[columnName]; columnName != "" && ok {
+		columns[columnName].SetPk(true)
+	}
+	// set foreign keys
+	if viewType == "view" {
+		tables := reflection.GetTables()
+		for columnName, column := range columns {
+			if columnName[len(columnName)-3:] == "_id" {
+				for _, table := range tables {
+					tableName := table["TABLE_NAME"].(string)
+					suffix := tableName + "_id"
+					if columnName[len(columnName)-len(suffix):] == suffix {
+					}
+					column.SetFk(tableName)
+				}
+			}
+		}
+	} else {
+		fks := reflection.GetTableForeignKeys(name)
+		for columnName, table := range fks {
+			columns[columnName].SetFk(table)
+		}
+	}
+	return NewReflectedTable(name, viewType, columns)
+}
 
+/*
 public static function fromReflection(GenericReflection $reflection, string $name, string $type): ReflectedTable
 {
 	// set columns
@@ -109,17 +178,36 @@ public function getPk()
 {
 	return $this->pk;
 }
+*/
+func (rt *ReflectedTable) GetName() string {
+	return rt.name
+}
 
+/*
 public function getName(): string
 {
 	return $this->name;
 }
+*/
+func (rt *ReflectedTable) GetType() string {
+	return rt.tableType
+}
 
+/*
 public function getType(): string
 {
 	return $this->type;
 }
+*/
+func (rt *ReflectedTable) GetColumnNames() []string {
+	result := []string{}
+	for key := range rt.columns {
+		result = append(result, key)
+	}
+	return result
+}
 
+/*
 public function getColumnNames(): array
 {
 	return array_keys($this->columns);

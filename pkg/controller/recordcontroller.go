@@ -42,6 +42,8 @@ func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Table found: %v\n", vars["table"])
+	result := rc.service.List(vars["table"], map[string]string{})
+	fmt.Fprintf(w, "List Result: %v\n", result)
 }
 
 /*

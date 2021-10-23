@@ -16,7 +16,7 @@ type GenericDB struct {
 	reflection *GenericReflection
 	definition string
 	conditions string
-	columns    string
+	columns    *ColumnsBuilder
 	converter  string
 }
 
@@ -71,6 +71,7 @@ func (g *GenericDB) getOptions() map[string]string {
 	return options
 }
 
+// not finished
 func (g *GenericDB) initPdo() bool {
 	var result bool
 	if g.pdo != nil {
@@ -255,7 +256,20 @@ public function selectCount(ReflectedTable $table, Condition $condition): int
 	$stmt = $this->query($sql, $parameters);
 	return $stmt->fetchColumn(0);
 }
+*/
+// not finished
+func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition string, columnOrdering []string, offset, limit int) []map[string]interface{} {
+	if limit == 0 {
+		return []map[string]interface{}{}
+	}
+	selectColumns := g.columns.GetSelect(table, columnNames)
+	tableName := table.GetName()
+	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` // + whereClause + orderBy + offsetLimit
+	records := g.query(sql)
+	return records
+}
 
+/*
 public function selectAll(ReflectedTable $table, array $columnNames, Condition $condition, array $columnOrdering, int $offset, int $limit): array
 {
 	if ($limit == 0) {
@@ -320,7 +334,14 @@ public function incrementSingle(ReflectedTable $table, array $columnValues, stri
 	$stmt = $this->query($sql, $parameters);
 	return $stmt->rowCount();
 }
+*/
+func (g *GenericDB) query(sql string, parameters ...interface{}) []map[string]interface{} {
+	var results []map[string]interface{}
+	g.pdo.PDO().Raw(sql, parameters...).Scan(&results)
+	return results
+}
 
+/*
 private function query(string $sql, array $parameters): \PDOStatement
 {
 	$stmt = $this->pdo->prepare($sql);

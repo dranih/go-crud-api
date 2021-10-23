@@ -6,15 +6,15 @@ import (
 )
 
 type ListDocument struct {
-	records map[string]string
+	records []map[string]interface{}
 	results int
 }
 
-func NewListDocument(records map[string]string, results int) *ListDocument {
+func NewListDocument(records []map[string]interface{}, results int) *ListDocument {
 	return &ListDocument{records, results}
 }
 
-func (l *ListDocument) GetRecords() map[string]string {
+func (l *ListDocument) GetRecords() []map[string]interface{} {
 	return l.records
 }
 

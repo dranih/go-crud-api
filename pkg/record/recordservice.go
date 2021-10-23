@@ -1,22 +1,21 @@
 package record
 
 import (
-	"github.com/dranih/go-crud-api/pkg/column"
 	"github.com/dranih/go-crud-api/pkg/database"
 )
 
 type RecordService struct {
 	db         *database.GenericDB
-	reflection *column.ReflectionService
-	columns    string
+	reflection *database.ReflectionService
+	columns    *ColumnIncluder
 	joiner     string
 	filters    string
 	ordering   string
 	pagination string
 }
 
-func NewRecordService(db *database.GenericDB, reflection *column.ReflectionService) *RecordService {
-	return &RecordService{db, reflection, "", "", "", "", ""}
+func NewRecordService(db *database.GenericDB, reflection *database.ReflectionService) *RecordService {
+	return &RecordService{db, reflection, &ColumnIncluder{}, "", "", "", ""}
 }
 
 /*
@@ -123,8 +122,28 @@ func (r *RecordService) HasTable(table string) bool {
        return $this->db->incrementSingle($table, $columnValues, $id);
    }
 */
-func (r *RecordService) List(tableName string, params map[string]string) *ListDocument {
-	table := r.reflection.GetTable(tableName)
+// not finished
+func (rs *RecordService) List(tableName string, params map[string]string) *ListDocument {
+	table := rs.reflection.GetTable(tableName)
+	//$this->joiner->addMandatoryColumns($table, $params);
+	columnNames := rs.columns.GetNames(table, true, params)
+	/*$condition = $this->filters->getCombinedConditions($table, $params);
+	  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
+	  if (!$this->pagination->hasPage($params)) {
+	      $offset = 0;
+	      $limit = $this->pagination->getPageLimit($params);
+	      $count = -1;
+	  } else {
+	      $offset = $this->pagination->getPageOffset($params);
+	      $limit = $this->pagination->getPageLimit($params);
+	      $count = $this->db->selectCount($table, $condition);
+	  }
+	  $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
+	  $this->joiner->addJoins($table, $records, $params, $this->db);
+	  return new ListDocument($records, $count);*/
+	records := rs.db.SelectAll(table, columnNames, "", []string{}, 0, 10)
+	count := 3
+	return NewListDocument(records, count)
 }
 
 /*

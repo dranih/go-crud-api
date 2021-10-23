@@ -1,6 +1,4 @@
-package column
-
-import "github.com/dranih/go-crud-api/pkg/database"
+package database
 
 type ReflectedDatabase struct {
 	tableTypes map[string]string
@@ -19,7 +17,7 @@ func NewReflectedDatabase(tableTypes map[string]string) *ReflectedDatabase {
 */
 
 // done
-func FromReflection(reflection *database.GenericReflection) *ReflectedDatabase {
+func NewReflectedDatabaseFromReflection(reflection *GenericReflection) *ReflectedDatabase {
 	tableTypes := map[string]string{}
 	//[]map[string]interface{}
 	for _, table := range reflection.GetTables() {
@@ -68,11 +66,19 @@ func (r *ReflectedDatabase) HasTable(tableName string) bool {
 }
 
 /*
-       public function hasTable(string $tableName): bool
-       {
-           return isset($this->tableTypes[$tableName]);
-       }
+   public function hasTable(string $tableName): bool
+   {
+       return isset($this->tableTypes[$tableName]);
+   }
+*/
+func (rd *ReflectedDatabase) GetType(tableName string) string {
+	if val, ok := rd.tableTypes[tableName]; ok {
+		return val
+	}
+	return ""
+}
 
+/*
        public function getType(string $tableName): string
        {
            return isset($this->tableTypes[$tableName]) ? $this->tableTypes[$tableName] : '';
