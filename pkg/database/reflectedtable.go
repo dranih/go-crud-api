@@ -212,7 +212,12 @@ public function getColumnNames(): array
 {
 	return array_keys($this->columns);
 }
+*/
+func (rt *ReflectedTable) GetColumn(columnName string) *ReflectedColumn {
+	return rt.columns[columnName]
+}
 
+/*
 public function getColumn($columnName): ReflectedColumn
 {
 	return $this->columns[$columnName];

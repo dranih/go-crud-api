@@ -87,10 +87,10 @@ func (g *GenericDB) initPdo() bool {
 	}
 
 	g.reflection = NewGenericReflection(g.pdo, g.driver, g.database, g.tables)
-	/*$this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
-	$this->conditions = new ConditionsBuilder($this->driver);
-	$this->columns = new ColumnsBuilder($this->driver);
-	$this->converter = new DataConverter($this->driver);*/
+	//$this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
+	//$this->conditions = new ConditionsBuilder($this->driver);
+	g.columns = NewColumnsBuilder(g.driver)
+	//$this->converter = new DataConverter($this->driver);
 
 	return result
 }

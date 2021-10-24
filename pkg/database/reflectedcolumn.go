@@ -126,6 +126,7 @@ private static function getDataSize(int $length, int $precision, int $scale): st
 	return $dataSize;
 }
 */
+// done
 func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResult map[string]interface{}) *ReflectedColumn {
 	name := columnResult["COLUMN_NAME"].(string)
 	dataType := columnResult["DATA_TYPE"].(string)
@@ -204,7 +205,12 @@ public function getNullable(): bool
 {
 	return $this->nullable;
 }
+*/
+func (rc *ReflectedColumn) GetType() string {
+	return rc.columnType
+}
 
+/*
 public function getType(): string
 {
 	return $this->type;
@@ -219,7 +225,16 @@ public function getPrecision(): int
 {
 	return $this->precision ?: self::DEFAULT_PRECISION;
 }
+*/
+func (rc *ReflectedColumn) GetScale() int {
+	if rc.scale != -1 {
+		return rc.scale
+	} else {
+		return DEFAULT_SCALE
+	}
+}
 
+/*
 public function getScale(): int
 {
 	return $this->scale ?: self::DEFAULT_SCALE;
@@ -239,17 +254,38 @@ public function hasScale(): bool
 {
 	return $this->type == 'decimal';
 }
+*/
+func (rc *ReflectedColumn) IsBinary() bool {
+	switch rc.columnType {
+	case
+		"blob",
+		"varbinary":
+		return true
+	}
+	return false
+}
 
+/*
 public function isBinary(): bool
 {
 	return in_array($this->type, ['blob', 'varbinary']);
 }
+*/
+func (rc *ReflectedColumn) IsBoolean() bool {
+	return rc.columnType == "boolean"
+}
 
+/*
 public function isBoolean(): bool
 {
 	return $this->type == 'boolean';
 }
+*/
+func (rc *ReflectedColumn) IsGeometry() bool {
+	return rc.columnType == "geometry"
+}
 
+/*
 public function isGeometry(): bool
 {
 	return $this->type == 'geometry';

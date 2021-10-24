@@ -1,16 +1,17 @@
 package database
 
 import (
+	"log"
 	"strings"
 )
 
 type ColumnsBuilder struct {
 	driver    string
-	converter string
+	converter *ColumnConverter
 }
 
 func NewColumnsBuilder(driver string) *ColumnsBuilder {
-	return &ColumnsBuilder{driver, ""}
+	return &ColumnsBuilder{driver, NewColumnConverter(driver)}
 }
 
 /*
@@ -36,7 +37,12 @@ public function getOffsetLimit(int $offset, int $limit): string
 			return " LIMIT $limit OFFSET $offset";
 	}
 }
+*/
+func (cb *ColumnsBuilder) quoteColumnName(column *ReflectedColumn) string {
+	return `"` + column.GetName() + `"`
+}
 
+/*
 private function quoteColumnName(ReflectedColumn $column): string
 {
 	return '"' . $column->getName() . '"';
@@ -56,12 +62,15 @@ public function getOrderBy(ReflectedTable $table, array $columnOrdering): string
 	return ' ORDER BY ' . implode(',', $results);
 }
 */
-// not finished
+// done
 func (cb *ColumnsBuilder) GetSelect(table *ReflectedTable, columnNames []string) string {
 	results := []string{}
 	for _, columnName := range columnNames {
-		//column := table.GetColumn(columnName)
-		results = append(results, columnName)
+		column := table.GetColumn(columnName)
+		quotedColumnName := cb.quoteColumnName(column)
+		log.Printf("CB : %v", cb.converter)
+		quotedColumnName = cb.converter.ConvertColumnName(column, quotedColumnName)
+		results = append(results, quotedColumnName)
 	}
 	return strings.Join(results, ",")
 }
