@@ -1,7 +1,6 @@
 package database
 
 import (
-	"log"
 	"strings"
 )
 
@@ -68,7 +67,6 @@ func (cb *ColumnsBuilder) GetSelect(table *ReflectedTable, columnNames []string)
 	for _, columnName := range columnNames {
 		column := table.GetColumn(columnName)
 		quotedColumnName := cb.quoteColumnName(column)
-		log.Printf("CB : %v", cb.converter)
 		quotedColumnName = cb.converter.ConvertColumnName(column, quotedColumnName)
 		results = append(results, quotedColumnName)
 	}

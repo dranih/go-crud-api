@@ -9,11 +9,12 @@ import (
 )
 
 type RecordController struct {
-	service *record.RecordService
+	service   *record.RecordService
+	responder Responder
 }
 
 func NewRecordController(router *mux.Router, service *record.RecordService) *RecordController {
-	rc := &RecordController{service}
+	rc := &RecordController{service, NewJsonResponder(false)}
 	router.HandleFunc("/records/{table}", rc.List).Methods("GET")
 	return rc
 }
@@ -40,10 +41,11 @@ func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Table: %v not found\n", vars["table"])
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Table found: %v\n", vars["table"])
+	//w.WriteHeader(http.StatusOK)
+	//fmt.Fprintf(w, "Table found: %v\n", vars["table"])
 	result := rc.service.List(vars["table"], map[string]string{})
-	fmt.Fprintf(w, "List Result: %v\n", result)
+	//fmt.Fprintf(w, "List Result: %v\n", result)
+	rc.responder.Success(result, w)
 }
 
 /*

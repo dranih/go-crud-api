@@ -2,6 +2,7 @@ package record
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -35,4 +36,17 @@ func (l *ListDocument) JsonSerialize() string {
 		log.Printf("Marshaling error : %v", err)
 	}
 	return string(data)
+}
+
+// json marshaling for struct ListDocument
+func (l *ListDocument) MarshalJSON() ([]byte, error) {
+	jsonRecords, err := json.Marshal(l.records)
+	if err != nil {
+		return []byte{}, err
+	}
+	jsonResults, err := json.Marshal(l.results)
+	if err != nil {
+		return []byte{}, err
+	}
+	return []byte(fmt.Sprintf("{\"records\":%s,\"results\":%s}", jsonRecords, jsonResults)), err
 }

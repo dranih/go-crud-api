@@ -1,11 +1,36 @@
 package database
 
+import (
+	"strconv"
+	"strings"
+)
+
 type DataConverter struct {
 	driver string
 }
 
 func NewDataConverter(driver string) *DataConverter {
 	return &DataConverter{driver}
+}
+
+// Should check conv errors
+func (dc *DataConverter) convertRecordValue(conversion, value string) interface{} {
+	args := strings.Split(conversion, "|")
+	switch args[0] {
+	case "boolean":
+		res, _ := strconv.ParseBool(value)
+		return res
+	case "integer":
+		res, _ := strconv.Atoi(value)
+		return res
+	case "float":
+		res, _ := strconv.ParseFloat(value, 32)
+		return res
+	case "decimal":
+		res, _ := strconv.ParseFloat(value, 32)
+		return res
+	}
+	return value
 }
 
 /*
@@ -73,7 +98,7 @@ func (dc *DataConverter) ConvertRecords(table *ReflectedTable, columnNames map[s
 				if !ok {
 					continue
 				}
-				records[i][columnName] = dc.convertRecordValue(conversion, value)
+				records[i][columnName] = dc.convertRecordValue(conversion, value.(string))
 			}
 		}
 
