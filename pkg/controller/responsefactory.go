@@ -40,9 +40,9 @@ func (rf *ResponseFactory) FromObject(status int, body interface{}, w http.Respo
 }
 
 func (rf *ResponseFactory) From(status int, contentType string, content []byte, w http.ResponseWriter) http.ResponseWriter {
-	w.WriteHeader(status)
 	w.Header().Set("Content-Type", contentType+"; charset=utf-8")
 	w.Header().Set("Content-Length", fmt.Sprint(len(content)))
+	w.WriteHeader(status)
 	w.Write(content)
 	return w
 }

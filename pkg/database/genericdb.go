@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 )
 
 type GenericDB struct {
@@ -245,7 +246,23 @@ public function selectMultiple(ReflectedTable $table, array $columnNames, array 
 	$this->converter->convertRecords($table, $columnNames, $records);
 	return $records;
 }
+*/
+// not finished
+func (g *GenericDB) SelectCount(table *ReflectedTable, condition string) int {
+	tableName := table.GetName()
+	//$condition = $this->addMiddlewareConditions($tableName, $condition);
+	//$parameters = array();
+	//$whereClause = $this->conditions->getWhereClause($condition, $parameters);
+	sql := `SELECT COUNT(*) as c FROM "` + tableName + `"` //+ whereClause;
+	stmt := g.query(sql)
+	ret, ok := stmt[0]["c"].(int64)
+	if !ok {
+		log.Printf("Error converting count from table %s\n", tableName)
+	}
+	return int(ret)
+}
 
+/*
 public function selectCount(ReflectedTable $table, Condition $condition): int
 {
 	$tableName = $table->getName();

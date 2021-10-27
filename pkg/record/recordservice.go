@@ -142,7 +142,7 @@ func (rs *RecordService) List(tableName string, params map[string]string) *ListD
 	  $this->joiner->addJoins($table, $records, $params, $this->db);
 	  return new ListDocument($records, $count);*/
 	records := rs.db.SelectAll(table, columnNames, "", []string{}, 0, 10)
-	count := 3
+	count := rs.db.SelectCount(table, "")
 	return NewListDocument(records, count)
 }
 
