@@ -3,22 +3,25 @@ package database
 import (
 	"fmt"
 	"log"
+
+	"github.com/dranih/go-crud-api/pkg/middleware"
 )
 
 type GenericDB struct {
-	driver     string
-	address    string
-	port       int
-	database   string
-	tables     map[string]bool
-	username   string
-	password   string
-	pdo        *LazyPdo
-	reflection *GenericReflection
-	definition string
-	conditions string
-	columns    *ColumnsBuilder
-	converter  string
+	driver        string
+	address       string
+	port          int
+	database      string
+	tables        map[string]bool
+	username      string
+	password      string
+	pdo           *LazyPdo
+	reflection    *GenericReflection
+	definition    string
+	conditions    *ConditionsBuilder
+	columns       *ColumnsBuilder
+	converter     string
+	variablestore *middleware.VariableStore
 }
 
 func (g *GenericDB) getDsn() string {
@@ -89,7 +92,7 @@ func (g *GenericDB) initPdo() bool {
 
 	g.reflection = NewGenericReflection(g.pdo, g.driver, g.database, g.tables)
 	//$this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
-	//$this->conditions = new ConditionsBuilder($this->driver);
+	g.conditions = NewConditionsBuilder(g.driver)
 	g.columns = NewColumnsBuilder(g.driver)
 	//$this->converter = new DataConverter($this->driver);
 
@@ -105,6 +108,7 @@ func NewGenericDB(driver string, address string, port int, database string, tabl
 	g.tables = tables
 	g.username = username
 	g.password = password
+	g.variablestore = &middleware.VariableStore{}
 	g.initPdo()
 	return g
 }
@@ -164,7 +168,22 @@ public function rollBackTransaction()
 {
 	$this->pdo->rollBack();
 }
+*/
 
+// Should type check
+func (g *GenericDB) addMiddlewareConditions(tableName string, condition interface{ Condition }) interface{ Condition } {
+	condition1 := g.variablestore.Get("authorization.conditions." + tableName)
+	if condition1 != nil {
+		condition = condition.And(condition1.(interface{ Condition }))
+	}
+	condition2 := g.variablestore.Get("multiTenancy.conditions." + tableName)
+	if condition2 != nil {
+		condition = condition.And(condition2.(interface{ Condition }))
+	}
+	return condition
+}
+
+/*
 private function addMiddlewareConditions(string $tableName, Condition $condition): Condition
 {
 	$condition1 = VariableStore::get("authorization.conditions.$tableName");
@@ -275,13 +294,17 @@ public function selectCount(ReflectedTable $table, Condition $condition): int
 }
 */
 // not finished
-func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition string, columnOrdering []string, offset, limit int) []map[string]interface{} {
+func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition interface{ Condition }, columnOrdering []string, offset, limit int) []map[string]interface{} {
 	if limit == 0 {
 		return []map[string]interface{}{}
 	}
 	selectColumns := g.columns.GetSelect(table, columnNames)
 	tableName := table.GetName()
-	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` // + whereClause + orderBy + offsetLimit
+	condition = g.addMiddlewareConditions(tableName, condition)
+	parameters := []string{}
+	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause //+ orderBy + offsetLimit
+	log.Println(sql)
 	records := g.query(sql)
 	return records
 }

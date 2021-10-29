@@ -14,7 +14,6 @@ import (
 
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
-	"github.com/dranih/go-crud-api/pkg/record"
 )
 
 var dbClient database.GenericDB
@@ -94,9 +93,9 @@ func read(w http.ResponseWriter, r *http.Request) {
 }
 
 func connectDB(router *mux.Router) {
-	dbClient = *database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
-	reflection := database.NewReflectionService(&dbClient, "", 0)
-	records := record.NewRecordService(&dbClient, reflection)
+	dbClient := database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
+	reflection := database.NewReflectionService(dbClient, "", 0)
+	records := database.NewRecordService(dbClient, reflection)
 	controller.NewRecordController(router, records)
 
 	/*if err := dbClient.Connect(); err != nil {

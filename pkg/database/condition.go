@@ -1,9 +1,7 @@
-package record
+package database
 
 import (
 	"strings"
-
-	"github.com/dranih/go-crud-api/pkg/database"
 )
 
 // Condition interface
@@ -43,7 +41,7 @@ func (gc *GenericCondition) GetCondition() interface{ Condition } {
 	return nil
 }
 
-func (gc *GenericCondition) FromString(table *database.ReflectedTable, value string) interface{ Condition } {
+func GenericConditionFromString(table *ReflectedTable, value string) interface{ Condition } {
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	parts := strings.SplitN(value, ",", 3)
@@ -150,7 +148,7 @@ func (ac *OrCondition) GetConditions() []interface{ Condition } {
 	return ac.conditions
 }
 
-func (oc *OrCondition) FromArray(conditions []interface{ Condition }) interface{ Condition } {
+func OrConditionFromArray(conditions []interface{ Condition }) interface{ Condition } {
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	for _, c := range conditions {
@@ -185,7 +183,7 @@ func (ac *AndCondition) GetConditions() []interface{ Condition } {
 	return ac.conditions
 }
 
-func (ac *AndCondition) FromArray(conditions []interface{ Condition }) interface{ Condition } {
+func AndConditionFromArray(conditions []interface{ Condition }) interface{ Condition } {
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	for _, c := range conditions {
@@ -198,17 +196,17 @@ func (ac *AndCondition) FromArray(conditions []interface{ Condition }) interface
 
 // ColumnCondition struct
 type ColumnCondition struct {
-	column   *database.ReflectedColumn
+	column   *ReflectedColumn
 	operator string
 	value    string
 	GenericCondition
 }
 
-func NewColumnCondition(column *database.ReflectedColumn, operator, value string) *ColumnCondition {
+func NewColumnCondition(column *ReflectedColumn, operator, value string) *ColumnCondition {
 	return &ColumnCondition{column, operator, value, GenericCondition{}}
 }
 
-func (cc *ColumnCondition) GetColumn() *database.ReflectedColumn {
+func (cc *ColumnCondition) GetColumn() *ReflectedColumn {
 	return cc.column
 }
 func (cc *ColumnCondition) GetOperator() string {
@@ -226,6 +224,6 @@ type SpatialCondition struct {
 	ColumnCondition
 }
 
-func NewSpatialCondition(column *database.ReflectedColumn, operator, value string) *SpatialCondition {
+func NewSpatialCondition(column *ReflectedColumn, operator, value string) *SpatialCondition {
 	return &SpatialCondition{ColumnCondition{column, operator, value, GenericCondition{}}}
 }

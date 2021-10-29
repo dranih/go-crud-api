@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -64,7 +65,7 @@ func (dc *DataConverter) getRecordValueConversion(column *ReflectedColumn) strin
 		return "float"
 	case "decimal":
 		if dc.driver == "sqlite" {
-			return "decimal|" + string(column.GetScale())
+			return "decimal|" + fmt.Sprint(column.GetScale())
 		}
 	}
 	return "none"

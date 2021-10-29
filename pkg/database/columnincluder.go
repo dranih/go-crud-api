@@ -1,6 +1,4 @@
-package record
-
-import "github.com/dranih/go-crud-api/pkg/database"
+package database
 
 type ColumnIncluder struct {
 }
@@ -49,7 +47,7 @@ private function select(
 }
 */
 //not finished
-func (ci *ColumnIncluder) GetNames(table *database.ReflectedTable, primaryTable bool, params map[string]string) []string {
+func (ci *ColumnIncluder) GetNames(table ReflectedTable, primaryTable bool, params map[string][]string) []string {
 	//tableName := table.GetName()
 	result := table.GetColumnNames()
 	return result

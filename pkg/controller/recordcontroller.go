@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dranih/go-crud-api/pkg/record"
+	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/gorilla/mux"
 )
 
 type RecordController struct {
-	service   *record.RecordService
+	service   *database.RecordService
 	responder Responder
 }
 
-func NewRecordController(router *mux.Router, service *record.RecordService) *RecordController {
+func NewRecordController(router *mux.Router, service *database.RecordService) *RecordController {
 	rc := &RecordController{service, NewJsonResponder(false)}
 	router.HandleFunc("/records/{table}", rc.List).Methods("GET")
 	return rc
@@ -43,7 +43,7 @@ func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 	}
 	//w.WriteHeader(http.StatusOK)
 	//fmt.Fprintf(w, "Table found: %v\n", vars["table"])
-	result := rc.service.List(vars["table"], map[string]string{})
+	result := rc.service.List(vars["table"], getRequestParams(r))
 	//fmt.Fprintf(w, "List Result: %v\n", result)
 	rc.responder.Success(result, w)
 }

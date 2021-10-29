@@ -1,10 +1,8 @@
-package record
+package database
 
 import (
 	"log"
 	"strings"
-
-	"github.com/dranih/go-crud-api/pkg/database"
 )
 
 type ConditionsBuilder struct {
@@ -23,8 +21,8 @@ func (cb *ConditionsBuilder) getConditionSql(condition interface{ Condition }, a
 		return cb.getOrConditionSql(condition.(*OrCondition), arguments)
 	case *NotCondition:
 		return cb.getNotConditionSql(condition.(*NotCondition), arguments)
-	/*case *SpatialCondition:
-	return cb.getSpatialConditionSql(condition.(*SpatialCondition), arguments)*/
+	case *SpatialCondition:
+		return cb.getSpatialConditionSql(condition.(*SpatialCondition), arguments)
 	case *ColumnCondition:
 		return cb.getColumnConditionSql(condition.(*ColumnCondition), arguments)
 	default:
@@ -54,17 +52,17 @@ func (cb *ConditionsBuilder) getNotConditionSql(not *NotCondition, arguments *[]
 	return "(NOT " + cb.getConditionSql(condition, arguments) + ")"
 }
 
-func (cb *ConditionsBuilder) quoteColumnName(column *database.ReflectedColumn) string {
+func (cb *ConditionsBuilder) quoteColumnName(column *ReflectedColumn) string {
 	return `"` + column.GetName() + `"`
 }
 
 func (cb *ConditionsBuilder) escapeLikeValue(value string) string {
-	return cb.Addcslashes(value, "%_")
+	return cb.addcslashes(value, "%_")
 }
 
 // From https://www.php2golang.com/method/function.addcslashes.html
 // Addcslashes - Quote string with slashes in a C style
-func (cb *ConditionsBuilder) Addcslashes(s string, c string) string {
+func (cb *ConditionsBuilder) addcslashes(s string, c string) string {
 	var tmpRune []rune
 	strRune := []rune(s)
 	list := []rune(c)
@@ -170,38 +168,49 @@ func (cb *ConditionsBuilder) hasSpatialArgument(operator string) bool {
 	return map[string]bool{`ic`: true, `is`: true, `iv`: true}[operator]
 }
 
-/*
-   private function getSpatialFunctionCall(string $functionName, string $column, bool $hasArgument): string
-   {
-       switch ($this->driver) {
-           case `mysql`:
-           case `pgsql`:
-               $argument = $hasArgument ? `ST_GeomFromText(?)` : ``;
-               return "$functionName($column, $argument)=TRUE";
-           case `sqlsrv`:
-               $functionName = str_replace(`ST_`, `ST`, $functionName);
-               $argument = $hasArgument ? `geometry::STGeomFromText(?,0)` : ``;
-               return "$column.$functionName($argument)=1";
-           case `sqlite`:
-               $argument = $hasArgument ? `?` : `0`;
-               return "$functionName($column, $argument)=1";
-       }
-   }
+func (cb *ConditionsBuilder) getSpatialFunctionCall(functionName, column string, hasArgument bool) string {
+	argument := ""
+	switch cb.driver {
+	case `mysql`:
+	case `pgsql`:
+		if hasArgument {
+			argument = `ST_GeomFromText(?)`
+		} else {
+			argument = ``
+		}
+		return functionName + "(" + column + "," + argument + ")=TRUE"
+	case `sqlsrv`:
+		functionName = strings.Replace(functionName, `ST_`, `ST`, -1)
+		if hasArgument {
+			argument = `geometry::STGeomFromText(?,0)`
+		} else {
+			argument = ``
+		}
+		return column + "." + functionName + "(" + argument + ")=1"
+	case `sqlite`:
+		if hasArgument {
+			argument = `?`
+		} else {
+			argument = `0`
+		}
+		return functionName + "(" + column + "," + argument + ")=1"
+	}
+	return ""
+}
 
-   private function getSpatialConditionSql(ColumnCondition $condition, array &$arguments): string
-   {
-       $column = $this->quoteColumnName($condition->getColumn());
-       $operator = $condition->getOperator();
-       $value = $condition->getValue();
-       $functionName = $this->getSpatialFunctionName($operator);
-       $hasArgument = $this->hasSpatialArgument($operator);
-       $sql = $this->getSpatialFunctionCall($functionName, $column, $hasArgument);
-       if ($hasArgument) {
-           $arguments[] = $value;
-       }
-       return $sql;
-   }
-*/
+func (cb *ConditionsBuilder) getSpatialConditionSql(condition *SpatialCondition, arguments *[]string) string {
+	column := cb.quoteColumnName(condition.GetColumn())
+	operator := condition.GetOperator()
+	value := condition.GetValue()
+	functionName := cb.getSpatialFunctionName(operator)
+	hasArgument := cb.hasSpatialArgument(operator)
+	sql := cb.getSpatialFunctionCall(functionName, column, hasArgument)
+	if hasArgument {
+		*arguments = append(*arguments, value)
+	}
+	return sql
+}
+
 func (cb *ConditionsBuilder) GetWhereClause(condition interface{ Condition }, arguments *[]string) string {
 	switch condition.(type) {
 	case *NoCondition:
