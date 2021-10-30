@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -98,12 +99,12 @@ private static function parseColumnType(string $columnType, int &$length, int &$
 func getDataSize(length, precision, scale int) string {
 	dataSize := ""
 	if length != -1 {
-		dataSize = string(length)
+		dataSize = fmt.Sprint(length)
 	} else if precision != -1 {
 		if scale != -1 {
-			dataSize = string(precision) + "," + string(scale)
+			dataSize = fmt.Sprint(precision) + "," + fmt.Sprint(scale)
 		} else {
-			dataSize = string(precision)
+			dataSize = fmt.Sprint(precision)
 		}
 
 	}

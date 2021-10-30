@@ -1,6 +1,7 @@
 package database
 
 import (
+	"log"
 	"strings"
 )
 
@@ -16,10 +17,15 @@ type GenericCondition struct {
 }
 
 func (gc *GenericCondition) And(condition interface{ Condition }) interface{ Condition } {
+	log.Println("Coucou")
+	log.Printf("AAA gc : %v\n", gc)
+	log.Printf("AAA gc type : %T\n", gc)
 	switch condition.(type) {
 	case *NoCondition:
-		return condition
+		log.Println("Coucou1")
+		return gc
 	default:
+		log.Println("Coucou2")
 		return NewAndCondition(gc, condition)
 	}
 }
@@ -45,6 +51,7 @@ func GenericConditionFromString(table *ReflectedTable, value string) interface{ 
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	parts := strings.SplitN(value, ",", 3)
+	log.Printf("Parts : %v\n", parts)
 	if (len(parts)) < 2 {
 		return condition
 	}
@@ -52,6 +59,7 @@ func GenericConditionFromString(table *ReflectedTable, value string) interface{ 
 		parts = append(parts, "")
 	}
 	field := table.GetColumn(parts[0])
+	log.Printf("field : %v\n", field)
 	command := parts[1]
 	negate := false
 	spatial := false
@@ -64,14 +72,15 @@ func GenericConditionFromString(table *ReflectedTable, value string) interface{ 
 			command = command[1:]
 		}
 	}
+	log.Printf("command : %v\n", command)
 	if spatial {
 		if map[string]bool{"co": true, "cr": true, "di": true, "eq": true, "in": true, "ov": true, "to": true, "wi": true, "ic": true, "is": true, "iv": true}[command] {
 			condition = NewSpatialCondition(field, command, parts[2])
-		} else {
-			if map[string]bool{"cs": true, "sw": true, "ew": true, "eq": true, "lt": true, "le": true, "ge": true, "gt": true, "bt": true, "in": true, "is": true}[command] {
-			}
-			condition = NewColumnCondition(field, command, parts[2])
 		}
+	} else {
+		if map[string]bool{"cs": true, "sw": true, "ew": true, "eq": true, "lt": true, "le": true, "ge": true, "gt": true, "bt": true, "in": true, "is": true}[command] {
+		}
+		condition = NewColumnCondition(field, command, parts[2])
 	}
 	if negate {
 		condition = condition.Not()

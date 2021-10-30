@@ -1,5 +1,7 @@
 package database
 
+import "log"
+
 type PathTree struct {
 	tree *tree
 }
@@ -22,11 +24,11 @@ func NewPathTree(tree *tree) *PathTree {
 }
 
 func NewTree() *tree {
-	return &tree{}
+	return &tree{map[string]*tree{}, []interface{ Condition }{}}
 }
 
-func (pt *PathTree) GetKeys() []string {
-	branches := pt.tree.branches
+func (t *tree) GetKeys() []string {
+	branches := t.branches
 	keys := []string{}
 	for key := range branches {
 		keys = append(keys, key)
@@ -34,15 +36,15 @@ func (pt *PathTree) GetKeys() []string {
 	return keys
 }
 
-func (pt *PathTree) GetValues() []interface{ Condition } {
-	return pt.tree.values
+func (t *tree) GetValues() []interface{ Condition } {
+	return t.values
 }
 
-func (pt *PathTree) Get(key string) *PathTree {
-	if _, exists := pt.tree.branches[key]; !exists {
+func (t *tree) Get(key string) *PathTree {
+	if _, exists := t.branches[key]; !exists {
 		return nil
 	} else {
-		return NewPathTree(pt.tree.branches[key])
+		return NewPathTree(t.branches[key])
 	}
 }
 
@@ -57,14 +59,22 @@ public function get(string $key): PathTree
 */
 func (pt *PathTree) Put(path []string, value interface{ Condition }) {
 	tree := pt.tree
+	log.Printf("--- Tree1 : %v\n", tree)
+	log.Printf("--- PathTree1 ; %v\n", pt.tree)
 	for _, key := range path {
+		if key == `` {
+			key = `0`
+		}
 		if _, exists := pt.tree.branches[key]; !exists {
+			log.Printf("Branches ; %v\n", pt.tree.branches)
+			log.Printf("Key ; %v\n", key)
 			pt.tree.branches[key] = NewTree()
 		}
 		tree = pt.tree.branches[key]
 	}
 	tree.values = append(tree.values, value)
-
+	log.Printf("--- Tree2 : %v\n", tree)
+	log.Printf("--- PathTree2 ; %v\n", pt)
 }
 
 /*
