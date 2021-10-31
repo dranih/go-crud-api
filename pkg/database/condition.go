@@ -14,19 +14,22 @@ type Condition interface {
 }
 
 type GenericCondition struct {
+	condition interface{ Condition }
 }
 
 func (gc *GenericCondition) And(condition interface{ Condition }) interface{ Condition } {
 	log.Println("Coucou")
+	log.Printf("AAA gc : %v\n", gc.condition)
+	log.Printf("AAA gc type : %T\n", gc.condition)
 	log.Printf("AAA gc : %v\n", gc)
 	log.Printf("AAA gc type : %T\n", gc)
 	switch condition.(type) {
 	case *NoCondition:
 		log.Println("Coucou1")
-		return gc
+		return gc.condition
 	default:
 		log.Println("Coucou2")
-		return NewAndCondition(gc, condition)
+		return NewAndCondition(gc.condition, condition)
 	}
 }
 
@@ -35,19 +38,19 @@ func (gc *GenericCondition) Or(condition interface{ Condition }) interface{ Cond
 	case *NoCondition:
 		return condition
 	default:
-		return NewOrCondition(gc, condition)
+		return NewOrCondition(gc.condition, condition)
 	}
 }
 
 func (gc *GenericCondition) Not() interface{ Condition } {
-	return NewNotCondition(gc)
+	return NewNotCondition(gc.condition)
 }
 
 func (gc *GenericCondition) GetCondition() interface{ Condition } {
 	return nil
 }
 
-func GenericConditionFromString(table *ReflectedTable, value string) interface{ Condition } {
+func ConditionFromString(table *ReflectedTable, value string) interface{ Condition } {
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	parts := strings.SplitN(value, ",", 3)
@@ -85,6 +88,7 @@ func GenericConditionFromString(table *ReflectedTable, value string) interface{ 
 	if negate {
 		condition = condition.Not()
 	}
+	log.Printf("#################### from string : %v // %T", condition, condition)
 	return condition
 }
 
@@ -92,16 +96,16 @@ func GenericConditionFromString(table *ReflectedTable, value string) interface{ 
 
 // NoCondition struct
 type NoCondition struct {
-	GenericCondition
 }
 
 func NewNoCondition() *NoCondition {
 	return &NoCondition{}
+
 }
 
-/*func (nc *NoCondition) GetCondition() interface{ Condition } {
+func (nc *NoCondition) GetCondition() interface{ Condition } {
 	return nil
-}*/
+}
 
 func (nc *NoCondition) And(condition interface{ Condition }) interface{ Condition } {
 	return condition
@@ -124,7 +128,7 @@ type NotCondition struct {
 }
 
 func NewNotCondition(condition interface{ Condition }) *NotCondition {
-	return &NotCondition{condition, GenericCondition{}}
+	return &NotCondition{condition, GenericCondition{condition}}
 }
 
 func (nc *NotCondition) GetCondition() interface{ Condition } {
@@ -139,8 +143,8 @@ type OrCondition struct {
 	GenericCondition
 }
 
-func NewOrCondition(condition1, condition2 interface{ Condition }) *AndCondition {
-	return &AndCondition{[]interface{ Condition }{condition1, condition2}, GenericCondition{}}
+func NewOrCondition(condition1, condition2 interface{ Condition }) *OrCondition {
+	return &OrCondition{[]interface{ Condition }{condition1, condition2}, GenericCondition{}}
 }
 
 func (oc *OrCondition) Or(condition interface{ Condition }) interface{ Condition } {
@@ -179,9 +183,10 @@ func NewAndCondition(condition1, condition2 interface{ Condition }) *AndConditio
 }
 
 func (ac *AndCondition) And(condition interface{ Condition }) interface{ Condition } {
+	log.Println("33333333333333333333333")
 	switch condition.(type) {
 	case *NoCondition:
-		return condition
+		return ac
 	default:
 		ac.conditions = append(ac.conditions, condition)
 		return ac
@@ -211,8 +216,12 @@ type ColumnCondition struct {
 	GenericCondition
 }
 
+// Ugly
 func NewColumnCondition(column *ReflectedColumn, operator, value string) *ColumnCondition {
-	return &ColumnCondition{column, operator, value, GenericCondition{}}
+	condition := &ColumnCondition{column, operator, value, GenericCondition{}}
+	condition.GenericCondition = GenericCondition{condition}
+	//return &ColumnCondition{column, operator, value, GenericCondition{&NoCondition{}}}
+	return condition
 }
 
 func (cc *ColumnCondition) GetColumn() *ReflectedColumn {
@@ -233,6 +242,9 @@ type SpatialCondition struct {
 	ColumnCondition
 }
 
+//Ugly
 func NewSpatialCondition(column *ReflectedColumn, operator, value string) *SpatialCondition {
-	return &SpatialCondition{ColumnCondition{column, operator, value, GenericCondition{}}}
+	condition := &ColumnCondition{column, operator, value, GenericCondition{}}
+	condition.GenericCondition = GenericCondition{condition}
+	return &SpatialCondition{*condition}
 }

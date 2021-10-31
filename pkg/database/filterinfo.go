@@ -24,7 +24,7 @@ func (ft *FilterInfo) getConditionsAsPathTree(table *ReflectedTable, params map[
 			for _, filter := range filters {
 				log.Printf("table : %v\n", table)
 				log.Printf("filter : %v\n", filter)
-				condition := GenericConditionFromString(table, filter)
+				condition := ConditionFromString(table, filter)
 				log.Printf("condition : %v\n", condition)
 				switch condition.(type) {
 				case *NoCondition:
@@ -42,9 +42,9 @@ func (ft *FilterInfo) getConditionsAsPathTree(table *ReflectedTable, params map[
 func (ft *FilterInfo) combinePathTreeOfConditions(tree *PathTree) interface{ Condition } {
 	log.Printf("*** Combine tree : %v\n", tree.tree)
 	andConditions := tree.tree.GetValues()
-	log.Printf("*** Combine andConditions : %v\n", andConditions)
+	log.Printf("*** Combine andConditions : %v \n", andConditions)
 	and := AndConditionFromArray(andConditions)
-	log.Printf("*** Combine and : %v\n", and)
+	log.Printf("*** Combine and : %v / %T\n", and, and)
 	orConditions := []interface{ Condition }{}
 	for _, p := range tree.tree.GetKeys() {
 		orConditions = append(orConditions, ft.combinePathTreeOfConditions(tree.tree.Get(p)))

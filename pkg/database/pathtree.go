@@ -73,6 +73,7 @@ func (pt *PathTree) Put(path []string, value interface{ Condition }) {
 		tree = pt.tree.branches[key]
 	}
 	tree.values = append(tree.values, value)
+	log.Printf("Putting value %v of type %T in tree\n", value, value)
 	log.Printf("--- Tree2 : %v\n", tree)
 	log.Printf("--- PathTree2 ; %v\n", pt)
 }

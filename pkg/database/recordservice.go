@@ -131,6 +131,7 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	columnNames := rs.columns.GetNames(*table, true, params)
 	//condition := NewNoCondition()
 	condition := rs.filters.GetCombinedConditions(table, params)
+	log.Printf("List condition type : %T\n", condition)
 	log.Printf("List condition : %v\n", condition)
 	/*$condition = $this->filters->getCombinedConditions($table, $params);
 	  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
@@ -147,7 +148,7 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	  $this->joiner->addJoins($table, $records, $params, $this->db);
 	  return new ListDocument($records, $count);*/
 	records := rs.db.SelectAll(table, columnNames, condition, []string{}, 0, 10)
-	count := rs.db.SelectCount(table, "")
+	count := rs.db.SelectCount(table, condition)
 	return record.NewListDocument(records, count)
 }
 

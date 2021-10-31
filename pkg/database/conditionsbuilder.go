@@ -14,8 +14,12 @@ func NewConditionsBuilder(driver string) *ConditionsBuilder {
 }
 
 func (cb *ConditionsBuilder) getConditionSql(condition interface{ Condition }, arguments *[]string) string {
+	log.Printf("oooooooooooooo getConditionSql : %v\n", condition)
+	log.Printf("getConditionSql adress : %v\n", &condition)
+	log.Printf("getConditionSql Type : %T\n", condition)
 	switch v := condition.(type) {
 	case *AndCondition:
+		log.Println("111111111111111111")
 		return cb.getAndConditionSql(condition.(*AndCondition), arguments)
 	case *OrCondition:
 		return cb.getOrConditionSql(condition.(*OrCondition), arguments)
@@ -26,7 +30,7 @@ func (cb *ConditionsBuilder) getConditionSql(condition interface{ Condition }, a
 	case *ColumnCondition:
 		return cb.getColumnConditionSql(condition.(*ColumnCondition), arguments)
 	default:
-		log.Panicf("Unknown Condition: %s\n", v)
+		log.Panicf("Unknown Condition: %T\n", v)
 	}
 	return ""
 }

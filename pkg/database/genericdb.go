@@ -267,13 +267,13 @@ public function selectMultiple(ReflectedTable $table, array $columnNames, array 
 }
 */
 // not finished
-func (g *GenericDB) SelectCount(table *ReflectedTable, condition string) int {
+func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Condition }) int {
 	tableName := table.GetName()
-	//$condition = $this->addMiddlewareConditions($tableName, $condition);
-	//$parameters = array();
-	//$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	sql := `SELECT COUNT(*) as c FROM "` + tableName + `"` //+ whereClause;
-	stmt := g.query(sql)
+	condition = g.addMiddlewareConditions(tableName, condition)
+	parameters := []string{}
+	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	sql := `SELECT COUNT(*) as c FROM "` + tableName + `"` + whereClause
+	stmt := g.query(sql, parameters)
 	ret, ok := stmt[0]["c"].(int64)
 	if !ok {
 		log.Printf("Error converting count from table %s\n", tableName)
@@ -303,9 +303,10 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []string{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	log.Printf("Where : %v\n", whereClause)
 	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause //+ orderBy + offsetLimit
 	log.Println(sql)
-	records := g.query(sql)
+	records := g.query(sql, parameters)
 	return records
 }
 
@@ -377,6 +378,7 @@ public function incrementSingle(ReflectedTable $table, array $columnValues, stri
 */
 func (g *GenericDB) query(sql string, parameters ...interface{}) []map[string]interface{} {
 	var results []map[string]interface{}
+	log.Printf("Parameters : %v\n", parameters)
 	g.pdo.PDO().Raw(sql, parameters...).Scan(&results)
 	return results
 }
