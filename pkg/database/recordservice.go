@@ -127,7 +127,6 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	table := rs.reflection.GetTable(tableName)
 	//$this->joiner->addMandatoryColumns($table, $params);
 	columnNames := rs.columns.GetNames(*table, true, params)
-	//condition := NewNoCondition()
 	condition := rs.filters.GetCombinedConditions(table, params)
 	/*$condition = $this->filters->getCombinedConditions($table, $params);
 	  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);

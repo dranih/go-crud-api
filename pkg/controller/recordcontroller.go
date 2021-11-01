@@ -33,7 +33,6 @@ public function __construct(Router $router, Responder $responder, RecordService 
 }
 */
 // List function lists a table
-// Should write to a responder insead of directly
 func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	params := getRequestParams(r)

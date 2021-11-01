@@ -163,7 +163,13 @@ public static function fromJson($json): ReflectedTable
 	}
 	return new ReflectedTable($name, $type, $columns);
 }
+*/
+func (rt *ReflectedTable) HasColumn(columnName string) bool {
+	_, exists := rt.columns[columnName]
+	return exists
+}
 
+/*
 public function hasColumn(string $columnName): bool
 {
 	return isset($this->columns[$columnName]);
@@ -173,12 +179,11 @@ public function hasPk(): bool
 {
 	return $this->pk != null;
 }
-
-public function getPk()
-{
-	return $this->pk;
-}
 */
+func (rt *ReflectedTable) GetPk() *ReflectedColumn {
+	return rt.pk
+}
+
 func (rt *ReflectedTable) GetName() string {
 	return rt.name
 }
