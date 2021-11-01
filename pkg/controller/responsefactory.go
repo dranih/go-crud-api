@@ -9,18 +9,6 @@ import (
 type ResponseFactory struct {
 }
 
-const OK = 200
-const MOVED_PERMANENTLY = 301
-const FOUND = 302
-const UNAUTHORIZED = 401
-const FORBIDDEN = 403
-const NOT_FOUND = 404
-const METHOD_NOT_ALLOWED = 405
-const CONFLICT = 409
-const UNPROCESSABLE_ENTITY = 422
-const FAILED_DEPENDENCY = 424
-const INTERNAL_SERVER_ERROR = 500
-
 func (rf *ResponseFactory) FromXml(status int, xml string, w http.ResponseWriter) http.ResponseWriter {
 	return rf.From(status, "text/xml", []byte(xml), w)
 }

@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/gorilla/mux"
 )
 
@@ -38,12 +38,12 @@ func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	params := getRequestParams(r)
 	if !rc.service.HasTable(table) {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Table: %v not found\n", table)
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
 	result := rc.service.List(table, params)
 	rc.responder.Success(result, w)
+	return
 }
 
 /*

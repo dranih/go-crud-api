@@ -53,6 +53,9 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 		parts = append(parts, "")
 	}
 	field := table.GetColumn(parts[0])
+	if field == nil {
+		return condition
+	}
 	command := parts[1]
 	negate := false
 	spatial := false

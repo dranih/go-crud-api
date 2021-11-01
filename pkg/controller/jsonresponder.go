@@ -1,6 +1,10 @@
 package controller
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/dranih/go-crud-api/pkg/record"
+)
 
 type JsonResponder struct {
 	debug bool
@@ -12,8 +16,9 @@ func NewJsonResponder(debug bool) *JsonResponder {
 }
 
 // not finished (errordocument)
-func (jr *JsonResponder) Error(errorCode int, argument interface{}, w http.ResponseWriter, details ...interface{}) http.ResponseWriter {
-	return jr.rf.FromObject(NOT_FOUND, argument, w)
+func (jr *JsonResponder) Error(errorCode int, argument string, w http.ResponseWriter, details string) http.ResponseWriter {
+	document := record.NewErrorDocument(record.NewErrorCode(errorCode), argument, details)
+	return jr.rf.FromObject(document.GetStatus(), document, w)
 }
 
 /*
@@ -25,12 +30,12 @@ public function error(int $error, string $argument, $details = null): ResponseIn
 }
 */
 func (jr *JsonResponder) Success(result interface{}, w http.ResponseWriter) http.ResponseWriter {
-	return jr.rf.FromObject(OK, result, w)
+	return jr.rf.FromObject(record.OK, result, w)
 }
 
 // not finished (errordocument)
 func (jr *JsonResponder) Exception(err error, w http.ResponseWriter) http.ResponseWriter {
-	return jr.rf.FromObject(NOT_FOUND, "", w)
+	return jr.rf.FromObject(record.NOT_FOUND, "", w)
 }
 
 /*
@@ -47,7 +52,7 @@ public function exception($exception): ResponseInterface
 */
 // not finished (errordocument)
 func (jr *JsonResponder) Multi(results interface{}, w http.ResponseWriter) http.ResponseWriter {
-	return jr.rf.FromObject(OK, results, w)
+	return jr.rf.FromObject(record.OK, results, w)
 }
 
 /*
