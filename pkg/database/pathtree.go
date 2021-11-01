@@ -1,7 +1,5 @@
 package database
 
-import "log"
-
 type PathTree struct {
 	tree *tree
 }
@@ -59,23 +57,16 @@ public function get(string $key): PathTree
 */
 func (pt *PathTree) Put(path []string, value interface{ Condition }) {
 	tree := pt.tree
-	log.Printf("--- Tree1 : %v\n", tree)
-	log.Printf("--- PathTree1 ; %v\n", pt.tree)
 	for _, key := range path {
 		if key == `` {
 			key = `0`
 		}
 		if _, exists := pt.tree.branches[key]; !exists {
-			log.Printf("Branches ; %v\n", pt.tree.branches)
-			log.Printf("Key ; %v\n", key)
 			pt.tree.branches[key] = NewTree()
 		}
 		tree = pt.tree.branches[key]
 	}
 	tree.values = append(tree.values, value)
-	log.Printf("Putting value %v of type %T in tree\n", value, value)
-	log.Printf("--- Tree2 : %v\n", tree)
-	log.Printf("--- PathTree2 ; %v\n", pt)
 }
 
 /*

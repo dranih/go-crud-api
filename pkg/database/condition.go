@@ -1,7 +1,6 @@
 package database
 
 import (
-	"log"
 	"strings"
 )
 
@@ -18,17 +17,10 @@ type GenericCondition struct {
 }
 
 func (gc *GenericCondition) And(condition interface{ Condition }) interface{ Condition } {
-	log.Println("Coucou")
-	log.Printf("AAA gc : %v\n", gc.condition)
-	log.Printf("AAA gc type : %T\n", gc.condition)
-	log.Printf("AAA gc : %v\n", gc)
-	log.Printf("AAA gc type : %T\n", gc)
 	switch condition.(type) {
 	case *NoCondition:
-		log.Println("Coucou1")
 		return gc.condition
 	default:
-		log.Println("Coucou2")
 		return NewAndCondition(gc.condition, condition)
 	}
 }
@@ -54,7 +46,6 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	parts := strings.SplitN(value, ",", 3)
-	log.Printf("Parts : %v\n", parts)
 	if (len(parts)) < 2 {
 		return condition
 	}
@@ -62,7 +53,6 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 		parts = append(parts, "")
 	}
 	field := table.GetColumn(parts[0])
-	log.Printf("field : %v\n", field)
 	command := parts[1]
 	negate := false
 	spatial := false
@@ -75,7 +65,6 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 			command = command[1:]
 		}
 	}
-	log.Printf("command : %v\n", command)
 	if spatial {
 		if map[string]bool{"co": true, "cr": true, "di": true, "eq": true, "in": true, "ov": true, "to": true, "wi": true, "ic": true, "is": true, "iv": true}[command] {
 			condition = NewSpatialCondition(field, command, parts[2])
@@ -88,7 +77,6 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 	if negate {
 		condition = condition.Not()
 	}
-	log.Printf("#################### from string : %v // %T", condition, condition)
 	return condition
 }
 
@@ -183,7 +171,6 @@ func NewAndCondition(condition1, condition2 interface{ Condition }) *AndConditio
 }
 
 func (ac *AndCondition) And(condition interface{ Condition }) interface{ Condition } {
-	log.Println("33333333333333333333333")
 	switch condition.(type) {
 	case *NoCondition:
 		return ac

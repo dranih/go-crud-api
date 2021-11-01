@@ -1,8 +1,6 @@
 package database
 
 import (
-	"log"
-
 	"github.com/dranih/go-crud-api/pkg/record"
 )
 
@@ -131,8 +129,6 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	columnNames := rs.columns.GetNames(*table, true, params)
 	//condition := NewNoCondition()
 	condition := rs.filters.GetCombinedConditions(table, params)
-	log.Printf("List condition type : %T\n", condition)
-	log.Printf("List condition : %v\n", condition)
 	/*$condition = $this->filters->getCombinedConditions($table, $params);
 	  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
 	  if (!$this->pagination->hasPage($params)) {

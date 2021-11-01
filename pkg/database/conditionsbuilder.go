@@ -13,13 +13,9 @@ func NewConditionsBuilder(driver string) *ConditionsBuilder {
 	return &ConditionsBuilder{driver}
 }
 
-func (cb *ConditionsBuilder) getConditionSql(condition interface{ Condition }, arguments *[]string) string {
-	log.Printf("oooooooooooooo getConditionSql : %v\n", condition)
-	log.Printf("getConditionSql adress : %v\n", &condition)
-	log.Printf("getConditionSql Type : %T\n", condition)
+func (cb *ConditionsBuilder) getConditionSql(condition interface{ Condition }, arguments *[]interface{}) string {
 	switch v := condition.(type) {
 	case *AndCondition:
-		log.Println("111111111111111111")
 		return cb.getAndConditionSql(condition.(*AndCondition), arguments)
 	case *OrCondition:
 		return cb.getOrConditionSql(condition.(*OrCondition), arguments)
@@ -35,7 +31,7 @@ func (cb *ConditionsBuilder) getConditionSql(condition interface{ Condition }, a
 	return ""
 }
 
-func (cb *ConditionsBuilder) getAndConditionSql(and *AndCondition, arguments *[]string) string {
+func (cb *ConditionsBuilder) getAndConditionSql(and *AndCondition, arguments *[]interface{}) string {
 	parts := []string{}
 	for _, condition := range and.GetConditions() {
 		parts = append(parts, cb.getConditionSql(condition, arguments))
@@ -43,7 +39,7 @@ func (cb *ConditionsBuilder) getAndConditionSql(and *AndCondition, arguments *[]
 	return "(" + strings.Join(parts, " AND ") + ")"
 }
 
-func (cb *ConditionsBuilder) getOrConditionSql(or *OrCondition, arguments *[]string) string {
+func (cb *ConditionsBuilder) getOrConditionSql(or *OrCondition, arguments *[]interface{}) string {
 	parts := []string{}
 	for _, condition := range or.GetConditions() {
 		parts = append(parts, cb.getConditionSql(condition, arguments))
@@ -51,7 +47,7 @@ func (cb *ConditionsBuilder) getOrConditionSql(or *OrCondition, arguments *[]str
 	return "(" + strings.Join(parts, " OR ") + ")"
 }
 
-func (cb *ConditionsBuilder) getNotConditionSql(not *NotCondition, arguments *[]string) string {
+func (cb *ConditionsBuilder) getNotConditionSql(not *NotCondition, arguments *[]interface{}) string {
 	condition := not.GetCondition()
 	return "(NOT " + cb.getConditionSql(condition, arguments) + ")"
 }
@@ -81,7 +77,7 @@ func (cb *ConditionsBuilder) addcslashes(s string, c string) string {
 	return string(tmpRune)
 }
 
-func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, arguments *[]string) string {
+func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, arguments *[]interface{}) string {
 	column := cb.quoteColumnName(condition.GetColumn())
 	operator := condition.GetOperator()
 	value := condition.GetValue()
@@ -129,7 +125,11 @@ func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, a
 				qmarks = strings.Repeat(`,?`, count)
 			}
 			sql = column + ` IN ( ` + qmarks + ` )`
-			*arguments = append(*arguments, parts...)
+			s := make([]interface{}, len(parts))
+			for i, v := range parts {
+				s[i] = v
+			}
+			*arguments = append(*arguments, s...)
 		} else {
 			sql = "FALSE"
 		}
@@ -202,7 +202,7 @@ func (cb *ConditionsBuilder) getSpatialFunctionCall(functionName, column string,
 	return ""
 }
 
-func (cb *ConditionsBuilder) getSpatialConditionSql(condition *SpatialCondition, arguments *[]string) string {
+func (cb *ConditionsBuilder) getSpatialConditionSql(condition *SpatialCondition, arguments *[]interface{}) string {
 	column := cb.quoteColumnName(condition.GetColumn())
 	operator := condition.GetOperator()
 	value := condition.GetValue()
@@ -215,7 +215,7 @@ func (cb *ConditionsBuilder) getSpatialConditionSql(condition *SpatialCondition,
 	return sql
 }
 
-func (cb *ConditionsBuilder) GetWhereClause(condition interface{ Condition }, arguments *[]string) string {
+func (cb *ConditionsBuilder) GetWhereClause(condition interface{ Condition }, arguments *[]interface{}) string {
 	switch condition.(type) {
 	case *NoCondition:
 		return ``

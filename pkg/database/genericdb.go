@@ -270,10 +270,10 @@ public function selectMultiple(ReflectedTable $table, array $columnNames, array 
 func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Condition }) int {
 	tableName := table.GetName()
 	condition = g.addMiddlewareConditions(tableName, condition)
-	parameters := []string{}
+	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	sql := `SELECT COUNT(*) as c FROM "` + tableName + `"` + whereClause
-	stmt := g.query(sql, parameters)
+	stmt := g.query(sql, parameters...)
 	ret, ok := stmt[0]["c"].(int64)
 	if !ok {
 		log.Printf("Error converting count from table %s\n", tableName)
@@ -301,12 +301,10 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	selectColumns := g.columns.GetSelect(table, columnNames)
 	tableName := table.GetName()
 	condition = g.addMiddlewareConditions(tableName, condition)
-	parameters := []string{}
+	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	log.Printf("Where : %v\n", whereClause)
 	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause //+ orderBy + offsetLimit
-	log.Println(sql)
-	records := g.query(sql, parameters)
+	records := g.query(sql, parameters...)
 	return records
 }
 
@@ -378,7 +376,6 @@ public function incrementSingle(ReflectedTable $table, array $columnValues, stri
 */
 func (g *GenericDB) query(sql string, parameters ...interface{}) []map[string]interface{} {
 	var results []map[string]interface{}
-	log.Printf("Parameters : %v\n", parameters)
 	g.pdo.PDO().Raw(sql, parameters...).Scan(&results)
 	return results
 }

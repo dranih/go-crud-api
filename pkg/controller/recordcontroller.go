@@ -35,16 +35,14 @@ public function __construct(Router $router, Responder $responder, RecordService 
 // List function lists a table
 // Should write to a responder insead of directly
 func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	if !rc.service.HasTable(vars["table"]) {
+	table := mux.Vars(r)["table"]
+	params := getRequestParams(r)
+	if !rc.service.HasTable(table) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Table: %v not found\n", vars["table"])
+		fmt.Fprintf(w, "Table: %v not found\n", table)
 		return
 	}
-	//w.WriteHeader(http.StatusOK)
-	//fmt.Fprintf(w, "Table found: %v\n", vars["table"])
-	result := rc.service.List(vars["table"], getRequestParams(r))
-	//fmt.Fprintf(w, "List Result: %v\n", result)
+	result := rc.service.List(table, params)
 	rc.responder.Success(result, w)
 }
 
