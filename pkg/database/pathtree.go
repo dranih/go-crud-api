@@ -46,15 +46,6 @@ func (t *tree) Get(key string) *PathTree {
 	}
 }
 
-/*
-public function get(string $key): PathTree
-{
-	if (!isset($this->tree->branches->$key)) {
-		return null;
-	}
-	return new PathTree($this->tree->branches->$key);
-}
-*/
 func (pt *PathTree) Put(path []string, value interface{ Condition }) {
 	tree := pt.tree
 	for _, key := range path {
@@ -70,18 +61,6 @@ func (pt *PathTree) Put(path []string, value interface{ Condition }) {
 }
 
 /*
-public function put(array $path, $value)
-{
-	$tree = &$this->tree;
-	foreach ($path as $key) {
-		if (!isset($tree->branches->$key)) {
-			$tree->branches->$key = $this->newTree();
-		}
-		$tree = &$tree->branches->$key;
-	}
-	$tree->values[] = $value;
-}
-
 public function match(array $path): array
 {
 	$star = self::WILDCARD;

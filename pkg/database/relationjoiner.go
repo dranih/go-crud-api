@@ -68,12 +68,32 @@ func (rj *RelationJoiner) AddMandatoryColumns(table *ReflectedTable, params *map
 		return $joins;
 	}
 
-	public function addJoins(ReflectedTable $table, array &$records, array $params, GenericDB $db)
-	{
-		$joins = $this->getJoinsAsPathTree($params);
-		$this->addJoinsForTables($table, $joins, $records, $params, $db);
-	}
 */
+func (rj *RelationJoiner) getJoinsAsPathTree(params map[string][]string) *PathTree {
+	joins := NewPathTree(nil)
+	if join, exists := params["join"]; exists {
+		for _, tableNames := range join {
+			path := []string{}
+			for _, tableName := range strings.Split(tableNames, ",") {
+				if !rj.reflection.HasTable(tableName) {
+					continue
+				}
+				t := rj.reflection.GetTable(tableName)
+				if t != nil {
+					path = append(path, t.GetName())
+				}
+			}
+			joins.Put(path, nil)
+		}
+	}
+	return joins
+}
+
+func (rj *RelationJoiner) AddJoins(table *ReflectedTable, records *[]map[string]interface{}, params map[string][]string, db *GenericDB) {
+	joins := rj.getJoinsAsPathTree(params)
+	rj.addJoinsForTables(table, joins, records, params, db)
+}
+
 func (rj *RelationJoiner) hasAndBelongsToMany(t1, t2 *ReflectedTable) *ReflectedTable {
 	for _, tableName := range rj.reflection.GetTableNames() {
 		t3 := rj.reflection.GetTable(tableName)
@@ -84,17 +104,22 @@ func (rj *RelationJoiner) hasAndBelongsToMany(t1, t2 *ReflectedTable) *Reflected
 	return nil
 }
 
-/*
-	private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2)
-	{
-		foreach ($this->reflection->getTableNames() as $tableName) {
-			$t3 = $this->reflection->getTable($tableName);
-			if (count($t3->getFksTo($t1->getName())) > 0 && count($t3->getFksTo($t2->getName())) > 0) {
-				return $t3;
-			}
+func (rj *RelationJoiner) addJoinsForTables(t1 *ReflectedTable, joins *PathTree, records *[]map[string]interface{}, params map[string][]string, db *GenericDB) {
+	for _, t2Name := range joins.tree.GetKeys() {
+		t2 := rj.reflection.GetTable(t2Name)
+		belongsTo := len(t1.GetFksTo(t2.GetName())) > 0
+		hasMany := len(t2.GetFksTo(t1.GetName())) > 0
+		var t3 *ReflectedTable
+		if !belongsTo && !hasMany {
+			t3 = rj.hasAndBelongsToMany(t1, t2)
+		} else {
+			t3 = nil
 		}
-		return null;
+		hasAndBelongsToMany := (t3 != nil)
 	}
+}
+
+/*
 
 	private function addJoinsForTables(ReflectedTable $t1, PathTree $joins, array &$records, array $params, GenericDB $db)
 	{

@@ -129,8 +129,8 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 		limit = rs.pagination.GetPageLimit(params)
 		count = rs.db.SelectCount(table, condition)
 	}
-	//rs.joiner.AddJoins(table,records,params,rs.db)
 	records := rs.db.SelectAll(table, columnNames, condition, columnOrdering, offset, limit)
+	rs.joiner.AddJoins(table, &records, params, rs.db)
 	return record.NewListDocument(records, count)
 }
 
