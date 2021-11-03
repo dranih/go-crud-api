@@ -1,67 +1,78 @@
 package database
 
+import (
+	"strings"
+)
+
 type ColumnIncluder struct {
 }
 
-/*
-private function isMandatory(string $tableName, string $columnName, array $params): bool
-{
-	return isset($params['mandatory']) && in_array($tableName . "." . $columnName, $params['mandatory']);
+func (ci *ColumnIncluder) isMandatory(tableName, columnName string, params map[string][]string) bool {
+	if _, exists := params["mandatory"]; exists {
+		for _, param := range params["mandatory"] {
+			if param == tableName+"."+columnName {
+				return true
+			}
+		}
+	}
+	return false
 }
 
-private function select(
-	string $tableName,
-	bool $primaryTable,
-	array $params,
-	string $paramName,
-	array $columnNames,
-	bool $include
-): array {
-	if (!isset($params[$paramName])) {
-		return $columnNames;
+func (ci *ColumnIncluder) selectColumn(tableName string, primaryTable bool, params map[string][]string, paramName string, columnNames []string, include bool) []string {
+	if _, exists := params[paramName]; !exists {
+		return columnNames
 	}
-	$columns = array();
-	foreach (explode(',', $params[$paramName][0]) as $columnName) {
-		$columns[$columnName] = true;
+	columns := map[string]bool{}
+	for _, columnName := range strings.Split(params[paramName][0], ",") {
+		columns[columnName] = true
 	}
-	$result = array();
-	foreach ($columnNames as $columnName) {
-		$match = isset($columns['*.*']);
-		if (!$match) {
-			$match = isset($columns[$tableName . '.*']) || isset($columns[$tableName . '.' . $columnName]);
-		}
-		if ($primaryTable && !$match) {
-			$match = isset($columns['*']) || isset($columns[$columnName]);
-		}
-		if ($match) {
-			if ($include || $this->isMandatory($tableName, $columnName, $params)) {
-				$result[] = $columnName;
-			}
-		} else {
-			if (!$include || $this->isMandatory($tableName, $columnName, $params)) {
-				$result[] = $columnName;
+	result := []string{}
+	for _, columnName := range columnNames {
+		_, match := columns[`*.*`]
+		if !match {
+			_, match = columns[tableName+`.*`]
+			if !match {
+				_, match = columns[tableName+`.`+columnName]
 			}
 		}
+		if primaryTable && !match {
+			_, match = columns[tableName+`*`]
+			if !match {
+				_, match = columns[columnName]
+			}
+		}
+		if match {
+			if include || ci.isMandatory(tableName, columnName, params) {
+				result = append(result, columnName)
+			}
+		} else if !include || ci.isMandatory(tableName, columnName, params) {
+			result = append(result, columnName)
+		}
 	}
-	return $result;
-}
-*/
-//not finished
-func (ci *ColumnIncluder) GetNames(table ReflectedTable, primaryTable bool, params map[string][]string) []string {
-	//tableName := table.GetName()
-	result := table.GetColumnNames()
 	return result
 }
 
-/*
-public function getNames(ReflectedTable $table, bool $primaryTable, array $params): array
-{
-	$tableName = $table->getName();
-	$results = $table->getColumnNames();
-	$results = $this->select($tableName, $primaryTable, $params, 'include', $results, true);
-	$results = $this->select($tableName, $primaryTable, $params, 'exclude', $results, false);
-	return $results;
+func (ci *ColumnIncluder) GetNames(table *ReflectedTable, primaryTable bool, params map[string][]string) []string {
+	tableName := table.GetName()
+	results := table.GetColumnNames()
+	results = ci.selectColumn(tableName, primaryTable, params, "include", results, true)
+	results = ci.selectColumn(tableName, primaryTable, params, "exclude", results, false)
+	return results
 }
+
+// Not sure for property exists
+func (ci *ColumnIncluder) GetValues(table *ReflectedTable, primaryTable bool, record map[string]interface{}, params map[string][]string) []interface{} {
+	results := []interface{}{}
+	columnNames := ci.GetNames(table, primaryTable, params)
+	for _, columnName := range columnNames {
+		if value, exists := record[columnName]; exists {
+			results = append(results, value)
+		}
+	}
+	return results
+}
+
+/*
 
 public function getValues(ReflectedTable $table, bool $primaryTable, $record, array $params): array
 {

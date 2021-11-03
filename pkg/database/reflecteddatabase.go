@@ -80,7 +80,7 @@ func (rd *ReflectedDatabase) GetType(tableName string) string {
 
 func (rc *ReflectedDatabase) GetTableNames() []string {
 	i, keys := 0, make([]string, len(rc.tableTypes))
-	for key, _ := range rc.tableTypes {
+	for key := range rc.tableTypes {
 		keys[i] = key
 		i++
 	}

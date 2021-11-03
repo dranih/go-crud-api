@@ -127,7 +127,7 @@ func (r *RecordService) HasTable(table string) bool {
 func (rs *RecordService) List(tableName string, params map[string][]string) *record.ListDocument {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
-	columnNames := rs.columns.GetNames(*table, true, params)
+	columnNames := rs.columns.GetNames(table, true, params)
 	condition := rs.filters.GetCombinedConditions(table, params)
 	/*  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
 	if (!$this->pagination->hasPage($params)) {
