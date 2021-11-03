@@ -44,9 +44,9 @@ func (l *ListDocument) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-	jsonResults, err := json.Marshal(l.results)
-	if err != nil {
-		return []byte{}, err
+	resultsCount := ``
+	if l.results != -1 {
+		resultsCount = fmt.Sprintf(",\"results\":%d", l.results)
 	}
-	return []byte(fmt.Sprintf("{\"records\":%s,\"results\":%s}", jsonRecords, jsonResults)), err
+	return []byte(fmt.Sprintf("{\"records\":%s%s}", jsonRecords, resultsCount)), err
 }
