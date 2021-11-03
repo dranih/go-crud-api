@@ -8,14 +8,15 @@ type RecordService struct {
 	db         *GenericDB
 	reflection *ReflectionService
 	columns    *ColumnIncluder
-	joiner     string
+	joiner     *RelationJoiner
 	filters    *FilterInfo
 	ordering   string
 	pagination string
 }
 
 func NewRecordService(db *GenericDB, reflection *ReflectionService) *RecordService {
-	return &RecordService{db, reflection, &ColumnIncluder{}, "", &FilterInfo{}, "", ""}
+	ci := &ColumnIncluder{}
+	return &RecordService{db, reflection, ci, NewRelationJoiner(reflection, ci), &FilterInfo{}, "", ""}
 }
 
 /*
@@ -125,23 +126,22 @@ func (r *RecordService) HasTable(table string) bool {
 // not finished
 func (rs *RecordService) List(tableName string, params map[string][]string) *record.ListDocument {
 	table := rs.reflection.GetTable(tableName)
-	//$this->joiner->addMandatoryColumns($table, $params);
+	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(*table, true, params)
 	condition := rs.filters.GetCombinedConditions(table, params)
-	/*$condition = $this->filters->getCombinedConditions($table, $params);
-	  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
-	  if (!$this->pagination->hasPage($params)) {
-	      $offset = 0;
-	      $limit = $this->pagination->getPageLimit($params);
-	      $count = -1;
-	  } else {
-	      $offset = $this->pagination->getPageOffset($params);
-	      $limit = $this->pagination->getPageLimit($params);
-	      $count = $this->db->selectCount($table, $condition);
-	  }
-	  $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
-	  $this->joiner->addJoins($table, $records, $params, $this->db);
-	  return new ListDocument($records, $count);*/
+	/*  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
+	if (!$this->pagination->hasPage($params)) {
+	    $offset = 0;
+	    $limit = $this->pagination->getPageLimit($params);
+	    $count = -1;
+	} else {
+	    $offset = $this->pagination->getPageOffset($params);
+	    $limit = $this->pagination->getPageLimit($params);
+	    $count = $this->db->selectCount($table, $condition);
+	}
+	$records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
+	$this->joiner->addJoins($table, $records, $params, $this->db);
+	return new ListDocument($records, $count);*/
 	records := rs.db.SelectAll(table, columnNames, condition, []string{}, 0, 10)
 	count := rs.db.SelectCount(table, condition)
 	return record.NewListDocument(records, count)

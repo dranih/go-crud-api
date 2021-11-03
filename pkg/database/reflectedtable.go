@@ -227,7 +227,18 @@ public function getColumn($columnName): ReflectedColumn
 {
 	return $this->columns[$columnName];
 }
+*/
+func (rt *ReflectedTable) GetFksTo(tableName string) []*ReflectedColumn {
+	columns := []*ReflectedColumn{}
+	for columnName, referencedTableName := range rt.fks {
+		if _, exists := rt.columns[columnName]; tableName == referencedTableName && exists {
+			columns = append(columns, rt.columns[columnName])
+		}
+	}
+	return columns
+}
 
+/*
 public function getFksTo(string $tableName): array
 {
 	$columns = array();

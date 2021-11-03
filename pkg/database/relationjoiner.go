@@ -1,5 +1,7 @@
 package database
 
+import "strings"
+
 type RelationJoiner struct {
 	reflection *ReflectionService
 	ordering   *OrderingInfo
@@ -17,43 +19,34 @@ func (rj *RelationJoiner) AddMandatoryColumns(table *ReflectedTable, params *map
 		return
 	}
 	(*params)["mandatory"] = []string{}
+	for _, tableNames := range (*params)["join"] {
+		t1 := table
+		for _, tableName := range strings.Split(tableNames, ",") {
+			if !rj.reflection.HasTable(tableName) {
+				continue
+			}
+			t2 := rj.reflection.GetTable(tableName)
+			fks1 := t1.GetFksTo(t2.GetName())
+			t3 := rj.hasAndBelongsToMany(t1, t2)
+			if t3 != nil && len(fks1) > 0 {
+				(*params)["mandatory"] = append((*params)["mandatory"], t2.GetName()+"."+t2.GetPk().GetName())
+			}
+			for _, fk := range fks1 {
+				(*params)["mandatory"] = append((*params)["mandatory"], t1.GetName()+"."+fk.GetName())
+			}
+			fks2 := t2.GetFksTo(t1.GetName())
+			if t3 != nil && len(fks2) > 0 {
+				(*params)["mandatory"] = append((*params)["mandatory"], t1.GetName()+"."+t1.GetPk().GetName())
+			}
+			for _, fk := range fks2 {
+				(*params)["mandatory"] = append((*params)["mandatory"], t2.GetName()+"."+fk.GetName())
+			}
+			t1 = t2
+		}
+	}
 }
 
 /*
-
-	public function addMandatoryColumns(ReflectedTable $table, array &$params)
-	{
-		if (!isset($params['join']) || !isset($params['include'])) {
-			return;
-		}
-		$params['mandatory'] = array();
-		foreach ($params['join'] as $tableNames) {
-			$t1 = $table;
-			foreach (explode(',', $tableNames) as $tableName) {
-				if (!$this->reflection->hasTable($tableName)) {
-					continue;
-				}
-				$t2 = $this->reflection->getTable($tableName);
-				$fks1 = $t1->getFksTo($t2->getName());
-				$t3 = $this->hasAndBelongsToMany($t1, $t2);
-				if ($t3 != null || count($fks1) > 0) {
-					$params['mandatory'][] = $t2->getName() . '.' . $t2->getPk()->getName();
-				}
-				foreach ($fks1 as $fk) {
-					$params['mandatory'][] = $t1->getName() . '.' . $fk->getName();
-				}
-				$fks2 = $t2->getFksTo($t1->getName());
-				if ($t3 != null || count($fks2) > 0) {
-					$params['mandatory'][] = $t1->getName() . '.' . $t1->getPk()->getName();
-				}
-				foreach ($fks2 as $fk) {
-					$params['mandatory'][] = $t2->getName() . '.' . $fk->getName();
-				}
-				$t1 = $t2;
-			}
-		}
-	}
-
 	private function getJoinsAsPathTree(array $params): PathTree
 	{
 		$joins = new PathTree();
@@ -80,7 +73,18 @@ func (rj *RelationJoiner) AddMandatoryColumns(table *ReflectedTable, params *map
 		$joins = $this->getJoinsAsPathTree($params);
 		$this->addJoinsForTables($table, $joins, $records, $params, $db);
 	}
+*/
+func (rj *RelationJoiner) hasAndBelongsToMany(t1, t2 *ReflectedTable) *ReflectedTable {
+	for _, tableName := range rj.reflection.GetTableNames() {
+		t3 := rj.reflection.GetTable(tableName)
+		if len(t3.GetFksTo(t1.GetName())) > 0 && len(t3.GetFksTo(t2.GetName())) > 0 {
+			return t3
+		}
+	}
+	return nil
+}
 
+/*
 	private function hasAndBelongsToMany(ReflectedTable $t1, ReflectedTable $t2)
 	{
 		foreach ($this->reflection->getTableNames() as $tableName) {

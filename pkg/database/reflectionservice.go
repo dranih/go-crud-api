@@ -23,12 +23,12 @@ func NewReflectionService(db *GenericDB, cache string, ttl int) *ReflectionServi
         }
 */
 // done
-func (r *ReflectionService) getDatabase() *ReflectedDatabase {
-	if r.database != nil {
-		return r.database
+func (rs *ReflectionService) getDatabase() *ReflectedDatabase {
+	if rs.database != nil {
+		return rs.database
 	}
-	r.database = r.loadDatabase(true)
-	return r.database
+	rs.database = rs.loadDatabase(true)
+	return rs.database
 }
 
 /*
@@ -42,8 +42,8 @@ func (r *ReflectionService) getDatabase() *ReflectedDatabase {
    }
 */
 // to finish with cache
-func (r *ReflectionService) loadDatabase(useCache bool) *ReflectedDatabase {
-	database := NewReflectedDatabaseFromReflection(r.db.Reflection())
+func (rs *ReflectionService) loadDatabase(useCache bool) *ReflectedDatabase {
+	database := NewReflectedDatabaseFromReflection(rs.db.Reflection())
 	return database
 }
 
@@ -63,9 +63,9 @@ func (r *ReflectionService) loadDatabase(useCache bool) *ReflectedDatabase {
    }
 */
 // to finish with cache
-func (r *ReflectionService) loadTable(tableName string, useCache bool) *ReflectedTable {
-	tableType := r.getDatabase().GetType(tableName)
-	table := NewReflectedTableFromReflection(r.db.Reflection(), tableName, tableType)
+func (rs *ReflectionService) loadTable(tableName string, useCache bool) *ReflectedTable {
+	tableType := rs.getDatabase().GetType(tableName)
+	table := NewReflectedTableFromReflection(rs.db.Reflection(), tableName, tableType)
 	return table
 }
 
@@ -96,8 +96,8 @@ func (r *ReflectionService) loadTable(tableName string, useCache bool) *Reflecte
    }
 */
 // done
-func (r *ReflectionService) HasTable(tableName string) bool {
-	return r.getDatabase().HasTable(tableName)
+func (rs *ReflectionService) HasTable(tableName string) bool {
+	return rs.getDatabase().HasTable(tableName)
 }
 
 /*
@@ -111,22 +111,18 @@ func (r *ReflectionService) HasTable(tableName string) bool {
        return $this->database()->getType($tableName);
    }
 */
-func (r *ReflectionService) GetTable(tableName string) *ReflectedTable {
-	if _, ok := r.tables[tableName]; !ok {
-		r.tables[tableName] = r.loadTable(tableName, true)
+func (rs *ReflectionService) GetTable(tableName string) *ReflectedTable {
+	if _, ok := rs.tables[tableName]; !ok {
+		rs.tables[tableName] = rs.loadTable(tableName, true)
 	}
-	return r.tables[tableName]
+	return rs.tables[tableName]
+}
+
+func (rs *ReflectionService) GetTableNames() []string {
+	return rs.getDatabase().GetTableNames()
 }
 
 /*
-       public function getTable(string $tableName): ReflectedTable
-       {
-           if (!isset($this->tables[$tableName])) {
-               $this->tables[$tableName] = $this->loadTable($tableName, true);
-           }
-           return $this->tables[$tableName];
-       }
-
        public function getTableNames(): array
        {
            return $this->database()->getTableNames();

@@ -78,17 +78,16 @@ func (rd *ReflectedDatabase) GetType(tableName string) string {
 	return ""
 }
 
+func (rc *ReflectedDatabase) GetTableNames() []string {
+	i, keys := 0, make([]string, len(rc.tableTypes))
+	for key, _ := range rc.tableTypes {
+		keys[i] = key
+		i++
+	}
+	return keys
+}
+
 /*
-       public function getType(string $tableName): string
-       {
-           return isset($this->tableTypes[$tableName]) ? $this->tableTypes[$tableName] : '';
-       }
-
-       public function getTableNames(): array
-       {
-           return array_keys($this->tableTypes);
-       }
-
        public function removeTable(string $tableName): bool
        {
            if (!isset($this->tableTypes[$tableName])) {
