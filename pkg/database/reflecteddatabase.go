@@ -8,18 +8,9 @@ func NewReflectedDatabase(tableTypes map[string]string) *ReflectedDatabase {
 	return &ReflectedDatabase{tableTypes}
 }
 
-/*
-   public function __construct(array $tableTypes)
-    {
-        $this->tableTypes = $tableTypes;
-    }
-
-*/
-
 // done
 func NewReflectedDatabaseFromReflection(reflection *GenericReflection) *ReflectedDatabase {
 	tableTypes := map[string]string{}
-	//[]map[string]interface{}
 	for _, table := range reflection.GetTables() {
 		tableName := table["TABLE_NAME"]
 		tableType := table["TABLE_TYPE"]
@@ -38,19 +29,6 @@ func NewReflectedDatabaseFromReflection(reflection *GenericReflection) *Reflecte
 }
 
 /*
-   public static function fromReflection(GenericReflection $reflection): ReflectedDatabase
-   {
-       $tableTypes = [];
-       foreach ($reflection->getTables() as $table) {
-           $tableName = $table['TABLE_NAME'];
-           $tableType = $table['TABLE_TYPE'];
-           if (in_array($tableName, $reflection->getIgnoredTables())) {
-               continue;
-           }
-           $tableTypes[$tableName] = $tableType;
-       }
-       return new ReflectedDatabase($tableTypes);
-   }
 
    public static function fromJson($json): ReflectedDatabase
    {
@@ -65,12 +43,6 @@ func (r *ReflectedDatabase) HasTable(tableName string) bool {
 	return isPresent
 }
 
-/*
-   public function hasTable(string $tableName): bool
-   {
-       return isset($this->tableTypes[$tableName]);
-   }
-*/
 func (rd *ReflectedDatabase) GetType(tableName string) string {
 	if val, ok := rd.tableTypes[tableName]; ok {
 		return val

@@ -294,7 +294,7 @@ public function selectCount(ReflectedTable $table, Condition $condition): int
 }
 */
 // not finished
-func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition interface{ Condition }, columnOrdering []string, offset, limit int) []map[string]interface{} {
+func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition interface{ Condition }, columnOrdering [][2]string, offset, limit int) []map[string]interface{} {
 	if limit == 0 {
 		return []map[string]interface{}{}
 	}
@@ -303,7 +303,9 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause //+ orderBy + offsetLimit
+	orderBy := g.columns.GetOrderBy(table, columnOrdering)
+	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
+	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause + orderBy + offsetLimit
 	records := g.query(sql, parameters...)
 	return records
 }

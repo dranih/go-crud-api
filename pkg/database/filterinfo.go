@@ -10,7 +10,7 @@ type FilterInfo struct {
 func (ft *FilterInfo) getConditionsAsPathTree(table *ReflectedTable, params map[string][]string) *PathTree {
 	conditions := NewPathTree(nil)
 	for key, filters := range params {
-		if key[0:6] == `filter` {
+		if len(key) >= 6 && key[0:6] == `filter` {
 			re := regexp.MustCompile(`\d+|\D+`)
 			matches := re.FindAllString(key[6:], -1)
 			match := ``

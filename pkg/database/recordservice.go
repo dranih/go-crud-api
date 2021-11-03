@@ -10,13 +10,13 @@ type RecordService struct {
 	columns    *ColumnIncluder
 	joiner     *RelationJoiner
 	filters    *FilterInfo
-	ordering   string
+	ordering   *OrderingInfo
 	pagination string
 }
 
 func NewRecordService(db *GenericDB, reflection *ReflectionService) *RecordService {
 	ci := &ColumnIncluder{}
-	return &RecordService{db, reflection, ci, NewRelationJoiner(reflection, ci), &FilterInfo{}, "", ""}
+	return &RecordService{db, reflection, ci, NewRelationJoiner(reflection, ci), &FilterInfo{}, &OrderingInfo{}, ""}
 }
 
 /*
@@ -129,8 +129,8 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
 	condition := rs.filters.GetCombinedConditions(table, params)
-	/*  $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
-	if (!$this->pagination->hasPage($params)) {
+	columnOrdering := rs.ordering.GetColumnOrdering(table, params)
+	/*if (!$this->pagination->hasPage($params)) {
 	    $offset = 0;
 	    $limit = $this->pagination->getPageLimit($params);
 	    $count = -1;
@@ -142,8 +142,9 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	$records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
 	$this->joiner->addJoins($table, $records, $params, $this->db);
 	return new ListDocument($records, $count);*/
-	records := rs.db.SelectAll(table, columnNames, condition, []string{}, 0, 10)
 	count := rs.db.SelectCount(table, condition)
+	//rs.joiner.AddJoins(table,records,params,rs.db)
+	records := rs.db.SelectAll(table, columnNames, condition, columnOrdering, 0, 10)
 	return record.NewListDocument(records, count)
 }
 

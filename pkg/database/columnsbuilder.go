@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -13,54 +14,41 @@ func NewColumnsBuilder(driver string) *ColumnsBuilder {
 	return &ColumnsBuilder{driver, NewColumnConverter(driver)}
 }
 
-/*
-public function __construct(string $driver)
-{
-	$this->driver = $driver;
-	$this->converter = new ColumnConverter($driver);
+func (cb *ColumnsBuilder) GetOffsetLimit(offset, limit int) string {
+	if limit < 0 || offset < 0 {
+		return ``
+	}
+	switch cb.driver {
+	case "mysql":
+		return " LIMIT " + fmt.Sprint(offset) + ", " + fmt.Sprint(limit)
+	case "pgsql":
+		return " LIMIT " + fmt.Sprint(limit) + " OFFSET " + fmt.Sprint(offset)
+	case "sqlsrv":
+		return " OFFSET " + fmt.Sprint(offset) + " ROWS FETCH NEXT " + fmt.Sprint(limit) + " ROWS ONLY"
+	case "sqlite":
+		return " LIMIT " + fmt.Sprint(limit) + " OFFSET " + fmt.Sprint(offset)
+	default:
+		return ``
+	}
 }
 
-public function getOffsetLimit(int $offset, int $limit): string
-{
-	if ($limit < 0 || $offset < 0) {
-		return '';
-	}
-	switch ($this->driver) {
-		case 'mysql':
-			return " LIMIT $offset, $limit";
-		case 'pgsql':
-			return " LIMIT $limit OFFSET $offset";
-		case 'sqlsrv':
-			return " OFFSET $offset ROWS FETCH NEXT $limit ROWS ONLY";
-		case 'sqlite':
-			return " LIMIT $limit OFFSET $offset";
-	}
-}
-*/
 func (cb *ColumnsBuilder) quoteColumnName(column *ReflectedColumn) string {
 	return `"` + column.GetName() + `"`
 }
 
-/*
-private function quoteColumnName(ReflectedColumn $column): string
-{
-	return '"' . $column->getName() . '"';
+func (cb *ColumnsBuilder) GetOrderBy(table *ReflectedTable, columnOrdering [][2]string) string {
+	if len(columnOrdering) == 0 {
+		return ``
+	}
+	results := []string{}
+	for _, val := range columnOrdering {
+		column := table.GetColumn(val[0])
+		quotedColumnName := cb.quoteColumnName(column)
+		results = append(results, quotedColumnName+` `+val[1])
+	}
+	return ` ORDER BY ` + strings.Join(results, `,`)
 }
 
-public function getOrderBy(ReflectedTable $table, array $columnOrdering): string
-{
-	if (count($columnOrdering) == 0) {
-		return '';
-	}
-	$results = array();
-	foreach ($columnOrdering as $i => list($columnName, $ordering)) {
-		$column = $table->getColumn($columnName);
-		$quotedColumnName = $this->quoteColumnName($column);
-		$results[] = $quotedColumnName . ' ' . $ordering;
-	}
-	return ' ORDER BY ' . implode(',', $results);
-}
-*/
 // done
 func (cb *ColumnsBuilder) GetSelect(table *ReflectedTable, columnNames []string) string {
 	results := []string{}
@@ -74,17 +62,6 @@ func (cb *ColumnsBuilder) GetSelect(table *ReflectedTable, columnNames []string)
 }
 
 /*
-public function getSelect(ReflectedTable $table, array $columnNames): string
-{
-	$results = array();
-	foreach ($columnNames as $columnName) {
-		$column = $table->getColumn($columnName);
-		$quotedColumnName = $this->quoteColumnName($column);
-		$quotedColumnName = $this->converter->convertColumnName($column, $quotedColumnName);
-		$results[] = $quotedColumnName;
-	}
-	return implode(',', $results);
-}
 
 public function getInsert(ReflectedTable $table, array $columnValues): string
 {
