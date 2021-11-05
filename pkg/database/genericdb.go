@@ -21,7 +21,7 @@ type GenericDB struct {
 	definition    string
 	conditions    *ConditionsBuilder
 	columns       *ColumnsBuilder
-	converter     string
+	converter     *DataConverter
 	variablestore *middleware.VariableStore
 }
 
@@ -95,7 +95,7 @@ func (g *GenericDB) initPdo() bool {
 	//$this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
 	g.conditions = NewConditionsBuilder(g.driver)
 	g.columns = NewColumnsBuilder(g.driver)
-	//$this->converter = new DataConverter($this->driver);
+	g.converter = NewDataConverter(g.driver)
 
 	return result
 }
@@ -238,7 +238,7 @@ public function selectSingle(ReflectedTable $table, array $columnNames, string $
 }
 */
 
-//not finished
+// done
 func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []string) []map[string]interface{} {
 	records := []map[string]interface{}{}
 	if len(ids) == 0 {
@@ -253,29 +253,10 @@ func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []str
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	sql := `SELECT ` + selectColumns + ` FROM "` + tableName + `" ` + whereClause
 	records = g.query(sql, parameters...)
-	//$this->converter->convertRecords($table, $columnNames, $records);
+	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
 
-/*
-public function selectMultiple(ReflectedTable $table, array $columnNames, array $ids): array
-{
-	if (count($ids) == 0) {
-		return [];
-	}
-	$selectColumns = $this->columns->getSelect($table, $columnNames);
-	$tableName = $table->getName();
-	$condition = new ColumnCondition($table->getPk(), 'in', implode(',', $ids));
-	$condition = $this->addMiddlewareConditions($tableName, $condition);
-	$parameters = array();
-	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	$sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
-	$stmt = $this->query($sql, $parameters);
-	$records = $stmt->fetchAll();
-	$this->converter->convertRecords($table, $columnNames, $records);
-	return $records;
-}
-*/
 // ok
 func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Condition }) int {
 	tableName := table.GetName()
@@ -291,7 +272,7 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	return int(ret)
 }
 
-// not finished
+// done
 func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition interface{ Condition }, columnOrdering [][2]string, offset, limit int) []map[string]interface{} {
 	if limit == 0 {
 		return []map[string]interface{}{}
@@ -305,29 +286,11 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
 	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause + orderBy + offsetLimit
 	records := g.query(sql, parameters...)
-	//$this->converter->convertRecords($table, $columnNames, $records);
+	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
 
 /*
-public function selectAll(ReflectedTable $table, array $columnNames, Condition $condition, array $columnOrdering, int $offset, int $limit): array
-{
-	if ($limit == 0) {
-		return array();
-	}
-	$selectColumns = $this->columns->getSelect($table, $columnNames);
-	$tableName = $table->getName();
-	$condition = $this->addMiddlewareConditions($tableName, $condition);
-	$parameters = array();
-	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	$orderBy = $this->columns->getOrderBy($table, $columnOrdering);
-	$offsetLimit = $this->columns->getOffsetLimit($offset, $limit);
-	$sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '"' . $whereClause . $orderBy . $offsetLimit;
-	$stmt = $this->query($sql, $parameters);
-	$records = $stmt->fetchAll();
-	$this->converter->convertRecords($table, $columnNames, $records);
-	return $records;
-}
 
 public function updateSingle(ReflectedTable $table, array $columnValues, string $id)
 {

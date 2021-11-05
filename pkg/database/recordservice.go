@@ -112,7 +112,7 @@ func (r *RecordService) HasTable(table string) bool {
        return $this->db->incrementSingle($table, $columnValues, $id);
    }
 */
-// not finished
+// done
 func (rs *RecordService) List(tableName string, params map[string][]string) *record.ListDocument {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
@@ -135,27 +135,6 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 }
 
 /*
-       public function _list(string $tableName, array $params): ListDocument
-       {
-           $table = $this->reflection->getTable($tableName);
-           $this->joiner->addMandatoryColumns($table, $params);
-           $columnNames = $this->columns->getNames($table, true, $params);
-           $condition = $this->filters->getCombinedConditions($table, $params);
-           $columnOrdering = $this->ordering->getColumnOrdering($table, $params);
-           if (!$this->pagination->hasPage($params)) {
-               $offset = 0;
-               $limit = $this->pagination->getPageLimit($params);
-               $count = -1;
-           } else {
-               $offset = $this->pagination->getPageOffset($params);
-               $limit = $this->pagination->getPageLimit($params);
-               $count = $this->db->selectCount($table, $condition);
-           }
-           $records = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, $offset, $limit);
-           $this->joiner->addJoins($table, $records, $params, $this->db);
-           return new ListDocument($records, $count);
-       }
-
        public function ping(): int
        {
            return $this->db->ping();
