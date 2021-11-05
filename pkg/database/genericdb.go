@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/dranih/go-crud-api/pkg/middleware"
 )
@@ -184,18 +185,6 @@ func (g *GenericDB) addMiddlewareConditions(tableName string, condition interfac
 }
 
 /*
-private function addMiddlewareConditions(string $tableName, Condition $condition): Condition
-{
-	$condition1 = VariableStore::get("authorization.conditions.$tableName");
-	if ($condition1) {
-		$condition = $condition->_and($condition1);
-	}
-	$condition2 = VariableStore::get("multiTenancy.conditions.$tableName");
-	if ($condition2) {
-		$condition = $condition->_and($condition2);
-	}
-	return $condition;
-}
 
 public function createSingle(ReflectedTable $table, array $columnValues)
 {
@@ -247,7 +236,28 @@ public function selectSingle(ReflectedTable $table, array $columnNames, string $
 	$this->converter->convertRecords($table, $columnNames, $records);
 	return $records[0];
 }
+*/
 
+//not finished
+func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []string) []map[string]interface{} {
+	records := []map[string]interface{}{}
+	if len(ids) == 0 {
+		return records
+	}
+	selectColumns := g.columns.GetSelect(table, columnNames)
+	tableName := table.GetName()
+	var condition interface{ Condition }
+	condition = NewColumnCondition(table.GetPk(), `in`, strings.Join(ids, `,`))
+	condition = g.addMiddlewareConditions(tableName, condition)
+	parameters := []interface{}{}
+	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	sql := `SELECT ` + selectColumns + ` FROM "` + tableName + `" ` + whereClause
+	records = g.query(sql, parameters...)
+	//$this->converter->convertRecords($table, $columnNames, $records);
+	return records
+}
+
+/*
 public function selectMultiple(ReflectedTable $table, array $columnNames, array $ids): array
 {
 	if (count($ids) == 0) {
@@ -266,7 +276,7 @@ public function selectMultiple(ReflectedTable $table, array $columnNames, array 
 	return $records;
 }
 */
-// not finished
+// ok
 func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Condition }) int {
 	tableName := table.GetName()
 	condition = g.addMiddlewareConditions(tableName, condition)
@@ -281,18 +291,6 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	return int(ret)
 }
 
-/*
-public function selectCount(ReflectedTable $table, Condition $condition): int
-{
-	$tableName = $table->getName();
-	$condition = $this->addMiddlewareConditions($tableName, $condition);
-	$parameters = array();
-	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	$sql = 'SELECT COUNT(*) FROM "' . $tableName . '"' . $whereClause;
-	$stmt = $this->query($sql, $parameters);
-	return $stmt->fetchColumn(0);
-}
-*/
 // not finished
 func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition interface{ Condition }, columnOrdering [][2]string, offset, limit int) []map[string]interface{} {
 	if limit == 0 {
@@ -307,6 +305,7 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
 	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause + orderBy + offsetLimit
 	records := g.query(sql, parameters...)
+	//$this->converter->convertRecords($table, $columnNames, $records);
 	return records
 }
 
