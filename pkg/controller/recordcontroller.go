@@ -35,6 +35,7 @@ public function __construct(Router $router, Responder $responder, RecordService 
 }
 */
 // List function lists a table
+// Should return err error
 func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	params := getRequestParams(r)
@@ -47,6 +48,13 @@ func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+type argumentList struct {
+	table  string
+	id     string
+	params map[string][]string
+}
+
+// Should return err error
 func (rc *RecordController) Read(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	if !rc.service.HasTable(table) {
@@ -57,10 +65,12 @@ func (rc *RecordController) Read(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	if strings.Index(id, ",") != -1 {
 		ids := strings.Split(id, `,`)
-		//var argumentLists []interface{}
+		var argumentLists []*argumentList
 		for i := 0; i < len(ids); i++ {
-			//argumentLists
+			argumentLists = append(argumentLists, &argumentList{table, ids[i], params})
 		}
+		rc.responder.Multi(rc.multiCall(rc.service.Read, argumentLists), w)
+		return
 	} else {
 		response := rc.service.Read(table, id, params)
 		if response == nil {
@@ -96,6 +106,25 @@ public function read(ServerRequestInterface $request): ResponseInterface
 	}
 }
 
+*/
+
+// Use error instead of dealing with exceptions ?
+func (rc *RecordController) multiCall(callback func(string, string, map[string][]string) *record.ListDocument, argumentLists []*argumentList) []*record.ListDocument {
+	var result []*record.ListDocument
+	success := true
+	rc.service.BeginTransaction()
+	for _, arguments := range argumentLists {
+		result = append(result, callback(arguments.table, arguments.id, arguments.params))
+	}
+	if success {
+		rc.service.CommitTransaction()
+	} else {
+		rc.service.RollBackTransaction()
+	}
+	return result
+}
+
+/*
 private function multiCall(callable $method, array $argumentLists): array
 {
 	$result = array();

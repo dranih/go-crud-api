@@ -39,8 +39,8 @@ func NewRecordService(db *GenericDB, reflection *ReflectionService) *RecordServi
        }
    }
 */
-func (r *RecordService) HasTable(table string) bool {
-	return r.reflection.HasTable(table)
+func (rs *RecordService) HasTable(table string) bool {
+	return rs.reflection.HasTable(table)
 }
 
 /*
@@ -53,21 +53,20 @@ func (r *RecordService) HasTable(table string) bool {
    {
        return $this->reflection->getType($table);
    }
+*/
+func (rs *RecordService) BeginTransaction() {
+	rs.db.BeginTransaction()
+}
 
-   public function beginTransaction()
-   {
-       $this->db->beginTransaction();
-   }
+func (rs *RecordService) CommitTransaction() {
+	rs.db.CommitTransaction()
+}
 
-   public function commitTransaction()
-   {
-       $this->db->commitTransaction();
-   }
+func (rs *RecordService) RollBackTransaction() {
+	rs.db.RollBackTransaction()
+}
 
-   public function rollBackTransaction()
-       $this->db->rollBackTransaction();
-   }
-
+/*
    public function create(string $tableName,$record, array $params)
    {
        $this->sanitizeRecord($tableName, $record, '');

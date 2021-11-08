@@ -154,22 +154,18 @@ public function definition(): GenericDefinition
 {
 	return $this->definition;
 }
-
-public function beginTransaction()
-{
-	$this->pdo->beginTransaction();
-}
-
-public function commitTransaction()
-{
-	$this->pdo->commit();
-}
-
-public function rollBackTransaction()
-{
-	$this->pdo->rollBack();
-}
 */
+func (g *GenericDB) BeginTransaction() {
+	g.pdo.BeginTransaction()
+}
+
+func (g *GenericDB) CommitTransaction() {
+	g.pdo.Commit()
+}
+
+func (g *GenericDB) RollBackTransaction() {
+	g.pdo.RollBack()
+}
 
 // Should type check
 func (g *GenericDB) addMiddlewareConditions(tableName string, condition interface{ Condition }) interface{ Condition } {

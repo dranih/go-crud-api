@@ -98,17 +98,20 @@ func (l *LazyPdo) PDO() *gorm.DB {
 	return l.pdo
 }
 
+// Should check return status
+func (l *LazyPdo) Commit() bool {
+	l.pdo.Commit()
+	return true
+
+}
+
+// Should check return status
+func (l *LazyPdo) RollBack() bool {
+	l.pdo.Rollback()
+	return true
+}
+
 /*
-func (l *LazyPdo) Commit(): bool
-{
-	return $this->pdo()->commit();
-}
-
-func (l *LazyPdo) RollBack(): bool
-{
-	return $this->pdo()->rollBack();
-}
-
 func (l *LazyPdo) ErrorCode(): mixed
 {
 	return $this->pdo()->errorCode();
