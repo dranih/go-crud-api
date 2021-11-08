@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/record"
@@ -16,6 +17,7 @@ type RecordController struct {
 func NewRecordController(router *mux.Router, service *database.RecordService) *RecordController {
 	rc := &RecordController{service, NewJsonResponder(false)}
 	router.HandleFunc("/records/{table}", rc.List).Methods("GET")
+	router.HandleFunc("/records/{table}/{id}", rc.Read).Methods("GET")
 	return rc
 }
 
@@ -45,19 +47,31 @@ func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-/*
-
-
-public function _list(ServerRequestInterface $request): ResponseInterface
-{
-	$table = RequestUtils::getPathSegment($request, 2);
-	$params = RequestUtils::getParams($request);
-	if (!$this->service->hasTable($table)) {
-		return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+func (rc *RecordController) Read(w http.ResponseWriter, r *http.Request) {
+	table := mux.Vars(r)["table"]
+	if !rc.service.HasTable(table) {
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
+		return
 	}
-	return $this->responder->success($this->service->_list($table, $params));
+	params := getRequestParams(r)
+	id := mux.Vars(r)["id"]
+	if strings.Index(id, ",") != -1 {
+		ids := strings.Split(id, `,`)
+		//var argumentLists []interface{}
+		for i := 0; i < len(ids); i++ {
+			//argumentLists
+		}
+	} else {
+		response := rc.service.Read(table, id, params)
+		if response == nil {
+			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+			return
+		}
+		rc.responder.Success(response, w)
+	}
 }
 
+/*
 public function read(ServerRequestInterface $request): ResponseInterface
 {
 	$table = RequestUtils::getPathSegment($request, 2);

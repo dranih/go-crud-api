@@ -28,7 +28,7 @@ func Handle() {
 	connectDB(router)
 
 	router.HandleFunc("/status/ping", getPing).Methods("GET")
-	router.HandleFunc("/records/{table}/{row}", read).Methods("GET")
+	//router.HandleFunc("/records/{table}/{row}", read).Methods("GET")
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -74,7 +74,7 @@ func getPing(w http.ResponseWriter, r *http.Request) {
 
 func read(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	w.WriteHeader(http.StatusOK)
+	//w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Table: %v\n", vars["table"])
 	fmt.Fprintf(w, "Row: %v\n", vars["row"])
 	m := make(map[string]interface{})

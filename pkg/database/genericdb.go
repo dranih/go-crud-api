@@ -218,25 +218,24 @@ public function createSingle(ReflectedTable $table, array $columnValues)
 	return $pkValue;
 }
 
-public function selectSingle(ReflectedTable $table, array $columnNames, string $id)
-{
-	$selectColumns = $this->columns->getSelect($table, $columnNames);
-	$tableName = $table->getName();
-	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
-	$condition = $this->addMiddlewareConditions($tableName, $condition);
-	$parameters = array();
-	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	$sql = 'SELECT ' . $selectColumns . ' FROM "' . $tableName . '" ' . $whereClause;
-	$stmt = $this->query($sql, $parameters);
-	$record = $stmt->fetch() ?: null;
-	if ($record === null) {
-		return null;
-	}
-	$records = array($record);
-	$this->converter->convertRecords($table, $columnNames, $records);
-	return $records[0];
-}
 */
+func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id string) []map[string]interface{} {
+	records := []map[string]interface{}{}
+	selectColumns := g.columns.GetSelect(table, columnNames)
+	tableName := table.GetName()
+	var condition interface{ Condition }
+	condition = NewColumnCondition(table.GetPk(), `eq`, id)
+	condition = g.addMiddlewareConditions(tableName, condition)
+	parameters := []interface{}{}
+	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	sql := `SELECT ` + selectColumns + ` FROM "` + tableName + `" ` + whereClause
+	records = g.query(sql, parameters...)
+	if len(records) <= 0 {
+		return nil
+	}
+	g.converter.ConvertRecords(table, columnNames, &records)
+	return records[:1]
+}
 
 // done
 func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []string) []map[string]interface{} {

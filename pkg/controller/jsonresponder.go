@@ -15,20 +15,11 @@ func NewJsonResponder(debug bool) *JsonResponder {
 	return &JsonResponder{debug, &ResponseFactory{}}
 }
 
-// not finished (errordocument)
 func (jr *JsonResponder) Error(errorCode int, argument string, w http.ResponseWriter, details string) http.ResponseWriter {
 	document := record.NewErrorDocument(record.NewErrorCode(errorCode), argument, details)
 	return jr.rf.FromObject(document.GetStatus(), document, w)
 }
 
-/*
-
-public function error(int $error, string $argument, $details = null): ResponseInterface
-{
-	$document = new ErrorDocument(new ErrorCode($error), $argument, $details);
-	return ResponseFactory::fromObject($document->getStatus(), $document);
-}
-*/
 func (jr *JsonResponder) Success(result interface{}, w http.ResponseWriter) http.ResponseWriter {
 	return jr.rf.FromObject(record.OK, result, w)
 }

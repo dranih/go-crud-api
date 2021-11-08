@@ -75,7 +75,20 @@ func (r *RecordService) HasTable(table string) bool {
        $columnValues = $this->columns->getValues($table, true, $record, $params);
        return $this->db->createSingle($table, $columnValues);
    }
+*/
+func (rs *RecordService) Read(tableName, id string, params map[string][]string) *record.ListDocument {
+	table := rs.reflection.GetTable(tableName)
+	rs.joiner.AddMandatoryColumns(table, &params)
+	columnNames := rs.columns.GetNames(table, true, params)
+	records := rs.db.SelectSingle(table, columnNames, id)
+	if records == nil {
+		return nil
+	}
+	rs.joiner.AddJoins(table, &records, params, rs.db)
+	return record.NewListDocument(records, -1)
+}
 
+/*
    public function read(string $tableName, string $id, array $params)
    {
        $table = $this->reflection->getTable($tableName);
