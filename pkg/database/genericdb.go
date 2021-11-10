@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dranih/go-crud-api/pkg/middleware"
+	"gorm.io/gorm"
 )
 
 type GenericDB struct {
@@ -155,16 +156,16 @@ public function definition(): GenericDefinition
 	return $this->definition;
 }
 */
-func (g *GenericDB) BeginTransaction() {
-	g.pdo.BeginTransaction()
+func (g *GenericDB) BeginTransaction() *gorm.DB {
+	return g.pdo.BeginTransaction()
 }
 
-func (g *GenericDB) CommitTransaction() {
-	g.pdo.Commit()
+func (g *GenericDB) CommitTransaction(tx *gorm.DB) {
+	g.pdo.Commit(tx)
 }
 
-func (g *GenericDB) RollBackTransaction() {
-	g.pdo.RollBack()
+func (g *GenericDB) RollBackTransaction(tx *gorm.DB) {
+	g.pdo.RollBack(tx)
 }
 
 // Should type check
@@ -335,7 +336,7 @@ public function incrementSingle(ReflectedTable $table, array $columnValues, stri
 */
 func (g *GenericDB) query(sql string, parameters ...interface{}) []map[string]interface{} {
 	var results []map[string]interface{}
-	g.pdo.PDO().Raw(sql, parameters...).Scan(&results)
+	g.pdo.connect().Raw(sql, parameters...).Scan(&results)
 	return results
 }
 

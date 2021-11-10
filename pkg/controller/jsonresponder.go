@@ -42,7 +42,7 @@ public function exception($exception): ResponseInterface
 
 */
 // not finished (errordocument)
-func (jr *JsonResponder) Multi(results []*record.ListDocument, w http.ResponseWriter) http.ResponseWriter {
+func (jr *JsonResponder) Multi(results *[]map[string]interface{}, w http.ResponseWriter) http.ResponseWriter {
 	return jr.rf.FromObject(record.OK, results, w)
 }
 

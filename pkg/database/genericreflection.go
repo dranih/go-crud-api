@@ -189,6 +189,6 @@ func (r *GenericReflection) ToJdbcType(jdbcType string, size string) string {
 
 func (r *GenericReflection) query(sql string, parameters ...interface{}) []map[string]interface{} {
 	var results []map[string]interface{}
-	r.pdo.PDO().Raw(sql, parameters...).Find(&results)
+	r.pdo.connect().Raw(sql, parameters...).Find(&results)
 	return results
 }

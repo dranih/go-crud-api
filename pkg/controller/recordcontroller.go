@@ -109,19 +109,21 @@ public function read(ServerRequestInterface $request): ResponseInterface
 */
 
 // Use error instead of dealing with exceptions ?
-func (rc *RecordController) multiCall(callback func(string, string, map[string][]string) *record.ListDocument, argumentLists []*argumentList) []*record.ListDocument {
-	var result []*record.ListDocument
+func (rc *RecordController) multiCall(callback func(string, string, map[string][]string) map[string]interface{}, argumentLists []*argumentList) *[]map[string]interface{} {
+	result := []map[string]interface{}{}
 	success := true
-	rc.service.BeginTransaction()
+	tx := rc.service.BeginTransaction()
 	for _, arguments := range argumentLists {
-		result = append(result, callback(arguments.table, arguments.id, arguments.params))
+		if tmp_result := callback(arguments.table, arguments.id, arguments.params); tmp_result != nil {
+			result = append(result, tmp_result)
+		}
 	}
 	if success {
-		rc.service.CommitTransaction()
+		rc.service.CommitTransaction(tx)
 	} else {
-		rc.service.RollBackTransaction()
+		rc.service.RollBackTransaction(tx)
 	}
-	return result
+	return &result
 }
 
 /*

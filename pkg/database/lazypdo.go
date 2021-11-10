@@ -87,27 +87,20 @@ func (l *LazyPdo) GetAttribute(attribute string) interface{} {
 	return nil
 }
 
-func (l *LazyPdo) BeginTransaction() bool {
-	l.connect().Begin()
-	return true
-}
-
-// To be removed
-func (l *LazyPdo) PDO() *gorm.DB {
-	l.pdo = l.connect()
-	return l.pdo
+func (l *LazyPdo) BeginTransaction() *gorm.DB {
+	return l.connect().Begin()
 }
 
 // Should check return status
-func (l *LazyPdo) Commit() bool {
-	l.pdo.Commit()
+func (l *LazyPdo) Commit(tx *gorm.DB) bool {
+	tx.Commit()
 	return true
 
 }
 
 // Should check return status
-func (l *LazyPdo) RollBack() bool {
-	l.pdo.Rollback()
+func (l *LazyPdo) RollBack(tx *gorm.DB) bool {
+	tx.Rollback()
 	return true
 }
 
@@ -145,7 +138,7 @@ func (l *LazyPdo) LastInsertId($name = null): string
 func (l *LazyPdo) Query(query string, fetchMode string, fetchModeArgs ...interface{}) []map[string]interface{} {
 	// fetchMode useful ?
 	var results []map[string]interface{}
-	l.pdo.Raw(query, fetchModeArgs...).Scan(&results)
+	l.connect().Raw(query, fetchModeArgs...).Scan(&results)
 	return results
 }
 

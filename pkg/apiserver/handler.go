@@ -73,7 +73,7 @@ func getPing(w http.ResponseWriter, r *http.Request) {
 }
 
 func read(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+	/*vars := mux.Vars(r)
 	//w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Table: %v\n", vars["table"])
 	fmt.Fprintf(w, "Row: %v\n", vars["row"])
@@ -89,7 +89,7 @@ func read(w http.ResponseWriter, r *http.Request) {
 	dbPK := dbClient.Reflection().GetTablePrimaryKeys("cows")
 	fmt.Fprintf(w, "PK: %v\n", dbPK)
 	dbFK := dbClient.Reflection().GetTableForeignKeys("cows")
-	fmt.Fprintf(w, "FK: %v\n", dbFK)
+	fmt.Fprintf(w, "FK: %v\n", dbFK)*/
 }
 
 func connectDB(router *mux.Router) {

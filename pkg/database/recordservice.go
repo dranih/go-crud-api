@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/dranih/go-crud-api/pkg/record"
+	"gorm.io/gorm"
 )
 
 type RecordService struct {
@@ -54,16 +55,16 @@ func (rs *RecordService) HasTable(table string) bool {
        return $this->reflection->getType($table);
    }
 */
-func (rs *RecordService) BeginTransaction() {
-	rs.db.BeginTransaction()
+func (rs *RecordService) BeginTransaction() *gorm.DB {
+	return rs.db.BeginTransaction()
 }
 
-func (rs *RecordService) CommitTransaction() {
-	rs.db.CommitTransaction()
+func (rs *RecordService) CommitTransaction(tx *gorm.DB) {
+	rs.db.CommitTransaction(tx)
 }
 
-func (rs *RecordService) RollBackTransaction() {
-	rs.db.RollBackTransaction()
+func (rs *RecordService) RollBackTransaction(tx *gorm.DB) {
+	rs.db.RollBackTransaction(tx)
 }
 
 /*
@@ -75,16 +76,16 @@ func (rs *RecordService) RollBackTransaction() {
        return $this->db->createSingle($table, $columnValues);
    }
 */
-func (rs *RecordService) Read(tableName, id string, params map[string][]string) *record.ListDocument {
+func (rs *RecordService) Read(tableName, id string, params map[string][]string) map[string]interface{} {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
 	records := rs.db.SelectSingle(table, columnNames, id)
-	if records == nil {
+	if records == nil || len(records) < 0 {
 		return nil
 	}
 	rs.joiner.AddJoins(table, &records, params, rs.db)
-	return record.NewListDocument(records, -1)
+	return records[0]
 }
 
 /*
