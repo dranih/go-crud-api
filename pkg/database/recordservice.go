@@ -76,16 +76,16 @@ func (rs *RecordService) RollBackTransaction(tx *gorm.DB) {
        return $this->db->createSingle($table, $columnValues);
    }
 */
-func (rs *RecordService) Read(tableName, id string, params map[string][]string) map[string]interface{} {
+func (rs *RecordService) Read(tableName, id string, params map[string][]string) (map[string]interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
 	records := rs.db.SelectSingle(table, columnNames, id)
 	if records == nil || len(records) < 0 {
-		return nil
+		return nil, nil
 	}
 	rs.joiner.AddJoins(table, &records, params, rs.db)
-	return records[0]
+	return records[0], nil
 }
 
 /*

@@ -37,6 +37,12 @@ func (ed *ErrorDocument) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ed.Serialize())
 }
 
+// To be finished with sql errors
+func NewErrorDocumentFromError(err error, debug bool) *ErrorDocument {
+	document := NewErrorDocument(NewErrorCode(ERROR_NOT_FOUND), err.Error(), "")
+	return document
+}
+
 /*
 public static function fromException(\Throwable $exception, bool $debug)
 {

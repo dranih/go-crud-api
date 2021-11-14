@@ -24,54 +24,37 @@ func (jr *JsonResponder) Success(result interface{}, w http.ResponseWriter) http
 	return jr.rf.FromObject(record.OK, result, w)
 }
 
-// not finished (errordocument)
 func (jr *JsonResponder) Exception(err error, w http.ResponseWriter) http.ResponseWriter {
-	return jr.rf.FromObject(record.NOT_FOUND, "", w)
-}
-
-/*
-public function exception($exception): ResponseInterface
-{
-	$document = ErrorDocument::fromException($exception, $this->debug);
-	$response = ResponseFactory::fromObject($document->getStatus(), $document);
-	if ($this->debug) {
-		$response = ResponseUtils::addExceptionHeaders($response, $exception);
+	document := record.NewErrorDocumentFromError(err, jr.debug)
+	if jr.debug {
+		addExceptionHeaders(w, err)
 	}
-	return $response;
+	response := jr.rf.FromObject(document.GetStatus(), document, w)
+	return response
 }
 
-*/
-// not finished (errordocument)
-func (jr *JsonResponder) Multi(results *[]map[string]interface{}, w http.ResponseWriter) http.ResponseWriter {
-	return jr.rf.FromObject(record.OK, results, w)
-}
-
-/*
-public function multi($results): ResponseInterface
-{
-	$documents = array();
-	$errors = array();
-	$success = true;
-	foreach ($results as $i => $result) {
-		if ($result instanceof \Throwable) {
-			$documents[$i] = null;
-			$errors[$i] = ErrorDocument::fromException($result, $this->debug);
-			$success = false;
-		} else {
-			$documents[$i] = $result;
-			$errors[$i] = new ErrorDocument(new ErrorCode(0), '', null);
-		}
-	}
-	$status = $success ? ResponseFactory::OK : ResponseFactory::FAILED_DEPENDENCY;
-	$document = $success ? $documents : $errors;
-	$response = ResponseFactory::fromObject($status, $document);
-	foreach ($results as $i => $result) {
-		if ($result instanceof \Throwable) {
-			if ($this->debug) {
-				$response = ResponseUtils::addExceptionHeaders($response, $result);
+func (jr *JsonResponder) Multi(results *[]map[string]interface{}, errs []error, w http.ResponseWriter) http.ResponseWriter {
+	success := true
+	documents := []interface{}{}
+	errors := []record.ErrorDocument{}
+	for i, result := range *results {
+		if errs[i] != nil {
+			documents = append(documents, nil)
+			errors = append(errors, *record.NewErrorDocumentFromError(errs[i], jr.debug))
+			success = false
+			if jr.debug {
+				addExceptionHeaders(w, errs[i])
 			}
+		} else {
+			documents = append(documents, result)
+			errors = append(errors, *record.NewErrorDocument(record.NewErrorCode(0), "", ""))
 		}
 	}
-	return $response;
+	var response http.ResponseWriter
+	if !success {
+		response = jr.rf.FromObject(record.FAILED_DEPENDENCY, errors, w)
+	} else {
+		response = jr.rf.FromObject(record.OK, documents, w)
+	}
+	return response
 }
-*/

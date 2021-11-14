@@ -96,7 +96,7 @@ func connectDB(router *mux.Router) {
 	dbClient := database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
 	reflection := database.NewReflectionService(dbClient, "", 0)
 	records := database.NewRecordService(dbClient, reflection)
-	controller.NewRecordController(router, records)
+	controller.NewRecordController(router, records, true)
 
 	/*if err := dbClient.Connect(); err != nil {
 		log.Fatalf("Connection to database failed : %v", err)

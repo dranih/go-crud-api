@@ -14,8 +14,8 @@ type RecordController struct {
 	responder Responder
 }
 
-func NewRecordController(router *mux.Router, service *database.RecordService) *RecordController {
-	rc := &RecordController{service, NewJsonResponder(false)}
+func NewRecordController(router *mux.Router, service *database.RecordService, debug bool) *RecordController {
+	rc := &RecordController{service, NewJsonResponder(debug)}
 	router.HandleFunc("/records/{table}", rc.List).Methods("GET")
 	router.HandleFunc("/records/{table}/{id}", rc.Read).Methods("GET")
 	return rc
@@ -69,10 +69,11 @@ func (rc *RecordController) Read(w http.ResponseWriter, r *http.Request) {
 		for i := 0; i < len(ids); i++ {
 			argumentLists = append(argumentLists, &argumentList{table, ids[i], params})
 		}
-		rc.responder.Multi(rc.multiCall(rc.service.Read, argumentLists), w)
+		result, errs := rc.multiCall(rc.service.Read, argumentLists)
+		rc.responder.Multi(result, errs, w)
 		return
 	} else {
-		response := rc.service.Read(table, id, params)
+		response, _ := rc.service.Read(table, id, params)
 		if response == nil {
 			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
 			return
@@ -108,14 +109,19 @@ public function read(ServerRequestInterface $request): ResponseInterface
 
 */
 
-// Use error instead of dealing with exceptions ?
-func (rc *RecordController) multiCall(callback func(string, string, map[string][]string) map[string]interface{}, argumentLists []*argumentList) *[]map[string]interface{} {
+func (rc *RecordController) multiCall(callback func(string, string, map[string][]string) (map[string]interface{}, error), argumentLists []*argumentList) (*[]map[string]interface{}, []error) {
 	result := []map[string]interface{}{}
+	var errs []error
 	success := true
 	tx := rc.service.BeginTransaction()
 	for _, arguments := range argumentLists {
-		if tmp_result := callback(arguments.table, arguments.id, arguments.params); tmp_result != nil {
+		if tmp_result, err := callback(arguments.table, arguments.id, arguments.params); err == nil {
 			result = append(result, tmp_result)
+			errs = append(errs, nil)
+		} else {
+			success = false
+			result = append(result, nil)
+			errs = append(errs, err)
 		}
 	}
 	if success {
@@ -123,7 +129,7 @@ func (rc *RecordController) multiCall(callback func(string, string, map[string][
 	} else {
 		rc.service.RollBackTransaction(tx)
 	}
-	return &result
+	return &result, errs
 }
 
 /*
