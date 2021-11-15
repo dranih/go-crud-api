@@ -113,7 +113,7 @@ func (rc *RecordController) multiCall(callback func(string, string, map[string][
 	result := []map[string]interface{}{}
 	var errs []error
 	success := true
-	tx := rc.service.BeginTransaction()
+	tx, _ := rc.service.BeginTransaction()
 	for _, arguments := range argumentLists {
 		if tmp_result, err := callback(arguments.table, arguments.id, arguments.params); err == nil {
 			result = append(result, tmp_result)

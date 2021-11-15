@@ -187,8 +187,9 @@ func (r *GenericReflection) ToJdbcType(jdbcType string, size string) string {
 	return r.typeConverter.ToJdbc(jdbcType, size)
 }
 
+// Should check errors
 func (r *GenericReflection) query(sql string, parameters ...interface{}) []map[string]interface{} {
-	var results []map[string]interface{}
-	r.pdo.connect().Raw(sql, parameters...).Find(&results)
+	rows, _ := r.pdo.connect().Query(sql, parameters...)
+	results, _ := r.pdo.Rows2Map(rows)
 	return results
 }

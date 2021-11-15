@@ -1,11 +1,12 @@
 package database
 
 import (
+	"context"
+	"database/sql"
 	"log"
 	"strings"
 
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // LazyPdo is a custom db client
@@ -15,7 +16,7 @@ type LazyPdo struct {
 	password string
 	options  map[string]string
 	commands []string
-	pdo      *gorm.DB
+	pdo      *sql.DB
 }
 
 func NewLazyPdo(dsn string, user string, password string, options map[string]string) *LazyPdo {
@@ -28,7 +29,7 @@ func (l *LazyPdo) AddInitCommand(command string) {
 
 // pdo connect to database
 // should deals with compatible databases
-func (l *LazyPdo) connect() *gorm.DB {
+func (l *LazyPdo) connect() *sql.DB {
 	if l.pdo == nil {
 		splitDsn := strings.Split(l.dsn, ":")
 		switch splitDsn[0] {
@@ -37,7 +38,7 @@ func (l *LazyPdo) connect() *gorm.DB {
 		case "sqlsrv":
 		case "sqlite":
 			var err error
-			if l.pdo, err = gorm.Open(sqlite.Open(splitDsn[1]), &gorm.Config{}); err != nil {
+			if l.pdo, err = sql.Open("sqlite3", splitDsn[1]); err != nil {
 				log.Fatalf("Connection failed to database %s", splitDsn[1])
 				return nil
 			} else {
@@ -73,35 +74,32 @@ func (l *LazyPdo) InTransaction() bool {
 }
 
 func (l *LazyPdo) SetAttribute(attribute, value interface{}) bool {
-	if l.pdo != nil {
+	/*if l.pdo != nil {
 		l.connect().Attrs(attribute, value)
-	}
+	}*/
 	l.options[attribute.(string)] = value.(string)
 	return true
 }
 
 func (l *LazyPdo) GetAttribute(attribute string) interface{} {
-	if value, err := l.connect().Get(attribute); !err {
+	/*if value, err := l.connect().Get(attribute); !err {
 		return value
-	}
+	}*/
 	return nil
 }
 
-func (l *LazyPdo) BeginTransaction() *gorm.DB {
-	return l.connect().Begin()
+func (l *LazyPdo) BeginTransaction() (*sql.Tx, error) {
+	return l.connect().BeginTx(context.Background(), nil)
 }
 
 // Should check return status
-func (l *LazyPdo) Commit(tx *gorm.DB) bool {
-	tx.Commit()
-	return true
-
+func (l *LazyPdo) Commit(tx *sql.Tx) error {
+	return tx.Commit()
 }
 
 // Should check return status
-func (l *LazyPdo) RollBack(tx *gorm.DB) bool {
-	tx.Rollback()
-	return true
+func (l *LazyPdo) RollBack(tx *sql.Tx) error {
+	return tx.Rollback()
 }
 
 /*
@@ -135,20 +133,44 @@ func (l *LazyPdo) LastInsertId($name = null): string
 	return $this->pdo()->lastInsertId($name);
 }
 */
+
+// Should check errors
 func (l *LazyPdo) Query(query string, fetchMode string, fetchModeArgs ...interface{}) []map[string]interface{} {
-	// fetchMode useful ?
-	var results []map[string]interface{}
-	l.connect().Raw(query, fetchModeArgs...).Scan(&results)
+	rows, _ := l.connect().Query(query, fetchModeArgs...)
+	results, _ := l.Rows2Map(rows)
 	return results
 }
 
-/*
-func (l *LazyPdo) Connect() error {
-	var err error
-	if c.Client, err = gorm.Open(sqlite.Open("../../test/test.db"), &gorm.Config{}); err != nil {
-		return err
-	} else {
-		log.Printf("Connected to %s", c.Client.Config.Name())
-		return nil
+// from https://kylewbanks.com/blog/query-result-to-map-in-golang
+func (l *LazyPdo) Rows2Map(rows *sql.Rows) ([]map[string]interface{}, error) {
+	result := []map[string]interface{}{}
+	cols, err := rows.Columns()
+	if err != nil {
+		return result, err
 	}
-}*/
+	for rows.Next() {
+		// Create a slice of interface{}'s to represent each column,
+		// and a second slice to contain pointers to each item in the columns slice.
+		columns := make([]interface{}, len(cols))
+		columnPointers := make([]interface{}, len(cols))
+		for i := range columns {
+			columnPointers[i] = &columns[i]
+		}
+
+		// Scan the result into the column pointers...
+		if err := rows.Scan(columnPointers...); err != nil {
+			return result, err
+		}
+
+		// Create our map, and retrieve the value for each column from the pointers slice,
+		// storing it in the map with the name of the column as the key.
+		m := make(map[string]interface{})
+		for i, colName := range cols {
+			val := columnPointers[i].(*interface{})
+			m[colName] = *val
+		}
+
+		result = append(result, m)
+	}
+	return result, err
+}

@@ -1,8 +1,9 @@
 package database
 
 import (
+	"database/sql"
+
 	"github.com/dranih/go-crud-api/pkg/record"
-	"gorm.io/gorm"
 )
 
 type RecordService struct {
@@ -55,15 +56,15 @@ func (rs *RecordService) HasTable(table string) bool {
        return $this->reflection->getType($table);
    }
 */
-func (rs *RecordService) BeginTransaction() *gorm.DB {
+func (rs *RecordService) BeginTransaction() (*sql.Tx, error) {
 	return rs.db.BeginTransaction()
 }
 
-func (rs *RecordService) CommitTransaction(tx *gorm.DB) {
+func (rs *RecordService) CommitTransaction(tx *sql.Tx) {
 	rs.db.CommitTransaction(tx)
 }
 
-func (rs *RecordService) RollBackTransaction(tx *gorm.DB) {
+func (rs *RecordService) RollBackTransaction(tx *sql.Tx) {
 	rs.db.RollBackTransaction(tx)
 }
 

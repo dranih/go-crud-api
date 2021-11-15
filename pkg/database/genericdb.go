@@ -1,12 +1,12 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/dranih/go-crud-api/pkg/middleware"
-	"gorm.io/gorm"
 )
 
 type GenericDB struct {
@@ -156,15 +156,15 @@ public function definition(): GenericDefinition
 	return $this->definition;
 }
 */
-func (g *GenericDB) BeginTransaction() *gorm.DB {
+func (g *GenericDB) BeginTransaction() (*sql.Tx, error) {
 	return g.pdo.BeginTransaction()
 }
 
-func (g *GenericDB) CommitTransaction(tx *gorm.DB) {
+func (g *GenericDB) CommitTransaction(tx *sql.Tx) {
 	g.pdo.Commit(tx)
 }
 
-func (g *GenericDB) RollBackTransaction(tx *gorm.DB) {
+func (g *GenericDB) RollBackTransaction(tx *sql.Tx) {
 	g.pdo.RollBack(tx)
 }
 
@@ -334,9 +334,11 @@ public function incrementSingle(ReflectedTable $table, array $columnValues, stri
 	return $stmt->rowCount();
 }
 */
+
+// Should check errors
 func (g *GenericDB) query(sql string, parameters ...interface{}) []map[string]interface{} {
-	var results []map[string]interface{}
-	g.pdo.connect().Raw(sql, parameters...).Scan(&results)
+	rows, _ := g.pdo.connect().Query(sql, parameters...)
+	results, _ := g.pdo.Rows2Map(rows)
 	return results
 }
 

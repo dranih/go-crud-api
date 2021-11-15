@@ -28,7 +28,6 @@ func Handle() {
 	connectDB(router)
 
 	router.HandleFunc("/status/ping", getPing).Methods("GET")
-	//router.HandleFunc("/records/{table}/{row}", read).Methods("GET")
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -72,36 +71,9 @@ func getPing(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK")
 }
 
-func read(w http.ResponseWriter, r *http.Request) {
-	/*vars := mux.Vars(r)
-	//w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Table: %v\n", vars["table"])
-	fmt.Fprintf(w, "Row: %v\n", vars["row"])
-	m := make(map[string]interface{})
-	m["name"] = vars["row"]
-	var results []map[string]interface{}
-	dbClient.PDO().PDO().Debug().Select("*").Where(m).Table(vars["table"]).Find(&results)
-	fmt.Fprintf(w, "Result: %v\n", results)
-	dbTables := dbClient.Reflection().GetTables()
-	fmt.Fprintf(w, "Tables: %v\n", dbTables)
-	dbColumns := dbClient.Reflection().GetTableColumns("cows", "")
-	fmt.Fprintf(w, "Columns: %v\n", dbColumns)
-	dbPK := dbClient.Reflection().GetTablePrimaryKeys("cows")
-	fmt.Fprintf(w, "PK: %v\n", dbPK)
-	dbFK := dbClient.Reflection().GetTableForeignKeys("cows")
-	fmt.Fprintf(w, "FK: %v\n", dbFK)*/
-}
-
 func connectDB(router *mux.Router) {
 	dbClient := database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
 	reflection := database.NewReflectionService(dbClient, "", 0)
 	records := database.NewRecordService(dbClient, reflection)
 	controller.NewRecordController(router, records, true)
-
-	/*if err := dbClient.Connect(); err != nil {
-		log.Fatalf("Connection to database failed : %v", err)
-		os.Exit(1)
-	}
-	dbReflection = *database.NewGenericReflection(&dbClient, "sqlite", "test", map[string]bool{"sharks": true})
-	*/
 }
