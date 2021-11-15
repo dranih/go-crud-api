@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -17,6 +20,7 @@ type RecordController struct {
 func NewRecordController(router *mux.Router, service *database.RecordService, debug bool) *RecordController {
 	rc := &RecordController{service, NewJsonResponder(debug)}
 	router.HandleFunc("/records/{table}", rc.List).Methods("GET")
+	router.HandleFunc("/records/{table}", rc.Create).Methods("POST")
 	router.HandleFunc("/records/{table}/{id}", rc.Read).Methods("GET")
 	return rc
 }
@@ -49,9 +53,9 @@ func (rc *RecordController) List(w http.ResponseWriter, r *http.Request) {
 }
 
 type argumentList struct {
-	table  string
-	id     string
-	params map[string][]string
+	table   string
+	payload interface{}
+	params  map[string][]string
 }
 
 // Should return err error
@@ -73,8 +77,8 @@ func (rc *RecordController) Read(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Multi(result, errs, w)
 		return
 	} else {
-		response, _ := rc.service.Read(table, id, params)
-		if response == nil {
+		response, err := rc.service.Read(table, id, params)
+		if response == nil || err != nil {
 			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
 			return
 		}
@@ -82,40 +86,13 @@ func (rc *RecordController) Read(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*
-public function read(ServerRequestInterface $request): ResponseInterface
-{
-	$table = RequestUtils::getPathSegment($request, 2);
-	if (!$this->service->hasTable($table)) {
-		return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
-	}
-	$id = RequestUtils::getPathSegment($request, 3);
-	$params = RequestUtils::getParams($request);
-	if (strpos($id, ',') !== false) {
-		$ids = explode(',', $id);
-		$argumentLists = array();
-		for ($i = 0; $i < count($ids); $i++) {
-			$argumentLists[] = array($table, $ids[$i], $params);
-		}
-		return $this->responder->multi($this->multiCall([$this->service, 'read'], $argumentLists));
-	} else {
-		$response = $this->service->read($table, $id, $params);
-		if ($response === null) {
-			return $this->responder->error(ErrorCode::RECORD_NOT_FOUND, $id);
-		}
-		return $this->responder->success($response);
-	}
-}
-
-*/
-
-func (rc *RecordController) multiCall(callback func(string, string, map[string][]string) (map[string]interface{}, error), argumentLists []*argumentList) (*[]map[string]interface{}, []error) {
+func (rc *RecordController) multiCall(callback func(string, interface{}, map[string][]string) (map[string]interface{}, error), argumentLists []*argumentList) (*[]map[string]interface{}, []error) {
 	result := []map[string]interface{}{}
 	var errs []error
 	success := true
 	tx, _ := rc.service.BeginTransaction()
 	for _, arguments := range argumentLists {
-		if tmp_result, err := callback(arguments.table, arguments.id, arguments.params); err == nil {
+		if tmp_result, err := callback(arguments.table, arguments.payload, arguments.params); err == nil {
 			result = append(result, tmp_result)
 			errs = append(errs, nil)
 		} else {
@@ -132,28 +109,49 @@ func (rc *RecordController) multiCall(callback func(string, string, map[string][
 	return &result, errs
 }
 
-/*
-private function multiCall(callable $method, array $argumentLists): array
-{
-	$result = array();
-	$success = true;
-	$this->service->beginTransaction();
-	foreach ($argumentLists as $arguments) {
-		try {
-			$result[] = call_user_func_array($method, $arguments);
-		} catch (\Throwable $e) {
-			$success = false;
-			$result[] = $e;
+func (rc *RecordController) Create(w http.ResponseWriter, r *http.Request) {
+	table := mux.Vars(r)["table"]
+	if !rc.service.HasTable(table) {
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
+		return
+	}
+	if rc.service.GetType(table) != "table" {
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Create", w, "")
+		return
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
+		return
+	}
+	var jsonMap interface{}
+	err = json.Unmarshal(b, &jsonMap)
+	if err != nil {
+		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
+		return
+	}
+	params := getRequestParams(r)
+
+	// []interface{} or map[string]interface{}
+	if records, isArray := jsonMap.([]interface{}); isArray {
+		var argumentLists []*argumentList
+		for _, record := range records {
+			argumentLists = append(argumentLists, &argumentList{table, record, params})
 		}
-	}
-	if ($success) {
-		$this->service->commitTransaction();
+		result, errs := rc.multiCall(rc.service.Create, argumentLists)
+		rc.responder.Multi(result, errs, w)
+		return
 	} else {
-		$this->service->rollBackTransaction();
+		response, err := rc.service.Create(table, jsonMap, params)
+		if response == nil || err != nil {
+			rc.responder.Error(record.INTERNAL_SERVER_ERROR, fmt.Sprint(records), w, "")
+			return
+		}
+		rc.responder.Success(response, w)
 	}
-	return $result;
 }
 
+/*
 public function create(ServerRequestInterface $request): ResponseInterface
 {
 	$table = RequestUtils::getPathSegment($request, 2);

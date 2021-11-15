@@ -2,6 +2,8 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 
 	"github.com/dranih/go-crud-api/pkg/record"
 )
@@ -19,6 +21,30 @@ type RecordService struct {
 func NewRecordService(db *GenericDB, reflection *ReflectionService) *RecordService {
 	ci := &ColumnIncluder{}
 	return &RecordService{db, reflection, ci, NewRelationJoiner(reflection, ci), &FilterInfo{}, &OrderingInfo{}, &PaginationInfo{}}
+}
+
+func (rs *RecordService) sanitizeRecord(tableName string, record interface{}, id string) map[string]interface{} {
+	recordMap := map[string]interface{}{}
+	//record type : map[string]interface {}
+	if recordMap, ok := record.(map[string]interface{}); ok {
+		for key := range recordMap {
+			if !rs.reflection.GetTable(tableName).HasColumn(key) {
+				delete(recordMap, key)
+			}
+		}
+		if id != "" {
+			pk := rs.reflection.GetTable(tableName).GetPk()
+			for _, key := range rs.reflection.GetTable(tableName).GetColumnNames() {
+				field := rs.reflection.GetTable(tableName).GetColumn(key)
+				if field.GetName() == pk.GetName() {
+					delete(recordMap, key)
+				}
+			}
+		}
+	} else {
+		log.Printf("Unable to assert record type : %T\n", record)
+	}
+	return recordMap
 }
 
 /*
@@ -45,17 +71,10 @@ func (rs *RecordService) HasTable(table string) bool {
 	return rs.reflection.HasTable(table)
 }
 
-/*
-   public function hasTable(string $table): bool
-   {
-       return $this->reflection->hasTable($table);
-   }
+func (rs *RecordService) GetType(table string) string {
+	return rs.reflection.GetType(table)
+}
 
-   public function getType(string $table): string
-   {
-       return $this->reflection->getType($table);
-   }
-*/
 func (rs *RecordService) BeginTransaction() (*sql.Tx, error) {
 	return rs.db.BeginTransaction()
 }
@@ -68,6 +87,13 @@ func (rs *RecordService) RollBackTransaction(tx *sql.Tx) {
 	rs.db.RollBackTransaction(tx)
 }
 
+func (rs *RecordService) Create(tableName string, record interface{}, params map[string][]string) (map[string]interface{}, error) {
+	recordMap := rs.sanitizeRecord(tableName, record, "")
+	table := rs.reflection.GetTable(tableName)
+	columnValues := rs.columns.GetValues(table, true, recordMap, params)
+	return rs.db.CreateSingle(table, columnValues)
+}
+
 /*
    public function create(string $tableName,$record, array $params)
    {
@@ -77,11 +103,11 @@ func (rs *RecordService) RollBackTransaction(tx *sql.Tx) {
        return $this->db->createSingle($table, $columnValues);
    }
 */
-func (rs *RecordService) Read(tableName, id string, params map[string][]string) (map[string]interface{}, error) {
+func (rs *RecordService) Read(tableName string, id interface{}, params map[string][]string) (map[string]interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
-	records := rs.db.SelectSingle(table, columnNames, id)
+	records := rs.db.SelectSingle(table, columnNames, fmt.Sprint(id))
 	if records == nil || len(records) < 0 {
 		return nil, nil
 	}
@@ -90,20 +116,6 @@ func (rs *RecordService) Read(tableName, id string, params map[string][]string) 
 }
 
 /*
-   public function read(string $tableName, string $id, array $params)
-   {
-       $table = $this->reflection->getTable($tableName);
-       $this->joiner->addMandatoryColumns($table, $params);
-       $columnNames = $this->columns->getNames($table, true, $params);
-       $record = $this->db->selectSingle($table, $columnNames, $id);
-       if ($record == null) {
-           return null;
-       }
-       $records = array($record);
-       $this->joiner->addJoins($table, $records, $params, $this->db);
-       return $records[0];
-   }
-
    public function update(string $tableName, string $id, $record, array $params)
    {
        $this->sanitizeRecord($tableName, $record, $id);

@@ -1,0 +1,15 @@
+POST http://127.0.0.1:8080/records/sharks HTTP/1.1
+content-type: application/json
+
+[
+{
+    "name": "Tomy",
+    "length": "100",
+    "sharktype": "Great White Shark"
+},
+{
+    "name": "Barbara",
+    "length": "150",
+    "sharktype": "Shark"
+}
+]

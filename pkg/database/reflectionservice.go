@@ -95,22 +95,14 @@ func (rs *ReflectionService) loadTable(tableName string, useCache bool) *Reflect
        $this->tables[$tableName] = $this->loadTable($tableName, false);
    }
 */
-// done
 func (rs *ReflectionService) HasTable(tableName string) bool {
 	return rs.getDatabase().HasTable(tableName)
 }
 
-/*
-   public function hasTable(string $tableName): bool
-   {
-       return $this->database()->hasTable($tableName);
-   }
+func (rs *ReflectionService) GetType(tableName string) string {
+	return rs.getDatabase().GetType(tableName)
+}
 
-   public function getType(string $tableName): string
-   {
-       return $this->database()->getType($tableName);
-   }
-*/
 func (rs *ReflectionService) GetTable(tableName string) *ReflectedTable {
 	if _, ok := rs.tables[tableName]; !ok {
 		rs.tables[tableName] = rs.loadTable(tableName, true)
@@ -123,11 +115,6 @@ func (rs *ReflectionService) GetTableNames() []string {
 }
 
 /*
-       public function getTableNames(): array
-       {
-           return $this->database()->getTableNames();
-       }
-
        public function removeTable(string $tableName): bool
        {
            unset($this->tables[$tableName]);
