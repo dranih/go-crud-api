@@ -61,12 +61,12 @@ func (ci *ColumnIncluder) GetNames(table *ReflectedTable, primaryTable bool, par
 }
 
 // Not sure for property exists
-func (ci *ColumnIncluder) GetValues(table *ReflectedTable, primaryTable bool, record map[string]interface{}, params map[string][]string) []interface{} {
-	results := []interface{}{}
+func (ci *ColumnIncluder) GetValues(table *ReflectedTable, primaryTable bool, record map[string]interface{}, params map[string][]string) map[string]interface{} {
+	results := map[string]interface{}{}
 	columnNames := ci.GetNames(table, primaryTable, params)
 	for _, columnName := range columnNames {
 		if value, exists := record[columnName]; exists {
-			results = append(results, value)
+			results[columnName] = value
 		}
 	}
 	return results

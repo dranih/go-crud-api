@@ -41,32 +41,13 @@ func (rs *RecordService) sanitizeRecord(tableName string, record interface{}, id
 				}
 			}
 		}
+		return recordMap
 	} else {
 		log.Printf("Unable to assert record type : %T\n", record)
 	}
 	return recordMap
 }
 
-/*
-   private function sanitizeRecord(string $tableName, $record, string $id)
-   {
-       $keyset = array_keys((array) $record);
-       foreach ($keyset as $key) {
-           if (!$this->reflection->getTable($tableName)->hasColumn($key)) {
-               unset($record->$key);
-           }
-       }
-       if ($id != '') {
-           $pk = $this->reflection->getTable($tableName)->getPk();
-           foreach ($this->reflection->getTable($tableName)->getColumnNames() as $key) {
-               $field = $this->reflection->getTable($tableName)->getColumn($key);
-               if ($field->getName() == $pk->getName()) {
-                   unset($record->$key);
-               }
-           }
-       }
-   }
-*/
 func (rs *RecordService) HasTable(table string) bool {
 	return rs.reflection.HasTable(table)
 }

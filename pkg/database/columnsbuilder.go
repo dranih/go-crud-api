@@ -61,33 +61,38 @@ func (cb *ColumnsBuilder) GetSelect(table *ReflectedTable, columnNames []string)
 	return strings.Join(results, ",")
 }
 
-/*
-
-public function getInsert(ReflectedTable $table, array $columnValues): string
-{
-	$columns = array();
-	$values = array();
-	foreach ($columnValues as $columnName => $columnValue) {
-		$column = $table->getColumn($columnName);
-		$quotedColumnName = $this->quoteColumnName($column);
-		$columns[] = $quotedColumnName;
-		$columnValue = $this->converter->convertColumnValue($column);
-		$values[] = $columnValue;
+// GetInsert return the insert request and the parameters to ensure to preserver column names and parameters order
+func (cb *ColumnsBuilder) GetInsert(table *ReflectedTable, columnValues map[string]interface{}) (string, []interface{}) {
+	columns := []string{}
+	values := []string{}
+	parameters := []interface{}{}
+	for columnName, val := range columnValues {
+		column := table.GetColumn(columnName)
+		quotedColumnName := cb.quoteColumnName(column)
+		quotedColumnName = cb.converter.ConvertColumnName(column, quotedColumnName)
+		columns = append(columns, quotedColumnName)
+		columnValue := cb.converter.ConvertColumnValue(column)
+		values = append(values, columnValue)
+		parameters = append(parameters, val)
 	}
-	$columnsSql = '(' . implode(',', $columns) . ')';
-	$valuesSql = '(' . implode(',', $values) . ')';
-	$outputColumn = $this->quoteColumnName($table->getPk());
-	switch ($this->driver) {
-		case 'mysql':
-			return "$columnsSql VALUES $valuesSql";
-		case 'pgsql':
-			return "$columnsSql VALUES $valuesSql RETURNING $outputColumn";
-		case 'sqlsrv':
-			return "$columnsSql OUTPUT INSERTED.$outputColumn VALUES $valuesSql";
-		case 'sqlite':
-			return "$columnsSql VALUES $valuesSql";
+	columnsSql := `(` + strings.Join(columns, ",") + `)`
+	valuesSql := `(` + strings.Join(values, ",") + `)`
+	outputColumn := cb.quoteColumnName(table.GetPk())
+	switch cb.driver {
+	case `mysql`:
+		return fmt.Sprintf("%s VALUES %s", columnsSql, valuesSql), parameters
+	case `pgsql`:
+		return fmt.Sprintf("%s VALUES %s RETURNING %s", columnsSql, valuesSql, outputColumn), parameters
+	case `sqlsrv`:
+		return fmt.Sprintf("%s OUTPUT INSERTED.%s VALUES %s", columnsSql, outputColumn, valuesSql), parameters
+	case `sqlite`:
+		return fmt.Sprintf("%s VALUES %s", columnsSql, valuesSql), parameters
+	default:
+		return "SELECT 1", nil
 	}
 }
+
+/*
 
 public function getUpdate(ReflectedTable $table, array $columnValues): string
 {

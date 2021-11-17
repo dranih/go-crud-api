@@ -1,6 +1,7 @@
 package database
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"strings"
@@ -70,6 +71,22 @@ func (dc *DataConverter) ConvertRecords(table *ReflectedTable, columnNames []str
 	}
 }
 
+// Not sure for base64url_to_base64
+func (dc *DataConverter) convertInputValue(conversion, value string) interface{} {
+	switch conversion {
+	case `boolean`:
+		b, err := strconv.ParseBool(value)
+		if err == nil {
+			return b
+		} else {
+			return false
+		}
+	case `base64url_to_base64`:
+		return base64.StdEncoding.EncodeToString([]byte(value))
+	}
+	return value
+}
+
 /*
 private function convertInputValue($conversion, $value)
 {
@@ -81,30 +98,25 @@ private function convertInputValue($conversion, $value)
 	}
 	return $value;
 }
-
-private function getInputValueConversion(ReflectedColumn $column): string
-{
-	if ($column->isBoolean()) {
-		return 'boolean';
+*/
+func (dc *DataConverter) getInputValueConversion(column *ReflectedColumn) string {
+	if column.IsBoolean() {
+		return `boolean`
 	}
-	if ($column->isBinary()) {
-		return 'base64url_to_base64';
+	if column.IsBinary() {
+		return `base64url_to_base64`
 	}
-	return 'none';
+	return `none`
 }
 
-public function convertColumnValues(ReflectedTable $table, array &$columnValues)
-{
-	$columnNames = array_keys($columnValues);
-	foreach ($columnNames as $columnName) {
-		$column = $table->getColumn($columnName);
-		$conversion = $this->getInputValueConversion($column);
-		if ($conversion != 'none') {
-			$value = $columnValues[$columnName];
-			if ($value !== null) {
-				$columnValues[$columnName] = $this->convertInputValue($conversion, $value);
+func (dc *DataConverter) ConvertColumnValues(table *ReflectedTable, columnValues *map[string]interface{}) {
+	for columnName := range *columnValues {
+		column := table.GetColumn(columnName)
+		conversion := dc.getInputValueConversion(column)
+		if conversion != `none` {
+			if value, exists := (*columnValues)[columnName]; exists {
+				(*columnValues)[columnName] = dc.convertInputValue(conversion, fmt.Sprintf("%v", value))
 			}
 		}
 	}
 }
-*/

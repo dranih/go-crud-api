@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -181,41 +182,41 @@ func (g *GenericDB) addMiddlewareConditions(tableName string, condition interfac
 	return condition
 }
 
-/*
-
-public function createSingle(ReflectedTable $table, array $columnValues)
-{
-	$this->converter->convertColumnValues($table, $columnValues);
-	$insertColumns = $this->columns->getInsert($table, $columnValues);
-	$tableName = $table->getName();
-	$pkName = $table->getPk()->getName();
-	$parameters = array_values($columnValues);
-	$sql = 'INSERT INTO "' . $tableName . '" ' . $insertColumns;
-	$stmt = $this->query($sql, $parameters);
-	// return primary key value if specified in the input
-	if (isset($columnValues[$pkName])) {
-		return $columnValues[$pkName];
+func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]interface{}) (map[string]interface{}, error) {
+	g.converter.ConvertColumnValues(table, &columnValues)
+	insertColumns, parameters := g.columns.GetInsert(table, columnValues)
+	tableName := table.GetName()
+	pkName := table.GetPk().GetName()
+	sql := `INSERT INTO "` + tableName + `" ` + insertColumns
+	records, err := g.query(sql, parameters...)
+	if err != nil {
+		return nil, err
+	}
+	if pkValue, exists := columnValues[pkName]; exists {
+		return map[string]interface{}{"id": pkValue}, nil
 	}
 	// work around missing "returning" or "output" in mysql
-	switch ($this->driver) {
-		case 'mysql':
-			$stmt = $this->query('SELECT LAST_INSERT_ID()', []);
-			break;
-		case 'sqlite':
-			$stmt = $this->query('SELECT LAST_INSERT_ROWID()', []);
-			break;
+	switch g.driver {
+	case `mysql`:
+		records, err = g.query("SELECT LAST_INSERT_ID()")
+	case `sqlite`:
+		records, err = g.query("SELECT LAST_INSERT_ROWID()")
 	}
-	$pkValue = $stmt->fetchColumn(0);
-	if ($table->getPk()->getType() == 'bigint') {
-		return (int) $pkValue;
+	if err != nil {
+		return nil, err
 	}
-	if (in_array($table->getPk()->getType(), ['integer', 'bigint'])) {
-		return (int) $pkValue;
+	for _, pkValue := range records[0] {
+		if table.GetPk().GetType() == `bigint` || table.GetPk().GetType() == `int` {
+			if pkValueInt, ok := pkValue.(int); ok {
+				return map[string]interface{}{"id": pkValueInt}, nil
+			}
+		}
+		return map[string]interface{}{"id": pkValue}, nil
 	}
-	return $pkValue;
+	return nil, errors.New("No Inserted ID")
 }
 
-*/
+// Should check error
 func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id string) []map[string]interface{} {
 	records := []map[string]interface{}{}
 	selectColumns := g.columns.GetSelect(table, columnNames)
@@ -226,7 +227,7 @@ func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	sql := `SELECT ` + selectColumns + ` FROM "` + tableName + `" ` + whereClause
-	records = g.query(sql, parameters...)
+	records, _ = g.query(sql, parameters...)
 	if len(records) <= 0 {
 		return nil
 	}
@@ -234,7 +235,7 @@ func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id
 	return records[:1]
 }
 
-// done
+// Should check error
 func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []string) []map[string]interface{} {
 	records := []map[string]interface{}{}
 	if len(ids) == 0 {
@@ -248,19 +249,19 @@ func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []str
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	sql := `SELECT ` + selectColumns + ` FROM "` + tableName + `" ` + whereClause
-	records = g.query(sql, parameters...)
+	records, _ = g.query(sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
 
-// ok
+// Should check error
 func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Condition }) int {
 	tableName := table.GetName()
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	sql := `SELECT COUNT(*) as c FROM "` + tableName + `"` + whereClause
-	stmt := g.query(sql, parameters...)
+	stmt, _ := g.query(sql, parameters...)
 	ret, ok := stmt[0]["c"].(int64)
 	if !ok {
 		log.Printf("Error converting count from table %s\n", tableName)
@@ -268,7 +269,7 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	return int(ret)
 }
 
-// done
+// Should check error
 func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition interface{ Condition }, columnOrdering [][2]string, offset, limit int) []map[string]interface{} {
 	if limit == 0 {
 		return []map[string]interface{}{}
@@ -281,7 +282,7 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	orderBy := g.columns.GetOrderBy(table, columnOrdering)
 	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
 	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause + orderBy + offsetLimit
-	records := g.query(sql, parameters...)
+	records, _ := g.query(sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
@@ -335,11 +336,13 @@ public function incrementSingle(ReflectedTable $table, array $columnValues, stri
 }
 */
 
-// Should check errors
-func (g *GenericDB) query(sql string, parameters ...interface{}) []map[string]interface{} {
-	rows, _ := g.pdo.connect().Query(sql, parameters...)
-	results, _ := g.pdo.Rows2Map(rows)
-	return results
+func (g *GenericDB) query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
+	rows, err := g.pdo.connect().Query(sql, parameters...)
+	if err != nil {
+		return nil, err
+	}
+	results, err := g.pdo.Rows2Map(rows)
+	return results, err
 }
 
 /*
