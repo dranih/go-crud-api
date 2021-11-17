@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/dranih/go-crud-api/pkg/middleware"
 )
@@ -193,7 +194,7 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 		return nil, err
 	}
 	if pkValue, exists := columnValues[pkName]; exists {
-		return map[string]interface{}{"id": pkValue}, nil
+		return map[string]interface{}{pkName: pkValue}, nil
 	}
 	// work around missing "returning" or "output" in mysql
 	switch g.driver {
@@ -208,10 +209,10 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	for _, pkValue := range records[0] {
 		if table.GetPk().GetType() == `bigint` || table.GetPk().GetType() == `int` {
 			if pkValueInt, ok := pkValue.(int); ok {
-				return map[string]interface{}{"id": pkValueInt}, nil
+				return map[string]interface{}{pkName: pkValueInt}, nil
 			}
 		}
-		return map[string]interface{}{"id": pkValue}, nil
+		return map[string]interface{}{pkName: pkValue}, nil
 	}
 	return nil, errors.New("No Inserted ID")
 }
@@ -353,7 +354,23 @@ private function query(string $sql, array $parameters): \PDOStatement
 	$stmt->execute($parameters);
 	return $stmt;
 }
+*/
+func (g *GenericDB) Ping() int {
+	start := time.Now()
+	stmt, err := g.pdo.connect().Prepare("SELECT 1")
+	if err != nil {
+		return -1
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		return -1
+	}
+	t := time.Now()
+	elapsed := t.Sub(start)
+	return int(elapsed.Milliseconds())
+}
 
+/*
 public function ping(): int
 {
 	$start = microtime(true);

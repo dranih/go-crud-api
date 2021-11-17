@@ -75,15 +75,6 @@ func (rs *RecordService) Create(tableName string, record interface{}, params map
 	return rs.db.CreateSingle(table, columnValues)
 }
 
-/*
-   public function create(string $tableName,$record, array $params)
-   {
-       $this->sanitizeRecord($tableName, $record, '');
-       $table = $this->reflection->getTable($tableName);
-       $columnValues = $this->columns->getValues($table, true, $record, $params);
-       return $this->db->createSingle($table, $columnValues);
-   }
-*/
 func (rs *RecordService) Read(tableName string, id interface{}, params map[string][]string) (map[string]interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
@@ -139,6 +130,10 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	records := rs.db.SelectAll(table, columnNames, condition, columnOrdering, offset, limit)
 	rs.joiner.AddJoins(table, &records, params, rs.db)
 	return record.NewListDocument(records, count)
+}
+
+func (rs *RecordService) Ping() int {
+	return rs.db.Ping()
 }
 
 /*
