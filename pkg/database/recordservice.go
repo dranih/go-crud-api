@@ -68,23 +68,32 @@ func (rs *RecordService) RollBackTransaction(tx *sql.Tx) {
 	rs.db.RollBackTransaction(tx)
 }
 
-func (rs *RecordService) Create(tableName string, record interface{}, params map[string][]string) (map[string]interface{}, error) {
-	recordMap := rs.sanitizeRecord(tableName, record, "")
+func (rs *RecordService) Create(tableName string, params map[string][]string, record ...interface{}) (map[string]interface{}, error) {
+	recordMap := rs.sanitizeRecord(tableName, record[0], "")
 	table := rs.reflection.GetTable(tableName)
 	columnValues := rs.columns.GetValues(table, true, recordMap, params)
 	return rs.db.CreateSingle(table, columnValues)
 }
 
-func (rs *RecordService) Read(tableName string, id interface{}, params map[string][]string) (map[string]interface{}, error) {
+func (rs *RecordService) Read(tableName string, params map[string][]string, id ...interface{}) (map[string]interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
-	records := rs.db.SelectSingle(table, columnNames, fmt.Sprint(id))
+	records := rs.db.SelectSingle(table, columnNames, fmt.Sprint(id[0]))
 	if records == nil || len(records) < 0 {
 		return nil, nil
 	}
 	rs.joiner.AddJoins(table, &records, params, rs.db)
 	return records[0], nil
+}
+
+func (rs *RecordService) Update(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+	id := fmt.Sprint(args[0])
+	record := args[1]
+	recordMap := rs.sanitizeRecord(tableName, record, id)
+	table := rs.reflection.GetTable(tableName)
+	columnValues := rs.columns.GetValues(table, true, recordMap, params)
+	return rs.db.UpdateSingle(table, columnValues, id)
 }
 
 /*

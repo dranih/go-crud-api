@@ -288,8 +288,28 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	return records
 }
 
-/*
+func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (map[string]interface{}, error) {
+	if len(columnValues) <= 0 {
+		return nil, nil
+	}
+	g.converter.ConvertColumnValues(table, &columnValues)
+	updateColumns, parameters := g.columns.GetUpdate(table, columnValues)
+	tableName := table.GetName()
+	var condition interface{ Condition }
+	pk := table.GetPk()
+	condition = NewColumnCondition(pk, `eq`, id)
+	condition = g.addMiddlewareConditions(tableName, condition)
+	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	sql := `UPDATE "` + tableName + `" SET ` + updateColumns + whereClause
+	_, err := g.query(sql, parameters...)
+	if err == nil {
+		return map[string]interface{}{pk.GetName(): id}, err
+	} else {
+		return nil, err
+	}
+}
 
+/*
 public function updateSingle(ReflectedTable $table, array $columnValues, string $id)
 {
 	if (count($columnValues) == 0) {

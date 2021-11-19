@@ -92,8 +92,20 @@ func (cb *ColumnsBuilder) GetInsert(table *ReflectedTable, columnValues map[stri
 	}
 }
 
-/*
+func (cb *ColumnsBuilder) GetUpdate(table *ReflectedTable, columnValues map[string]interface{}) (string, []interface{}) {
+	results := []string{}
+	parameters := []interface{}{}
+	for columnName, val := range columnValues {
+		column := table.GetColumn(columnName)
+		quotedColumnName := cb.quoteColumnName(column)
+		columnValue := cb.converter.ConvertColumnValue(column)
+		results = append(results, quotedColumnName+"="+columnValue)
+		parameters = append(parameters, val)
+	}
+	return strings.Join(results, ","), parameters
+}
 
+/*
 public function getUpdate(ReflectedTable $table, array $columnValues): string
 {
 	$results = array();
