@@ -290,7 +290,7 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 
 func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (map[string]interface{}, error) {
 	if len(columnValues) <= 0 {
-		return nil, nil
+		return map[string]interface{}{"RowsAffected": 0}, nil
 	}
 	g.converter.ConvertColumnValues(table, &columnValues)
 	updateColumns, parameters := g.columns.GetUpdate(table, columnValues)
@@ -336,36 +336,34 @@ func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (map[string]i
 	}
 }
 
-/*
-public function deleteSingle(ReflectedTable $table, string $id)
-{
-	$tableName = $table->getName();
-	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
-	$condition = $this->addMiddlewareConditions($tableName, $condition);
-	$parameters = array();
-	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	$sql = 'DELETE FROM "' . $tableName . '" ' . $whereClause;
-	$stmt = $this->query($sql, $parameters);
-	return $stmt->rowCount();
-}
-
-public function incrementSingle(ReflectedTable $table, array $columnValues, string $id)
-{
-	if (count($columnValues) == 0) {
-		return 0;
+func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (map[string]interface{}, error) {
+	if len(columnValues) <= 0 {
+		return map[string]interface{}{"RowsAffected": 0}, nil
 	}
-	$this->converter->convertColumnValues($table, $columnValues);
-	$updateColumns = $this->columns->getIncrement($table, $columnValues);
-	$tableName = $table->getName();
-	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
-	$condition = $this->addMiddlewareConditions($tableName, $condition);
-	$parameters = array_values($columnValues);
-	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	$sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
-	$stmt = $this->query($sql, $parameters);
-	return $stmt->rowCount();
+	g.converter.ConvertColumnValues(table, &columnValues)
+	updateColumns, parameters := g.columns.GetIncrement(table, columnValues)
+	if updateColumns == "" {
+		return map[string]interface{}{"RowsAffected": 0}, nil
+	}
+	tableName := table.GetName()
+	var condition interface{ Condition }
+	pk := table.GetPk()
+	condition = NewColumnCondition(pk, `eq`, id)
+	condition = g.addMiddlewareConditions(tableName, condition)
+	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	sql := `UPDATE "` + tableName + `" SET ` + updateColumns + whereClause
+	res, err := g.exec(sql, parameters...)
+	if err == nil {
+		count, err := res.RowsAffected()
+		if err != nil {
+			return nil, err
+		} else {
+			return map[string]interface{}{"RowsAffected": count}, nil
+		}
+	} else {
+		return nil, err
+	}
 }
-*/
 
 func (g *GenericDB) query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
 	rows, err := g.pdo.connect().Query(sql, parameters...)

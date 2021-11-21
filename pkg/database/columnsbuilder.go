@@ -105,31 +105,19 @@ func (cb *ColumnsBuilder) GetUpdate(table *ReflectedTable, columnValues map[stri
 	return strings.Join(results, ","), parameters
 }
 
-/*
-public function getUpdate(ReflectedTable $table, array $columnValues): string
-{
-	$results = array();
-	foreach ($columnValues as $columnName => $columnValue) {
-		$column = $table->getColumn($columnName);
-		$quotedColumnName = $this->quoteColumnName($column);
-		$columnValue = $this->converter->convertColumnValue($column);
-		$results[] = $quotedColumnName . '=' . $columnValue;
-	}
-	return implode(',', $results);
-}
-
-public function getIncrement(ReflectedTable $table, array $columnValues): string
-{
-	$results = array();
-	foreach ($columnValues as $columnName => $columnValue) {
-		if (!is_numeric($columnValue)) {
-			continue;
+func (cb *ColumnsBuilder) GetIncrement(table *ReflectedTable, columnValues map[string]interface{}) (string, []interface{}) {
+	results := []string{}
+	parameters := []interface{}{}
+	for columnName, val := range columnValues {
+		switch val.(type) {
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		case float32, float64, complex64, complex128:
+			column := table.GetColumn(columnName)
+			quotedColumnName := cb.quoteColumnName(column)
+			columnValue := cb.converter.ConvertColumnValue(column)
+			results = append(results, quotedColumnName+"="+quotedColumnName+"+"+columnValue)
+			parameters = append(parameters, val)
 		}
-		$column = $table->getColumn($columnName);
-		$quotedColumnName = $this->quoteColumnName($column);
-		$columnValue = $this->converter->convertColumnValue($column);
-		$results[] = $quotedColumnName . '=' . $quotedColumnName . '+' . $columnValue;
 	}
-	return implode(',', $results);
+	return strings.Join(results, ","), parameters
 }
-*/

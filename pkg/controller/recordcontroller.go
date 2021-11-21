@@ -24,22 +24,10 @@ func NewRecordController(router *mux.Router, service *database.RecordService, de
 	router.HandleFunc("/records/{table}/{id}", rc.read).Methods("GET")
 	router.HandleFunc("/records/{table}/{id}", rc.update).Methods("PUT")
 	router.HandleFunc("/records/{table}/{id}", rc.delete).Methods("DELETE")
+	router.HandleFunc("/records/{table}/{id}", rc.increment).Methods("PATCH")
 	return rc
 }
 
-/*
-public function __construct(Router $router, Responder $responder, RecordService $service)
-{
-	$router->register('GET', '/records/*', array($this, '_list'));
-	$router->register('POST', '/records/*', array($this, 'create'));
-*/ //$router->register('GET', '/records/*/*', array($this, 'read'));
-//$router->register('PUT', '/records/*/*', array($this, 'update'));
-//$router->register('DELETE', '/records/*/*', array($this, 'delete'));
-//$router->register('PATCH', '/records/*/*', array($this, 'increment'));
-/*$this->service = $service;
-	$this->responder = $responder;
-}
-*/
 // List function lists a table
 // Should return err error
 func (rc *RecordController) list(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +167,6 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 	ids := strings.Split(id, `,`)
 
 	if records, isArray := jsonMap.([]interface{}); isArray {
-		//if strings.Index(id, ",") != -1 {
 		if len(ids) != len(records) {
 			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
@@ -236,60 +223,53 @@ func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*
-public function delete(ServerRequestInterface $request): ResponseInterface
-{
-	$table = RequestUtils::getPathSegment($request, 2);
-	if (!$this->service->hasTable($table)) {
-		return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
+func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
+	table := mux.Vars(r)["table"]
+	if !rc.service.HasTable(table) {
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
+		return
 	}
-	if ($this->service->getType($table) != 'table') {
-		return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
+	if rc.service.GetType(table) != "table" {
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Update", w, "")
+		return
 	}
-	$id = RequestUtils::getPathSegment($request, 3);
-	$params = RequestUtils::getParams($request);
-	$ids = explode(',', $id);
-	if (count($ids) > 1) {
-		$argumentLists = array();
-		for ($i = 0; $i < count($ids); $i++) {
-			$argumentLists[] = array($table, $ids[$i], $params);
-		}
-		return $this->responder->multi($this->multiCall([$this->service, 'delete'], $argumentLists));
-	} else {
-		return $this->responder->success($this->service->delete($table, $id, $params));
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
+		return
 	}
-}
+	var jsonMap interface{}
+	err = json.Unmarshal(b, &jsonMap)
+	if err != nil {
+		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
+		return
+	}
+	params := getRequestParams(r)
+	id := mux.Vars(r)["id"]
+	ids := strings.Split(id, `,`)
 
-public function increment(ServerRequestInterface $request): ResponseInterface
-{
-	$table = RequestUtils::getPathSegment($request, 2);
-	if (!$this->service->hasTable($table)) {
-		return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $table);
-	}
-	if ($this->service->getType($table) != 'table') {
-		return $this->responder->error(ErrorCode::OPERATION_NOT_SUPPORTED, __FUNCTION__);
-	}
-	$id = RequestUtils::getPathSegment($request, 3);
-	$record = $request->getParsedBody();
-	if ($record === null) {
-		return $this->responder->error(ErrorCode::HTTP_MESSAGE_NOT_READABLE, '');
-	}
-	$params = RequestUtils::getParams($request);
-	$ids = explode(',', $id);
-	if (is_array($record)) {
-		if (count($ids) != count($record)) {
-			return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+	if records, isArray := jsonMap.([]interface{}); isArray {
+		if len(ids) != len(records) {
+			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
+			return
 		}
-		$argumentLists = array();
-		for ($i = 0; $i < count($ids); $i++) {
-			$argumentLists[] = array($table, $ids[$i], $record[$i], $params);
+		var argumentLists []*argumentList
+		for i := 0; i < len(ids); i++ {
+			argumentLists = append(argumentLists, &argumentList{table, []interface{}{ids[i], records[i]}, params})
 		}
-		return $this->responder->multi($this->multiCall([$this->service, 'increment'], $argumentLists));
+		result, errs := rc.multiCall(rc.service.Increment, argumentLists)
+		rc.responder.Multi(result, errs, w)
+		return
 	} else {
-		if (count($ids) != 1) {
-			return $this->responder->error(ErrorCode::ARGUMENT_COUNT_MISMATCH, $id);
+		if len(ids) != 1 {
+			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
+			return
 		}
-		return $this->responder->success($this->service->increment($table, $id, $record, $params));
+		response, err := rc.service.Increment(table, params, id)
+		if response == nil || err != nil {
+			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+			return
+		}
+		rc.responder.Success(response, w)
 	}
 }
-}*/

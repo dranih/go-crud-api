@@ -101,21 +101,15 @@ func (rs *RecordService) Delete(tableName string, params map[string][]string, ar
 	return rs.db.DeleteSingle(table, fmt.Sprint(args[0]))
 }
 
-/*
-   public function delete(string $tableName, string $id, array $params)
-   {
-       $table = $this->reflection->getTable($tableName);
-       return $this->db->deleteSingle($table, $id);
-   }
+func (rs *RecordService) Increment(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+	id := fmt.Sprint(args[0])
+	record := args[1]
+	recordMap := rs.sanitizeRecord(tableName, record, id)
+	table := rs.reflection.GetTable(tableName)
+	columnValues := rs.columns.GetValues(table, true, recordMap, params)
+	return rs.db.IncrementSingle(table, columnValues, id)
+}
 
-   public function increment(string $tableName, string $id, $record, array $params)
-   {
-       $this->sanitizeRecord($tableName, $record, $id);
-       $table = $this->reflection->getTable($tableName);
-       $columnValues = $this->columns->getValues($table, true, $record, $params);
-       return $this->db->incrementSingle($table, $columnValues, $id);
-   }
-*/
 // done
 func (rs *RecordService) List(tableName string, params map[string][]string) *record.ListDocument {
 	table := rs.reflection.GetTable(tableName)
@@ -141,11 +135,3 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 func (rs *RecordService) Ping() int {
 	return rs.db.Ping()
 }
-
-/*
-       public function ping(): int
-       {
-           return $this->db->ping();
-       }
-   }
-*/

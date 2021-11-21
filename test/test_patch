@@ -1,0 +1,12 @@
+PATCH http://127.0.0.1:8080/records/sharks/36,37 HTTP/1.1
+content-type: application/json
+
+[
+{
+    "length": 10
+},
+{
+    "length": 5,
+    "name": "str"
+}
+]
