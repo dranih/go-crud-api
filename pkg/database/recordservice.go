@@ -96,15 +96,12 @@ func (rs *RecordService) Update(tableName string, params map[string][]string, ar
 	return rs.db.UpdateSingle(table, columnValues, id)
 }
 
-/*
-   public function update(string $tableName, string $id, $record, array $params)
-   {
-       $this->sanitizeRecord($tableName, $record, $id);
-       $table = $this->reflection->getTable($tableName);
-       $columnValues = $this->columns->getValues($table, true, $record, $params);
-       return $this->db->updateSingle($table, $columnValues, $id);
-   }
+func (rs *RecordService) Delete(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+	table := rs.reflection.GetTable(tableName)
+	return rs.db.DeleteSingle(table, fmt.Sprint(args[0]))
+}
 
+/*
    public function delete(string $tableName, string $id, array $params)
    {
        $table = $this->reflection->getTable($tableName);

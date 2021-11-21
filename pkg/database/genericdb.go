@@ -301,32 +301,42 @@ func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]
 	condition = g.addMiddlewareConditions(tableName, condition)
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	sql := `UPDATE "` + tableName + `" SET ` + updateColumns + whereClause
-	_, err := g.query(sql, parameters...)
+	res, err := g.exec(sql, parameters...)
 	if err == nil {
-		return map[string]interface{}{pk.GetName(): id}, err
+		count, err := res.RowsAffected()
+		if err != nil {
+			return nil, err
+		} else {
+			return map[string]interface{}{"RowsAffected": count}, nil
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (map[string]interface{}, error) {
+	tableName := table.GetName()
+	var condition interface{ Condition }
+	pk := table.GetPk()
+	condition = NewColumnCondition(pk, `eq`, id)
+	condition = g.addMiddlewareConditions(tableName, condition)
+	parameters := []interface{}{}
+	whereClause := g.conditions.GetWhereClause(condition, &parameters)
+	sql := `DELETE FROM "` + tableName + `" ` + whereClause
+	res, err := g.exec(sql, parameters...)
+	if err == nil {
+		count, err := res.RowsAffected()
+		if err != nil {
+			return nil, err
+		} else {
+			return map[string]interface{}{"RowsAffected": count}, nil
+		}
 	} else {
 		return nil, err
 	}
 }
 
 /*
-public function updateSingle(ReflectedTable $table, array $columnValues, string $id)
-{
-	if (count($columnValues) == 0) {
-		return 0;
-	}
-	$this->converter->convertColumnValues($table, $columnValues);
-	$updateColumns = $this->columns->getUpdate($table, $columnValues);
-	$tableName = $table->getName();
-	$condition = new ColumnCondition($table->getPk(), 'eq', $id);
-	$condition = $this->addMiddlewareConditions($tableName, $condition);
-	$parameters = array_values($columnValues);
-	$whereClause = $this->conditions->getWhereClause($condition, $parameters);
-	$sql = 'UPDATE "' . $tableName . '" SET ' . $updateColumns . $whereClause;
-	$stmt = $this->query($sql, $parameters);
-	return $stmt->rowCount();
-}
-
 public function deleteSingle(ReflectedTable $table, string $id)
 {
 	$tableName = $table->getName();
@@ -366,15 +376,14 @@ func (g *GenericDB) query(sql string, parameters ...interface{}) ([]map[string]i
 	return results, err
 }
 
-/*
-private function query(string $sql, array $parameters): \PDOStatement
-{
-	$stmt = $this->pdo->prepare($sql);
-	//echo "- $sql -- " . json_encode($parameters, JSON_UNESCAPED_UNICODE) . "\n";
-	$stmt->execute($parameters);
-	return $stmt;
+func (g *GenericDB) exec(sql string, parameters ...interface{}) (sql.Result, error) {
+	res, err := g.pdo.connect().Exec(sql, parameters...)
+	if err != nil {
+		return nil, err
+	}
+	return res, err
 }
-*/
+
 func (g *GenericDB) Ping() int {
 	start := time.Now()
 	stmt, err := g.pdo.connect().Prepare("SELECT 1")

@@ -23,6 +23,7 @@ func NewRecordController(router *mux.Router, service *database.RecordService, de
 	router.HandleFunc("/records/{table}", rc.create).Methods("POST")
 	router.HandleFunc("/records/{table}/{id}", rc.read).Methods("GET")
 	router.HandleFunc("/records/{table}/{id}", rc.update).Methods("PUT")
+	router.HandleFunc("/records/{table}/{id}", rc.delete).Methods("DELETE")
 	return rc
 }
 
@@ -159,7 +160,7 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Create", w, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Update", w, "")
 		return
 	}
 	b, err := ioutil.ReadAll(r.Body)
@@ -196,6 +197,37 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response, err := rc.service.Update(table, params, id)
+		if response == nil || err != nil {
+			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+			return
+		}
+		rc.responder.Success(response, w)
+	}
+}
+
+func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
+	table := mux.Vars(r)["table"]
+	if !rc.service.HasTable(table) {
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
+		return
+	}
+	if rc.service.GetType(table) != "table" {
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Delete", w, "")
+		return
+	}
+	params := getRequestParams(r)
+	id := mux.Vars(r)["id"]
+	if strings.Index(id, ",") != -1 {
+		ids := strings.Split(id, `,`)
+		var argumentLists []*argumentList
+		for i := 0; i < len(ids); i++ {
+			argumentLists = append(argumentLists, &argumentList{table, []interface{}{ids[i]}, params})
+		}
+		result, errs := rc.multiCall(rc.service.Delete, argumentLists)
+		rc.responder.Multi(result, errs, w)
+		return
+	} else {
+		response, err := rc.service.Delete(table, params, id)
 		if response == nil || err != nil {
 			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
 			return
