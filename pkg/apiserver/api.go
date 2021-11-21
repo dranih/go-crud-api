@@ -16,18 +16,34 @@ import (
 	"github.com/dranih/go-crud-api/pkg/database"
 )
 
-var dbClient database.GenericDB
+type Api struct {
+	router *mux.Router
+	debug  bool
+}
 
-func Handle() {
+func NewApi(config *Config) *Api {
+	router := mux.NewRouter()
+	//dbClient := database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
+	dbClient := database.NewGenericDB(
+		config.Driver,
+		config.Address,
+		config.Port,
+		config.Database,
+		config.GetTables(),
+		config.Username,
+		config.Password)
+	reflection := database.NewReflectionService(dbClient, "", 0)
+	records := database.NewRecordService(dbClient, reflection)
+	controller.NewRecordController(router, records, true)
+	return &Api{router, config.Debug}
+}
+
+func (a *Api) Handle() {
 	var wait time.Duration
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	router := mux.NewRouter()
-	//Try DB connection
-	connectDB(router)
-
-	router.HandleFunc("/status/ping", getPing).Methods("GET")
+	a.router.HandleFunc("/status/ping", getPing).Methods("GET")
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -35,7 +51,7 @@ func Handle() {
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      router, // Pass our instance of gorilla/mux in.
+		Handler:      a.router, // Pass our instance of gorilla/mux in.
 	}
 
 	// Run our server in a goroutine so that it doesn't block.
@@ -69,11 +85,4 @@ func Handle() {
 func getPing(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "OK")
-}
-
-func connectDB(router *mux.Router) {
-	dbClient := database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
-	reflection := database.NewReflectionService(dbClient, "", 0)
-	records := database.NewRecordService(dbClient, reflection)
-	controller.NewRecordController(router, records, true)
 }

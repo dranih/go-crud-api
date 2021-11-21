@@ -5,5 +5,11 @@ import (
 )
 
 func main() {
-	apiserver.Handle()
+	config := apiserver.NewConfig()
+	config.Driver = "sqlite"
+	config.Address = "../../test/test.db"
+	config.Database = "test"
+	config.Tables = "sharks"
+	api := apiserver.NewApi(config)
+	api.Handle()
 }
