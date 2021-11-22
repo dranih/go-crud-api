@@ -5,11 +5,15 @@ import (
 )
 
 func main() {
-	config := apiserver.NewConfig()
-	config.Driver = "sqlite"
-	config.Address = "../../test/test.db"
-	config.Database = "test"
-	config.Tables = "sharks"
-	api := apiserver.NewApi(config)
-	api.Handle()
+	config := &apiserver.Config{
+		Api: &apiserver.ApiConfig{
+			Driver:   "sqlite",
+			Address:  "../../test/test.db",
+			Database: "test",
+			Tables:   "sharks",
+		},
+	}
+	config.SetDefaults()
+	api := apiserver.NewApi(config.Api)
+	api.Handle(config.Server)
 }

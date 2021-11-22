@@ -1,8 +1,16 @@
 package apiserver
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Config struct {
+	Api    *ApiConfig
+	Server *ServerConfig
+}
+
+type ApiConfig struct {
 	Driver                string
 	Address               string
 	Port                  int
@@ -22,78 +30,82 @@ type Config struct {
 	OpenApiBase           string
 }
 
-func NewConfig() *Config {
-	return &Config{
-		Driver:                "",
-		Address:               "",
-		Port:                  -1,
-		Username:              "",
-		Password:              "",
-		Database:              "",
-		Tables:                "",
-		Middlewares:           "cors,errors",
-		Controllers:           "records,geojson,openapi,status",
-		CustomControllers:     "",
-		CustomOpenApiBuilders: "",
-		CacheType:             "TempFile",
-		CachePath:             "",
-		CacheTime:             10,
-		Debug:                 false,
-		BasePath:              "",
-		OpenApiBase:           `{"info":{"title":"PHP-CRUD-API","version":"1.0.0"}}`,
-	}
+type ServerConfig struct {
+	Address         string
+	Port            int
+	GracefulTimeout int
+	WriteTimeout    int
+	ReadTimeout     int
+	IdleTimeout     int
 }
 
-/*
- class Config
-    {
-*/
-
-func (c *Config) getDefaultDriver() string {
-	if c.Driver != "" {
-		return c.Driver
+func (ac *ApiConfig) getDefaultDriver() string {
+	if ac.Driver != "" {
+		return ac.Driver
 	}
 	return "mysql"
 }
 
+func (ac *ApiConfig) getDefaultPort(driver string) int {
+	switch driver {
+	case "mysql":
+		return 3306
+	case "pgsql":
+		return 5432
+	case "sqlsrv":
+		return 1433
+	case "sqlite":
+		return 0
+	default:
+		return -1
+	}
+}
+
+func (ac *ApiConfig) getDefaultAddress(driver string) string {
+	switch driver {
+	case "mysql":
+		return "localhost"
+	case "pgsql":
+		return "localhost"
+	case "sqlsrv":
+		return "localhost"
+	case "sqlite":
+		return "data.db"
+	default:
+		return ""
+	}
+}
+
+func (ac *ApiConfig) getDriverDefaults(driver string) map[string]interface{} {
+	return map[string]interface{}{
+		"driver":  driver,
+		"address": ac.getDefaultAddress(driver),
+		"port":    ac.getDefaultPort(driver),
+	}
+}
+
+func (sc *ServerConfig) SetDefaults() {
+	if sc.Address == "" {
+		sc.Address = "0.0.0.0"
+	}
+	if sc.Port == 0 {
+		sc.Port = 8080
+	}
+	if sc.GracefulTimeout == 0 {
+		sc.GracefulTimeout = 15
+	}
+	if sc.WriteTimeout == 0 {
+		sc.WriteTimeout = 15
+	}
+	if sc.ReadTimeout == 0 {
+		sc.ReadTimeout = 15
+	}
+	if sc.IdleTimeout == 0 {
+		sc.IdleTimeout = 60
+	}
+}
+
 /*
-   private function getDefaultPort(string $driver): int
-   {
-       switch ($driver) {
-           case 'mysql':
-               return 3306;
-           case 'pgsql':
-               return 5432;
-           case 'sqlsrv':
-               return 1433;
-           case 'sqlite':
-               return 0;
-       }
-   }
-
-   private function getDefaultAddress(string $driver): string
-   {
-       switch ($driver) {
-           case 'mysql':
-               return 'localhost';
-           case 'pgsql':
-               return 'localhost';
-           case 'sqlsrv':
-               return 'localhost';
-           case 'sqlite':
-               return 'data.db';
-       }
-   }
-
-   private function getDriverDefaults(string $driver): array
-   {
-       return [
-           'driver' => $driver,
-           'address' => $this->getDefaultAddress($driver),
-           'port' => $this->getDefaultPort($driver),
-       ];
-   }
-
    private function applyEnvironmentVariables(array $values): array
    {
        $newValues = array();
@@ -103,7 +115,46 @@ func (c *Config) getDefaultDriver() string {
        }
        return $newValues;
    }
+*/
 
+func (c *Config) SetDefaults() {
+	if c.Api == nil {
+		c.Api = &ApiConfig{}
+	}
+	c.Api.SetDefaults()
+	if c.Server == nil {
+		c.Server = &ServerConfig{}
+	}
+	c.Server.SetDefaults()
+}
+
+func (ac *ApiConfig) SetDefaults() {
+	ac.Driver = ac.getDefaultDriver()
+	defaults := ac.getDriverDefaults(ac.Driver)
+	if ac.Address == "" {
+		ac.Address = fmt.Sprint(defaults["address"])
+	}
+	if ac.Port == 0 {
+		ac.Port, _ = defaults["port"].(int)
+	}
+	if ac.Middlewares == "" {
+		ac.Middlewares = "cors,errors"
+	}
+	if ac.Controllers == "" {
+		ac.Controllers = "records,geojson,openapi,status"
+	}
+	if ac.CacheType == "" {
+		ac.CacheType = "TempFile"
+	}
+	if ac.CacheTime == 0 {
+		ac.CacheTime = 10
+	}
+	if ac.OpenApiBase == "" {
+		ac.OpenApiBase = `{"info":{"title":"GO-CRUD-API","version":"0.0.1"}}`
+	}
+}
+
+/*
    public function __construct(array $values)
    {
        $driver = $this->getDefaultDriver($values);
@@ -173,20 +224,15 @@ func (c *Config) getDefaultDriver() string {
        return $this->values['database'];
    }
 */
-func (c *Config) GetTables() map[string]bool {
+func (ac *ApiConfig) GetTables() map[string]bool {
 	result := map[string]bool{}
-	for _, table := range strings.Split(c.Tables, ",") {
+	for _, table := range strings.Split(ac.Tables, ",") {
 		result[table] = true
 	}
 	return result
 }
 
 /*
-    public function getTables(): array
-    {
-        return array_filter(array_map('trim', explode(',', $this->values['tables'])));
-    }
-
     public function getMiddlewares(): array
     {
         return $this->values['middlewares'];

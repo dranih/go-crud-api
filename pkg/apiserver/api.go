@@ -2,7 +2,6 @@ package apiserver
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,9 +20,8 @@ type Api struct {
 	debug  bool
 }
 
-func NewApi(config *Config) *Api {
+func NewApi(config *ApiConfig) *Api {
 	router := mux.NewRouter()
-	//dbClient := database.NewGenericDB("sqlite", "../../test/test.db", 0, "test", map[string]bool{"sharks": true}, "", "")
 	dbClient := database.NewGenericDB(
 		config.Driver,
 		config.Address,
@@ -38,19 +36,15 @@ func NewApi(config *Config) *Api {
 	return &Api{router, config.Debug}
 }
 
-func (a *Api) Handle() {
-	var wait time.Duration
-	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
-	flag.Parse()
-
+func (a *Api) Handle(config *ServerConfig) {
 	a.router.HandleFunc("/status/ping", getPing).Methods("GET")
 
 	srv := &http.Server{
-		Addr: "0.0.0.0:8080",
+		Addr: fmt.Sprintf("%s:%d", config.Address, config.Port),
 		// Good practice to set timeouts to avoid Slowloris attacks.
-		WriteTimeout: time.Second * 15,
-		ReadTimeout:  time.Second * 15,
-		IdleTimeout:  time.Second * 60,
+		WriteTimeout: time.Second * time.Duration(config.WriteTimeout),
+		ReadTimeout:  time.Second * time.Duration(config.ReadTimeout),
+		IdleTimeout:  time.Second * time.Duration(config.IdleTimeout),
 		Handler:      a.router, // Pass our instance of gorilla/mux in.
 	}
 
@@ -70,7 +64,7 @@ func (a *Api) Handle() {
 	<-c
 
 	// Create a deadline to wait for.
-	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(config.GracefulTimeout))
 	defer cancel()
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
