@@ -3,3 +3,9 @@ api:
   address: "../../test/test.db"
   database: "test"
   tables: "sharks"
+
+  middlewares:
+  - dbAuth:
+      - mode: "optional"
+      - realm: "Username and password optionals"
+  - json:

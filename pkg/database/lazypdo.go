@@ -20,7 +20,11 @@ type LazyPdo struct {
 }
 
 func NewLazyPdo(dsn string, user string, password string, options map[string]string) *LazyPdo {
-	return &LazyPdo{dsn, user, password, options, nil, nil}
+	l := &LazyPdo{dsn, user, password, options, nil, nil}
+	if conn := l.connect(); conn == nil {
+		panic("Connection failed to database")
+	}
+	return l
 }
 
 func (l *LazyPdo) AddInitCommand(command string) {

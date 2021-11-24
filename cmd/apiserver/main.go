@@ -26,7 +26,7 @@ func main() {
 
 	// Set undefined variables
 	viper.SetDefault("api.driver", "mysql")
-	viper.SetDefault("api.middlewares", "records,geojson,openapi,status")
+	viper.SetDefault("api.controllers", "records,geojson,openapi,status")
 	viper.SetDefault("api.cachetype", "TempFile")
 	viper.SetDefault("api.cachetime", 10)
 	viper.SetDefault("api.openapibase", `{"info":{"title":"GO-CRUD-API","version":"0.0.1"}}`)
@@ -39,10 +39,10 @@ func main() {
 
 	err := viper.Unmarshal(&config)
 	if err != nil {
-		fmt.Printf("Unable to decode into struct, %v", err)
+		panic(fmt.Sprintf("Unable to decode into struct, %v", err))
 	}
 
-	config.Api.SetDriverDefaults()
+	config.Init()
 	api := apiserver.NewApi(config.Api)
 	api.Handle(config.Server)
 }

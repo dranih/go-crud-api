@@ -20,6 +20,7 @@ type Api struct {
 	debug  bool
 }
 
+//todo : cache
 func NewApi(config *ApiConfig) *Api {
 	router := mux.NewRouter()
 	dbClient := database.NewGenericDB(
@@ -30,15 +31,35 @@ func NewApi(config *ApiConfig) *Api {
 		config.GetTables(),
 		config.Username,
 		config.Password)
+	//$prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
+	//$cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
 	reflection := database.NewReflectionService(dbClient, "", 0)
-	records := database.NewRecordService(dbClient, reflection)
-	controller.NewRecordController(router, records, true)
+	for _, ctrl := range config.GetControllers() {
+		switch ctrl {
+		case "records":
+			records := database.NewRecordService(dbClient, reflection)
+			controller.NewRecordController(router, records, config.Debug)
+		case "columns":
+			//$definition = new DefinitionService($db, $reflection);
+			//new ColumnController($router, $responder, $reflection, $definition);
+		case "cache":
+			//new CacheController($router, $responder, $cache);
+		case "openapi":
+			//$openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers(), $config->getCustomOpenApiBuilders());
+			//new OpenApiController($router, $responder, $openApi);
+		case "geojson":
+			//$records = new RecordService($db, $reflection);
+			//$geoJson = new GeoJsonService($reflection, $records);
+			//new GeoJsonController($router, $responder, $geoJson);
+		case "status":
+			//new StatusController($router, $responder, $cache, $db);
+		}
+	}
 	return &Api{router, config.Debug}
 }
 
 func (a *Api) Handle(config *ServerConfig) {
-	a.router.HandleFunc("/status/ping", getPing).Methods("GET")
-
+	//From https://golangexample.com/a-powerful-http-router-and-url-matcher-for-building-go-web-servers/
 	srv := &http.Server{
 		Addr: fmt.Sprintf("%s:%d", config.Address, config.Port),
 		// Good practice to set timeouts to avoid Slowloris attacks.
@@ -74,9 +95,4 @@ func (a *Api) Handle(config *ServerConfig) {
 	// to finalize based on context cancellation.
 	log.Println("shutting down")
 	os.Exit(0)
-}
-
-func getPing(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "OK")
 }

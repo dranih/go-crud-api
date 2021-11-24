@@ -18,7 +18,7 @@ type ApiConfig struct {
 	Password              string
 	Database              string
 	Tables                string
-	Middlewares           string
+	Middlewares           map[string][]map[string]interface{}
 	Controllers           string
 	CustomControllers     string
 	CustomOpenApiBuilders string
@@ -89,7 +89,7 @@ func (ac *ApiConfig) getDriverDefaults(driver string) map[string]interface{} {
    }
 */
 
-func (ac *ApiConfig) SetDriverDefaults() {
+func (ac *ApiConfig) setDriverDefaults() {
 	defaults := ac.getDriverDefaults(ac.Driver)
 	if ac.Address == "" {
 		ac.Address = fmt.Sprint(defaults["address"])
@@ -97,6 +97,11 @@ func (ac *ApiConfig) SetDriverDefaults() {
 	if ac.Port == 0 {
 		ac.Port, _ = defaults["port"].(int)
 	}
+}
+
+func (c *Config) Init() {
+	c.Api.setDriverDefaults()
+	c.Api.initMiddlewares()
 }
 
 /*
@@ -115,6 +120,18 @@ func (ac *ApiConfig) SetDriverDefaults() {
        $this->values = $newValues;
    }
 
+*/
+
+func (ac *ApiConfig) initMiddlewares() {
+	defaultMiddlewares := "cors,errors"
+	for _, defaultMiddleware := range strings.Split(defaultMiddlewares, ",") {
+		if _, exists := ac.Middlewares[defaultMiddleware]; !exists {
+			ac.Middlewares[defaultMiddleware] = nil
+		}
+	}
+}
+
+/*
    private function parseMiddlewares(array $values): array
    {
        $newValues = array();
@@ -178,11 +195,16 @@ func (ac *ApiConfig) GetTables() map[string]bool {
 }
 
 /*
-    public function getMiddlewares(): array
-    {
-        return $this->values['middlewares'];
-    }
+   public function getMiddlewares(): array
+   {
+       return $this->values['middlewares'];
+   }
+*/
+func (ac *ApiConfig) GetControllers() []string {
+	return strings.Split(ac.Controllers, ",")
+}
 
+/*
     public function getControllers(): array
     {
         return array_filter(array_map('trim', explode(',', $this->values['controllers'])));
