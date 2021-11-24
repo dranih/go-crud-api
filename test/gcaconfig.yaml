@@ -1,0 +1,5 @@
+api:
+  driver: "sqlite"
+  address: "../../test/test.db"
+  database: "test"
+  tables: "sharks"

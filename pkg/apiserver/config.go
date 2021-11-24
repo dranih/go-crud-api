@@ -39,13 +39,6 @@ type ServerConfig struct {
 	IdleTimeout     int
 }
 
-func (ac *ApiConfig) getDefaultDriver() string {
-	if ac.Driver != "" {
-		return ac.Driver
-	}
-	return "mysql"
-}
-
 func (ac *ApiConfig) getDefaultPort(driver string) int {
 	switch driver {
 	case "mysql":
@@ -84,27 +77,6 @@ func (ac *ApiConfig) getDriverDefaults(driver string) map[string]interface{} {
 	}
 }
 
-func (sc *ServerConfig) SetDefaults() {
-	if sc.Address == "" {
-		sc.Address = "0.0.0.0"
-	}
-	if sc.Port == 0 {
-		sc.Port = 8080
-	}
-	if sc.GracefulTimeout == 0 {
-		sc.GracefulTimeout = 15
-	}
-	if sc.WriteTimeout == 0 {
-		sc.WriteTimeout = 15
-	}
-	if sc.ReadTimeout == 0 {
-		sc.ReadTimeout = 15
-	}
-	if sc.IdleTimeout == 0 {
-		sc.IdleTimeout = 60
-	}
-}
-
 /*
    private function applyEnvironmentVariables(array $values): array
    {
@@ -117,40 +89,13 @@ func (sc *ServerConfig) SetDefaults() {
    }
 */
 
-func (c *Config) SetDefaults() {
-	if c.Api == nil {
-		c.Api = &ApiConfig{}
-	}
-	c.Api.SetDefaults()
-	if c.Server == nil {
-		c.Server = &ServerConfig{}
-	}
-	c.Server.SetDefaults()
-}
-
-func (ac *ApiConfig) SetDefaults() {
-	ac.Driver = ac.getDefaultDriver()
+func (ac *ApiConfig) SetDriverDefaults() {
 	defaults := ac.getDriverDefaults(ac.Driver)
 	if ac.Address == "" {
 		ac.Address = fmt.Sprint(defaults["address"])
 	}
 	if ac.Port == 0 {
 		ac.Port, _ = defaults["port"].(int)
-	}
-	if ac.Middlewares == "" {
-		ac.Middlewares = "cors,errors"
-	}
-	if ac.Controllers == "" {
-		ac.Controllers = "records,geojson,openapi,status"
-	}
-	if ac.CacheType == "" {
-		ac.CacheType = "TempFile"
-	}
-	if ac.CacheTime == 0 {
-		ac.CacheTime = 10
-	}
-	if ac.OpenApiBase == "" {
-		ac.OpenApiBase = `{"info":{"title":"GO-CRUD-API","version":"0.0.1"}}`
 	}
 }
 
