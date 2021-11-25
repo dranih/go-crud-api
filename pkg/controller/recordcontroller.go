@@ -17,8 +17,8 @@ type RecordController struct {
 	responder Responder
 }
 
-func NewRecordController(router *mux.Router, service *database.RecordService, debug bool) *RecordController {
-	rc := &RecordController{service, NewJsonResponder(debug)}
+func NewRecordController(router *mux.Router, responder Responder, service *database.RecordService) *RecordController {
+	rc := &RecordController{service, responder}
 	router.HandleFunc("/records/{table}", rc.list).Methods("GET")
 	router.HandleFunc("/records/{table}", rc.create).Methods("POST")
 	router.HandleFunc("/records/{table}/{id}", rc.read).Methods("GET")

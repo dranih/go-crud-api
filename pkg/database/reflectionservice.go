@@ -2,13 +2,13 @@ package database
 
 type ReflectionService struct {
 	db       *GenericDB
-	cache    string
+	cache    interface{}
 	ttl      int
 	database *ReflectedDatabase
 	tables   map[string]*ReflectedTable
 }
 
-func NewReflectionService(db *GenericDB, cache string, ttl int) *ReflectionService {
+func NewReflectionService(db *GenericDB, cache interface{}, ttl int) *ReflectionService {
 	return &ReflectionService{db, cache, ttl, nil, map[string]*ReflectedTable{}}
 }
 

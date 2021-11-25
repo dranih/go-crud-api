@@ -22,8 +22,7 @@ type Api struct {
 
 //todo : cache
 func NewApi(config *ApiConfig) *Api {
-	router := mux.NewRouter()
-	dbClient := database.NewGenericDB(
+	db := database.NewGenericDB(
 		config.Driver,
 		config.Address,
 		config.Port,
@@ -33,12 +32,15 @@ func NewApi(config *ApiConfig) *Api {
 		config.Password)
 	//$prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
 	//$cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
-	reflection := database.NewReflectionService(dbClient, "", 0)
+	var cache interface{}
+	reflection := database.NewReflectionService(db, cache, 0)
+	responder := controller.NewJsonResponder(config.Debug)
+	router := mux.NewRouter()
 	for _, ctrl := range config.GetControllers() {
 		switch ctrl {
 		case "records":
-			records := database.NewRecordService(dbClient, reflection)
-			controller.NewRecordController(router, records, config.Debug)
+			records := database.NewRecordService(db, reflection)
+			controller.NewRecordController(router, responder, records)
 		case "columns":
 			//$definition = new DefinitionService($db, $reflection);
 			//new ColumnController($router, $responder, $reflection, $definition);
@@ -52,7 +54,7 @@ func NewApi(config *ApiConfig) *Api {
 			//$geoJson = new GeoJsonService($reflection, $records);
 			//new GeoJsonController($router, $responder, $geoJson);
 		case "status":
-			//new StatusController($router, $responder, $cache, $db);
+			controller.NewStatusController(router, responder, cache, db)
 		}
 	}
 	return &Api{router, config.Debug}
