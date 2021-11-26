@@ -1,4 +1,4 @@
-package middleware
+package database
 
 type VariableStore struct {
 	values map[string]interface{}

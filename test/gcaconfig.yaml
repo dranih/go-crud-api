@@ -5,7 +5,8 @@ api:
   tables: "sharks"
 
   middlewares:
-  - dbAuth:
+  - basicAuth:
       - mode: "optional"
       - realm: "Username and password optionals"
+      - passwordFile: $HOME/Work/go-crud-api/test/test.pwd
   - json:

@@ -1,8 +1,11 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/dranih/go-crud-api/pkg/controller"
 )
 
 type Middleware interface {
@@ -13,7 +16,8 @@ type Middleware interface {
 }
 
 type GenericMiddleware struct {
-	properties map[string]string
+	Responder  controller.Responder
+	Properties map[string]interface{}
 }
 
 func (gm *GenericMiddleware) getArrayProperty(key, defaut string) []string {
@@ -21,8 +25,8 @@ func (gm *GenericMiddleware) getArrayProperty(key, defaut string) []string {
 }
 
 func (gm *GenericMiddleware) getProperty(key, defaut string) string {
-	if val, exists := gm.properties[key]; exists {
-		return val
+	if val, exists := gm.Properties[key]; exists {
+		return fmt.Sprint(val)
 	}
 	return defaut
 }

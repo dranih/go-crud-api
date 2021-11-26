@@ -18,7 +18,7 @@ type ApiConfig struct {
 	Password              string
 	Database              string
 	Tables                string
-	Middlewares           map[string][]map[string]interface{}
+	Middlewares           map[string]map[string]interface{}
 	Controllers           string
 	CustomControllers     string
 	CustomOpenApiBuilders string

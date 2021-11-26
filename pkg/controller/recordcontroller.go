@@ -9,6 +9,7 @@ import (
 
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/record"
+	"github.com/dranih/go-crud-api/pkg/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -32,7 +33,7 @@ func NewRecordController(router *mux.Router, responder Responder, service *datab
 // Should return err error
 func (rc *RecordController) list(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
-	params := getRequestParams(r)
+	params := utils.GetRequestParams(r)
 	if !rc.service.HasTable(table) {
 		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
@@ -55,7 +56,7 @@ func (rc *RecordController) read(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
-	params := getRequestParams(r)
+	params := utils.GetRequestParams(r)
 	id := mux.Vars(r)["id"]
 	if strings.Index(id, ",") != -1 {
 		ids := strings.Split(id, `,`)
@@ -120,7 +121,7 @@ func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
-	params := getRequestParams(r)
+	params := utils.GetRequestParams(r)
 
 	// []interface{} or map[string]interface{}
 	if records, isArray := jsonMap.([]interface{}); isArray {
@@ -162,7 +163,7 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
-	params := getRequestParams(r)
+	params := utils.GetRequestParams(r)
 	id := mux.Vars(r)["id"]
 	ids := strings.Split(id, `,`)
 
@@ -202,7 +203,7 @@ func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Delete", w, "")
 		return
 	}
-	params := getRequestParams(r)
+	params := utils.GetRequestParams(r)
 	id := mux.Vars(r)["id"]
 	if strings.Index(id, ",") != -1 {
 		ids := strings.Split(id, `,`)
@@ -244,7 +245,7 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
-	params := getRequestParams(r)
+	params := utils.GetRequestParams(r)
 	id := mux.Vars(r)["id"]
 	ids := strings.Split(id, `,`)
 

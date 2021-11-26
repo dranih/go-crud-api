@@ -13,6 +13,7 @@ import (
 
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/middleware"
 )
 
 type Api struct {
@@ -36,6 +37,14 @@ func NewApi(config *ApiConfig) *Api {
 	reflection := database.NewReflectionService(db, cache, 0)
 	responder := controller.NewJsonResponder(config.Debug)
 	router := mux.NewRouter()
+	for middle, properties := range config.Middlewares {
+		switch middle {
+		case "basicAuth":
+			bamMiddle := &middleware.BasicAuthMiddleware{middleware.GenericMiddleware{responder, properties}}
+			router.Use(bamMiddle.Process)
+		}
+	}
+
 	for _, ctrl := range config.GetControllers() {
 		switch ctrl {
 		case "records":
