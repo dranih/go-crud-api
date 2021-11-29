@@ -120,8 +120,9 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 				} else {
 					next.ServeHTTP(w, r)
 				}
+			} else {
+				next.ServeHTTP(w, r)
 			}
-			next.ServeHTTP(w, r)
 		}
 	})
 }

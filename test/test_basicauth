@@ -1,3 +1,4 @@
 GET http://127.0.0.1:8080/records/sharks/2,3,4
 Authorization: Basic dXNlcjE6TXlQd2QwMQ==
 #user1:MyPwd01
+#user2:password
