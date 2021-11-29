@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"bufio"
-	"encoding/base64"
 	"log"
 	"net/http"
 	"os"
@@ -91,39 +90,15 @@ func (bam *BasicAuthMiddleware) writePasswords(passwordFile string, passwords ma
 	return nil
 }
 
-func (bam *BasicAuthMiddleware) getAuthorizationCredentials(request *http.Request) string {
-	serverParams := utils.GetRequestParams(request)
-	if authUser, exists := serverParams["AUTH_USER"]; exists {
-		if authPwd, exists := serverParams["AUTH_PW"]; exists {
-			return authUser[0] + ":" + authPwd[0]
-		}
-	}
-	header := request.Header.Get("Authorization")
-	parts := strings.Split(strings.TrimSpace(header), " ")
-	if len(parts) != 2 {
-		return ""
-	}
-	if parts[0] != "Basic" {
-		return ""
-	}
-	if sDec, err := base64.StdEncoding.DecodeString(parts[1]); err != nil {
-		return string(sDec)
-	}
-	return ""
+func (bam *BasicAuthMiddleware) getAuthorizationCredentials(request *http.Request) (string, string, bool) {
+	return request.BasicAuth()
 }
 
 func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RequestURI)
 		session := utils.SetSession(w, r)
-		credentials := bam.getAuthorizationCredentials(r)
-		if credentials != "" {
-			var username, password string
-			if strings.Contains(credentials, ":") {
-				val := strings.SplitN(strings.TrimSpace(credentials), ":", 2)
-				username = val[0]
-				password = val[1]
-			}
+		username, password, ok := bam.getAuthorizationCredentials(r)
+		if ok {
 			passwordFile := bam.getProperty("passwordFile", ".htpasswd")
 			validUser := bam.getValidUsername(username, password, passwordFile)
 			session.Values["username"] = validUser
@@ -150,44 +125,3 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 		}
 	})
 }
-
-/*
-	public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
-	{
-		if (session_status() == PHP_SESSION_NONE) {
-			if (!headers_sent()) {
-				$sessionName = $this->getProperty('sessionName', '');
-				if ($sessionName) {
-					session_name($sessionName);
-				}
-				session_start();
-			}
-		}
-		$credentials = $this->getAuthorizationCredentials($request);
-		if ($credentials) {
-			list($username, $password) = array('', '');
-			if (strpos($credentials, ':') !== false) {
-				list($username, $password) = explode(':', $credentials, 2);
-			}
-			$passwordFile = $this->getProperty('passwordFile', '.htpasswd');
-			$validUser = $this->getValidUsername($username, $password, $passwordFile);
-			$_SESSION['username'] = $validUser;
-			if (!$validUser) {
-				return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
-			}
-			if (!headers_sent()) {
-				session_regenerate_id();
-			}
-		}
-		if (!isset($_SESSION['username']) || !$_SESSION['username']) {
-			$authenticationMode = $this->getProperty('mode', 'required');
-			if ($authenticationMode == 'required') {
-				$response = $this->responder->error(ErrorCode::AUTHENTICATION_REQUIRED, '');
-				$realm = $this->getProperty('realm', 'Username and password required');
-				$response = $response->withHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
-				return $response;
-			}
-		}
-		return $next->handle($request);
-	}
-}*/
