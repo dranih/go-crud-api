@@ -40,7 +40,7 @@ func NewApi(config *ApiConfig) *Api {
 	for middle, properties := range config.Middlewares {
 		switch middle {
 		case "basicAuth":
-			bamMiddle := &middleware.BasicAuthMiddleware{middleware.GenericMiddleware{responder, properties}}
+			bamMiddle := middleware.NewBasiAuth(responder, properties)
 			router.Use(bamMiddle.Process)
 		}
 	}

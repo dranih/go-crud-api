@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/dranih/go-crud-api/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -14,6 +15,10 @@ import (
 
 type BasicAuthMiddleware struct {
 	GenericMiddleware
+}
+
+func NewBasiAuth(responder controller.Responder, properties map[string]interface{}) *BasicAuthMiddleware {
+	return &BasicAuthMiddleware{GenericMiddleware: GenericMiddleware{Responder: responder, Properties: properties}}
 }
 
 func (bam *BasicAuthMiddleware) hasCorrectPassword(username, password string, passwords *map[string]string) (bool, bool) {
