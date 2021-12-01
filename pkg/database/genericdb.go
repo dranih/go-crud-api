@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -187,11 +186,18 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	tableName := table.GetName()
 	pkName := table.GetPk().GetName()
 	sql := `INSERT INTO "` + tableName + `" ` + insertColumns
-	records, err := g.query(sql, parameters...)
+	log.Printf(sql)
+	log.Printf(sql)
+	res, err := g.exec(sql, parameters...)
 	if err != nil {
 		return nil, err
 	}
-	if pkValue, exists := columnValues[pkName]; exists {
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{pkName: id}, nil
+	/*if pkValue, exists := columnValues[pkName]; exists {
 		return map[string]interface{}{pkName: pkValue}, nil
 	}
 	// work around missing "returning" or "output" in mysql
@@ -212,7 +218,7 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 		}
 		return map[string]interface{}{pkName: pkValue}, nil
 	}
-	return nil, errors.New("No Inserted ID")
+	return nil, errors.New("No Inserted ID")*/
 }
 
 // Should check error
