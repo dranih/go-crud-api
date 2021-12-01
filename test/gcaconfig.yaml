@@ -6,7 +6,7 @@ api:
 
   middlewares:
   - basicAuth:
-      - mode: "required"
+      - mode: "optional"
       - realm: "GoCrudApi : Username and password required"
       - passwordFile: "../../test/test.pwd"
   - json:

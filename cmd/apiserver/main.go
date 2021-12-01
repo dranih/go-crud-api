@@ -8,5 +8,5 @@ func main() {
 	config := apiserver.ReadConfig()
 	config.Init()
 	api := apiserver.NewApi(config.Api)
-	api.Handle(config.Server)
+	api.Handle(config.Server, nil)
 }

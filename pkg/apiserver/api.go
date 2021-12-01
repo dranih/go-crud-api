@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -69,7 +71,7 @@ func NewApi(config *ApiConfig) *Api {
 	return &Api{router, config.Debug}
 }
 
-func (a *Api) Handle(config *ServerConfig) {
+func (a *Api) Handle(config *ServerConfig, wg *sync.WaitGroup) {
 	//From https://golangexample.com/a-powerful-http-router-and-url-matcher-for-building-go-web-servers/
 	srv := &http.Server{
 		Addr: fmt.Sprintf("%s:%d", config.Address, config.Port),
@@ -82,8 +84,24 @@ func (a *Api) Handle(config *ServerConfig) {
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
+		/*defer wg.Done()
 		if err := srv.ListenAndServe(); err != nil {
 			log.Println(err)
+		}*/
+		addr := srv.Addr
+		if addr == "" {
+			addr = ":http"
+		}
+		ln, err := net.Listen("tcp", addr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Started http server at %s", addr)
+		if wg != nil {
+			wg.Done()
+		}
+		if err := srv.Serve(ln); err != nil {
+			log.Fatal(err)
 		}
 	}()
 
