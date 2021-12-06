@@ -88,6 +88,9 @@ func (rs *RecordService) Read(tableName string, params map[string][]string, id .
 }
 
 func (rs *RecordService) Update(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+	if len(args) < 2 {
+		return nil, fmt.Errorf("Not enought arguments : %v", args)
+	}
 	id := fmt.Sprint(args[0])
 	record := args[1]
 	recordMap := rs.sanitizeRecord(tableName, record, id)
@@ -102,6 +105,9 @@ func (rs *RecordService) Delete(tableName string, params map[string][]string, ar
 }
 
 func (rs *RecordService) Increment(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+	if len(args) < 2 {
+		return nil, fmt.Errorf("Not enought arguments : %v", args)
+	}
 	id := fmt.Sprint(args[0])
 	record := args[1]
 	recordMap := rs.sanitizeRecord(tableName, record, id)

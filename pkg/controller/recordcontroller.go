@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 
@@ -184,8 +185,9 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
-		response, err := rc.service.Update(table, params, id)
+		response, err := rc.service.Update(table, params, id, jsonMap)
 		if response == nil || err != nil {
+			log.Printf("%v", err)
 			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
 			return
 		}
@@ -266,7 +268,7 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
-		response, err := rc.service.Increment(table, params, id)
+		response, err := rc.service.Increment(table, params, id, jsonMap)
 		if response == nil || err != nil {
 			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
 			return
