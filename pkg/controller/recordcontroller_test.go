@@ -28,6 +28,7 @@ func TestRecordController(t *testing.T) {
 	responder := NewJsonResponder(false)
 	router := mux.NewRouter()
 	NewRecordController(router, responder, records)
+	NewStatusController(router, responder, cache, db)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -42,6 +43,14 @@ func TestRecordController(t *testing.T) {
 		wantRegex  string
 		statusCode int
 	}{
+		{
+			name:       "ping ",
+			method:     http.MethodGet,
+			uri:        "/status/ping",
+			body:       ``,
+			wantRegex:  `{"cache":[0-9]+,"db":[0-9]+}`,
+			statusCode: http.StatusOK,
+		},
 		{
 			name:       "get table ",
 			method:     http.MethodGet,
@@ -98,6 +107,38 @@ func TestRecordController(t *testing.T) {
 			want:       `{"RowsAffected":1}`,
 			statusCode: http.StatusOK,
 		},
+		{
+			name:       "post multiple ",
+			method:     http.MethodPost,
+			uri:        "/records/sharks",
+			body:       `[{"id":99,"name":"Tomy","length": "100","sharktype": "Great White Shark"},{"id":999,"name":"Barbara","length": "150","sharktype": "Hammer head"}]`,
+			wantRegex:  `[{"id":[0-9]+},{"id":[0-9]+}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "put multiples ",
+			method:     http.MethodPut,
+			uri:        "/records/sharks/99,999",
+			body:       `[{"length": 2000},{"name": "Barbara3","length": 1000}]`,
+			want:       `[{"RowsAffected":1},{"RowsAffected":1}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "patch multiple ",
+			method:     http.MethodPatch,
+			uri:        "/records/sharks/99,999",
+			body:       `[{"length": 10},{"length": 50}]`,
+			want:       `[{"RowsAffected":1},{"RowsAffected":1}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "delete multiple ",
+			method:     http.MethodDelete,
+			uri:        "/records/sharks/99,999",
+			body:       ``,
+			want:       `[{"RowsAffected":1},{"RowsAffected":1}]`,
+			statusCode: http.StatusOK,
+		},
 	}
 
 	for _, tc := range tt {
@@ -114,7 +155,7 @@ func TestRecordController(t *testing.T) {
 			defer resp.Body.Close()
 
 			if resp.StatusCode != tc.statusCode {
-				t.Errorf("Want status '%d', got '%d'", tc.statusCode, resp.StatusCode)
+				t.Errorf("Want status '%d', got '%d' at url '%s'", tc.statusCode, resp.StatusCode, resp.Request.URL)
 			}
 			b, err := io.ReadAll(resp.Body)
 			if tc.wantRegex != "" {
