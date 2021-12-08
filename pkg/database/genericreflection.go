@@ -103,8 +103,8 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 	case `sqlite`:
 		mapArr = map[string]string{`table`: `table`, `view`: `view`}
 	}
+	_results := []map[string]interface{}{}
 	if len(tables) > 0 {
-		_results := results
 		for _, result := range results {
 			if _, ok := tables[result["TABLE_NAME"].(string)]; ok {
 				_results = append(_results, result)
