@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 type ReflectedTable struct {
 	name      string
 	tableType string
@@ -32,35 +34,6 @@ func NewReflectedTable(name, tableType string, columns map[string]*ReflectedColu
 	return r
 }
 
-/*
-public function __construct(string $name, string $type, array $columns)
-{
-	$this->name = $name;
-	$this->type = $type;
-	// set columns
-	$this->columns = [];
-	foreach ($columns as $column) {
-		$columnName = $column->getName();
-		$this->columns[$columnName] = $column;
-	}
-	// set primary key
-	$this->pk = null;
-	foreach ($columns as $column) {
-		if ($column->getPk() == true) {
-			$this->pk = $column;
-		}
-	}
-	// set foreign keys
-	$this->fks = [];
-	foreach ($columns as $column) {
-		$columnName = $column->getName();
-		$referencedTableName = $column->getFk();
-		if ($referencedTableName != '') {
-			$this->fks[$columnName] = $referencedTableName;
-		}
-	}
-}
-*/
 // done
 func NewReflectedTableFromReflection(reflection *GenericReflection, name, viewType string) *ReflectedTable {
 	// set columns
@@ -105,76 +78,33 @@ func NewReflectedTableFromReflection(reflection *GenericReflection, name, viewTy
 	return NewReflectedTable(name, viewType, columns)
 }
 
-/*
-public static function fromReflection(GenericReflection $reflection, string $name, string $type): ReflectedTable
-{
-	// set columns
-	$columns = [];
-	foreach ($reflection->getTableColumns($name, $type) as $tableColumn) {
-		$column = ReflectedColumn::fromReflection($reflection, $tableColumn);
-		$columns[$column->getName()] = $column;
-	}
-	// set primary key
-	$columnName = false;
-	if ($type == 'view') {
-		$columnName = 'id';
-	} else {
-		$columnNames = $reflection->getTablePrimaryKeys($name);
-		if (count($columnNames) == 1) {
-			$columnName = $columnNames[0];
+func NewReflectedTableFromJson(json map[string]interface{}) *ReflectedTable {
+	if n, exists := json["name"]; exists {
+		name := fmt.Sprint(n)
+		tableType := "table"
+		if tt, exists := json["type"]; exists {
+			tableType = fmt.Sprint(tt)
 		}
-	}
-	if ($columnName && isset($columns[$columnName])) {
-		$pk = $columns[$columnName];
-		$pk->setPk(true);
-	}
-	// set foreign keys
-	if ($type == 'view') {
-		$tables = $reflection->getTables();
-		foreach ($columns as $columnName => $column) {
-			if (substr($columnName, -3) == '_id') {
-				foreach ($tables as $table) {
-					$tableName = $table['TABLE_NAME'];
-					$suffix = $tableName . '_id';
-					if (substr($columnName, -1 * strlen($suffix)) == $suffix) {
-						$column->setFk($tableName);
-					}
+		columns := map[string]*ReflectedColumn{}
+		if jsonColumns, exists := json["columns"]; exists {
+			if c, ok := jsonColumns.([]map[string]interface{}); ok {
+				for _, column := range c {
+					rcolumn := NewReflectedColumnFromJson(column)
+					columns[rcolumn.GetName()] = rcolumn
 				}
 			}
 		}
-	} else {
-		$fks = $reflection->getTableForeignKeys($name);
-		foreach ($fks as $columnName => $table) {
-			$columns[$columnName]->setFk($table);
-		}
+		return NewReflectedTable(name, tableType, columns)
 	}
-	return new ReflectedTable($name, $type, array_values($columns));
+	return nil
 }
 
-public static function fromJson($json): ReflectedTable
-{
-	$name = $json->name;
-	$type = isset($json->type) ? $json->type : 'table';
-	$columns = [];
-	if (isset($json->columns) && is_array($json->columns)) {
-		foreach ($json->columns as $column) {
-			$columns[] = ReflectedColumn::fromJson($column);
-		}
-	}
-	return new ReflectedTable($name, $type, $columns);
-}
-*/
 func (rt *ReflectedTable) HasColumn(columnName string) bool {
 	_, exists := rt.columns[columnName]
 	return exists
 }
 
 /*
-public function hasColumn(string $columnName): bool
-{
-	return isset($this->columns[$columnName]);
-}
-
 public function hasPk(): bool
 {
 	return $this->pk != null;
@@ -188,22 +118,10 @@ func (rt *ReflectedTable) GetName() string {
 	return rt.name
 }
 
-/*
-public function getName(): string
-{
-	return $this->name;
-}
-*/
 func (rt *ReflectedTable) GetType() string {
 	return rt.tableType
 }
 
-/*
-public function getType(): string
-{
-	return $this->type;
-}
-*/
 func (rt *ReflectedTable) GetColumnNames() []string {
 	result := []string{}
 	for key := range rt.columns {
@@ -212,22 +130,10 @@ func (rt *ReflectedTable) GetColumnNames() []string {
 	return result
 }
 
-/*
-public function getColumnNames(): array
-{
-	return array_keys($this->columns);
-}
-*/
 func (rt *ReflectedTable) GetColumn(columnName string) *ReflectedColumn {
 	return rt.columns[columnName]
 }
 
-/*
-public function getColumn($columnName): ReflectedColumn
-{
-	return $this->columns[$columnName];
-}
-*/
 func (rt *ReflectedTable) GetFksTo(tableName string) []*ReflectedColumn {
 	columns := []*ReflectedColumn{}
 	for columnName, referencedTableName := range rt.fks {
@@ -239,16 +145,6 @@ func (rt *ReflectedTable) GetFksTo(tableName string) []*ReflectedColumn {
 }
 
 /*
-public function getFksTo(string $tableName): array
-{
-	$columns = array();
-	foreach ($this->fks as $columnName => $referencedTableName) {
-		if ($tableName == $referencedTableName && !is_null($this->columns[$columnName])) {
-			$columns[] = $this->columns[$columnName];
-		}
-	}
-	return $columns;
-}
 
 public function removeColumn(string $columnName): bool
 {
@@ -258,18 +154,20 @@ public function removeColumn(string $columnName): bool
 	unset($this->columns[$columnName]);
 	return true;
 }
-
-public function serialize()
-{
-	return [
-		'name' => $this->name,
-		'type' => $this->type,
-		'columns' => array_values($this->columns),
-	];
-}
-
-public function jsonSerialize()
-{
-	return $this->serialize();
-}
 */
+func (rt *ReflectedTable) Serialize() map[string]interface{} {
+	i, vals := 0, make([]interface{}, len(rt.columns))
+	for _, val := range rt.columns {
+		vals[i] = val
+		i++
+	}
+	return map[string]interface{}{
+		"name":    rt.name,
+		"type":    rt.tableType,
+		"columns": vals,
+	}
+}
+
+func (rt *ReflectedTable) JsonSerialize() map[string]interface{} {
+	return rt.Serialize()
+}

@@ -71,30 +71,6 @@ func parseColumnType(columnType string, length, precision, scale *int) {
 	}
 }
 
-/*
-private static function parseColumnType(string $columnType, int &$length, int &$precision, int &$scale)
-{
-	if (!$columnType) {
-		return;
-	}
-	$pos = strpos($columnType, '(');
-	if ($pos) {
-		$dataSize = rtrim(substr($columnType, $pos + 1), ')');
-		if ($length) {
-			$length = (int) $dataSize;
-		} else {
-			$pos = strpos($dataSize, ',');
-			if ($pos) {
-				$precision = (int) substr($dataSize, 0, $pos);
-				$scale = (int) substr($dataSize, $pos + 1);
-			} else {
-				$precision = (int) $dataSize;
-				$scale = 0;
-			}
-		}
-	}
-}
-*/
 // done
 func getDataSize(length, precision, scale int) string {
 	dataSize := ""
@@ -154,37 +130,53 @@ func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResul
 	return &ReflectedColumn{name, jdbcType, length, precision, scale, nullable, pk, fk}
 }
 
+func NewReflectedColumnFromJson(json map[string]interface{}) *ReflectedColumn {
+	name := fmt.Sprint(json["name"])
+	columnType := fmt.Sprint(json["type"])
+	length := 0
+	if l, exists := json["length"]; exists {
+		i, e := strconv.Atoi(fmt.Sprint(l))
+		if e == nil {
+			length = i
+		}
+	}
+	precision := 0
+	if l, exists := json["precision"]; exists {
+		i, e := strconv.Atoi(fmt.Sprint(l))
+		if e == nil {
+			precision = i
+		}
+	}
+	scale := 0
+	if l, exists := json["scale"]; exists {
+		i, e := strconv.Atoi(fmt.Sprint(l))
+		if e == nil {
+			scale = i
+		}
+	}
+	nullable := false
+	if l, exists := json["nullable"]; exists {
+		i, e := strconv.ParseBool(fmt.Sprint(l))
+		if e == nil {
+			nullable = i
+		}
+	}
+	pk := false
+	if l, exists := json["pk"]; exists {
+		i, e := strconv.ParseBool(fmt.Sprint(l))
+		if e == nil {
+			pk = i
+		}
+	}
+	fk := ""
+	if l, exists := json["fk"]; exists {
+		fk = fmt.Sprint(l)
+	}
+
+	return NewReflectedColumn(name, columnType, length, precision, scale, nullable, pk, fk)
+}
+
 /*
-public static function fromReflection(GenericReflection $reflection, array $columnResult): ReflectedColumn
-{
-	$name = $columnResult['COLUMN_NAME'];
-	$dataType = $columnResult['DATA_TYPE'];
-	$length = (int) $columnResult['CHARACTER_MAXIMUM_LENGTH'];
-	$precision = (int) $columnResult['NUMERIC_PRECISION'];
-	$scale = (int) $columnResult['NUMERIC_SCALE'];
-	$columnType = $columnResult['COLUMN_TYPE'];
-	self::parseColumnType($columnType, $length, $precision, $scale);
-	$dataSize = self::getDataSize($length, $precision, $scale);
-	$type = $reflection->toJdbcType($dataType, $dataSize);
-	$nullable = in_array(strtoupper($columnResult['IS_NULLABLE']), ['TRUE', 'YES', 'T', 'Y', '1']);
-	$pk = false;
-	$fk = '';
-	return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
-}
-
-public static function fromJson($json): ReflectedColumn
-{
-	$name = $json->name;
-	$type = $json->type;
-	$length = isset($json->length) ? (int) $json->length : 0;
-	$precision = isset($json->precision) ? (int) $json->precision : 0;
-	$scale = isset($json->scale) ? (int) $json->scale : 0;
-	$nullable = isset($json->nullable) ? (bool) $json->nullable : false;
-	$pk = isset($json->pk) ? (bool) $json->pk : false;
-	$fk = isset($json->fk) ? $json->fk : '';
-	return new ReflectedColumn($name, $type, $length, $precision, $scale, $nullable, $pk, $fk);
-}
-
 private function sanitize()
 {
 	$this->length = $this->hasLength() ? $this->getLength() : 0;
@@ -197,11 +189,6 @@ func (rc *ReflectedColumn) GetName() string {
 }
 
 /*
-public function getName(): string
-{
-	return $this->name;
-}
-
 public function getNullable(): bool
 {
 	return $this->nullable;
@@ -212,11 +199,6 @@ func (rc *ReflectedColumn) GetType() string {
 }
 
 /*
-public function getType(): string
-{
-	return $this->type;
-}
-
 public function getLength(): int
 {
 	return $this->length ?: self::DEFAULT_LENGTH;
@@ -236,11 +218,6 @@ func (rc *ReflectedColumn) GetScale() int {
 }
 
 /*
-public function getScale(): int
-{
-	return $this->scale ?: self::DEFAULT_SCALE;
-}
-
 public function hasLength(): bool
 {
 	return in_array($this->type, ['varchar', 'varbinary']);
@@ -266,32 +243,15 @@ func (rc *ReflectedColumn) IsBinary() bool {
 	return false
 }
 
-/*
-public function isBinary(): bool
-{
-	return in_array($this->type, ['blob', 'varbinary']);
-}
-*/
 func (rc *ReflectedColumn) IsBoolean() bool {
 	return rc.columnType == "boolean"
 }
 
-/*
-public function isBoolean(): bool
-{
-	return $this->type == 'boolean';
-}
-*/
 func (rc *ReflectedColumn) IsGeometry() bool {
 	return rc.columnType == "geometry"
 }
 
 /*
-public function isGeometry(): bool
-{
-	return $this->type == 'geometry';
-}
-
 public function isInteger(): bool
 {
 	return in_array($this->type, ['integer', 'bigint', 'smallint', 'tinyint']);
@@ -301,40 +261,32 @@ func (rc *ReflectedColumn) SetPk(value bool) {
 	rc.pk = value
 }
 
-/*
-public function setPk($value)
-{
-	$this->pk = $value;
-}
-*/
 func (rc *ReflectedColumn) GetPk() bool {
 	return rc.pk
 }
 
-/*
-public function getPk(): bool
-{
-	return $this->pk;
-}
-*/
 func (rc *ReflectedColumn) SetFk(value string) {
 	rc.fk = value
-} /*
-public function setFk($value)
-{
-	$this->fk = $value;
 }
-*/
+
 func (rc *ReflectedColumn) GetFk() string {
 	return rc.fk
 }
 
-/*
-public function getFk(): string
-{
-	return $this->fk;
+func (rc *ReflectedColumn) Serialize() map[string]interface{} {
+	return map[string]interface{}{
+		"name":      rc.name,
+		"type":      rc.columnType,
+		"length":    rc.length,
+		"precision": rc.precision,
+		"scale":     rc.scale,
+		"nullable":  rc.nullable,
+		"pk":        rc.pk,
+		"fk":        rc.fk,
+	}
 }
 
+/*
 public function serialize()
 {
 	return [

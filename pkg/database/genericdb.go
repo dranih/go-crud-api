@@ -18,7 +18,7 @@ type GenericDB struct {
 	password      string
 	pdo           *LazyPdo
 	reflection    *GenericReflection
-	definition    string
+	definition    *GenericDefinition
 	conditions    *ConditionsBuilder
 	columns       *ColumnsBuilder
 	converter     *DataConverter
@@ -80,7 +80,6 @@ func (g *GenericDB) getOptions() map[string]string {
 func (g *GenericDB) initPdo() bool {
 	var result bool
 	if g.pdo != nil {
-		//result = $this->pdo->reconstruct($this->getDsn(), $this->username, $this->password, $this->getOptions());
 		result = g.pdo.Reconstruct(g.getDsn(), g.username, g.password, g.getOptions())
 	} else {
 		g.pdo = NewLazyPdo(g.getDsn(), g.username, g.password, g.getOptions())
@@ -92,7 +91,7 @@ func (g *GenericDB) initPdo() bool {
 	}
 
 	g.reflection = NewGenericReflection(g.pdo, g.driver, g.database, g.tables)
-	//$this->definition = new GenericDefinition($this->pdo, $this->driver, $this->database, $this->tables);
+	g.definition = NewGenericDefinition(g.pdo, g.driver, g.database, g.tables)
 	g.conditions = NewConditionsBuilder(g.driver)
 	g.columns = NewColumnsBuilder(g.driver)
 	g.converter = NewDataConverter(g.driver)
@@ -149,12 +148,10 @@ func (g *GenericDB) Reflection() *GenericReflection {
 	return g.reflection
 }
 
-/*
-public function definition(): GenericDefinition
-{
-	return $this->definition;
+func (g *GenericDB) Definition() *GenericDefinition {
+	return g.definition
 }
-*/
+
 func (g *GenericDB) BeginTransaction() (*sql.Tx, error) {
 	return g.pdo.BeginTransaction()
 }
@@ -400,14 +397,6 @@ func (g *GenericDB) Ping() int {
 }
 
 /*
-public function ping(): int
-{
-	$start = microtime(true);
-	$stmt = $this->pdo->prepare('SELECT 1');
-	$stmt->execute();
-	return intval((microtime(true) - $start) * 1000000);
-}
-
 public function getCacheKey(): string
 {
 	return md5(json_encode([
