@@ -27,7 +27,7 @@ const (
 // done
 func NewReflectedColumn(name string, columnType string, length int, precision int, scale int, nullable bool, pk bool, fk string) *ReflectedColumn {
 	r := &ReflectedColumn{name, columnType, length, precision, scale, nullable, pk, fk}
-	//r.sanitize()
+	r.sanitize()
 	return r
 }
 
@@ -87,22 +87,6 @@ func getDataSize(length, precision, scale int) string {
 	return dataSize
 }
 
-/*
-private static function getDataSize(int $length, int $precision, int $scale): string
-{
-	$dataSize = '';
-	if ($length) {
-		$dataSize = $length;
-	} elseif ($precision) {
-		if ($scale) {
-			$dataSize = $precision . ',' . $scale;
-		} else {
-			$dataSize = $precision;
-		}
-	}
-	return $dataSize;
-}
-*/
 // done
 func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResult map[string]interface{}) *ReflectedColumn {
 	name := columnResult["COLUMN_NAME"].(string)
@@ -176,39 +160,50 @@ func NewReflectedColumnFromJson(json map[string]interface{}) *ReflectedColumn {
 	return NewReflectedColumn(name, columnType, length, precision, scale, nullable, pk, fk)
 }
 
-/*
-private function sanitize()
-{
-	$this->length = $this->hasLength() ? $this->getLength() : 0;
-	$this->precision = $this->hasPrecision() ? $this->getPrecision() : 0;
-	$this->scale = $this->hasScale() ? $this->getScale() : 0;
+func (rc *ReflectedColumn) sanitize() {
+	if rc.HasLength() {
+		rc.length = rc.GetLength()
+	} else {
+		rc.length = 0
+	}
+	if rc.HasPrecision() {
+		rc.precision = rc.GetPrecision()
+	} else {
+		rc.precision = 0
+	}
+	if rc.HasScale() {
+		rc.scale = rc.GetScale()
+	} else {
+		rc.scale = 0
+	}
 }
-*/
+
 func (rc *ReflectedColumn) GetName() string {
 	return rc.name
 }
 
-/*
-public function getNullable(): bool
-{
-	return $this->nullable;
+func (rc *ReflectedColumn) getNullable() bool {
+	return rc.nullable
 }
-*/
+
 func (rc *ReflectedColumn) GetType() string {
 	return rc.columnType
 }
 
-/*
-public function getLength(): int
-{
-	return $this->length ?: self::DEFAULT_LENGTH;
+func (rc *ReflectedColumn) GetLength() int {
+	if rc.length > 0 {
+		return rc.length
+	}
+	return DEFAULT_LENGTH
 }
 
-public function getPrecision(): int
-{
-	return $this->precision ?: self::DEFAULT_PRECISION;
+func (rc *ReflectedColumn) GetPrecision() int {
+	if rc.precision > 0 {
+		return rc.precision
+	}
+	return DEFAULT_PRECISION
 }
-*/
+
 func (rc *ReflectedColumn) GetScale() int {
 	if rc.scale != -1 {
 		return rc.scale
@@ -217,22 +212,18 @@ func (rc *ReflectedColumn) GetScale() int {
 	}
 }
 
-/*
-public function hasLength(): bool
-{
-	return in_array($this->type, ['varchar', 'varbinary']);
+func (rc *ReflectedColumn) HasLength() bool {
+	return rc.columnType == "varchar" && rc.columnType == "varbinary"
 }
 
-public function hasPrecision(): bool
-{
-	return $this->type == 'decimal';
+func (rc *ReflectedColumn) HasPrecision() bool {
+	return rc.columnType == "decimal"
 }
 
-public function hasScale(): bool
-{
-	return $this->type == 'decimal';
+func (rc *ReflectedColumn) HasScale() bool {
+	return rc.columnType == "decimal"
 }
-*/
+
 func (rc *ReflectedColumn) IsBinary() bool {
 	switch rc.columnType {
 	case
@@ -251,12 +242,18 @@ func (rc *ReflectedColumn) IsGeometry() bool {
 	return rc.columnType == "geometry"
 }
 
-/*
-public function isInteger(): bool
-{
-	return in_array($this->type, ['integer', 'bigint', 'smallint', 'tinyint']);
+func (rc *ReflectedColumn) IsInteger() bool {
+	switch rc.columnType {
+	case
+		"integer",
+		"bigint",
+		"smallint",
+		"tinyint":
+		return true
+	}
+	return false
 }
-*/
+
 func (rc *ReflectedColumn) SetPk(value bool) {
 	rc.pk = value
 }

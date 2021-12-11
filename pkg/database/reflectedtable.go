@@ -1,6 +1,9 @@
 package database
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type ReflectedTable struct {
 	name      string
@@ -156,18 +159,23 @@ public function removeColumn(string $columnName): bool
 }
 */
 func (rt *ReflectedTable) Serialize() map[string]interface{} {
-	i, vals := 0, make([]interface{}, len(rt.columns))
-	for _, val := range rt.columns {
-		vals[i] = val
+	i, keys := 0, make([]interface{}, len(rt.columns))
+	for key, _ := range rt.columns {
+		keys[i] = key
 		i++
 	}
 	return map[string]interface{}{
 		"name":    rt.name,
 		"type":    rt.tableType,
-		"columns": vals,
+		"columns": keys,
 	}
 }
 
 func (rt *ReflectedTable) JsonSerialize() map[string]interface{} {
 	return rt.Serialize()
+}
+
+// json marshaling for struct ListDocument
+func (rt *ReflectedTable) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rt.Serialize())
 }

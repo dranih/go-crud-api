@@ -53,8 +53,8 @@ func NewApi(config *ApiConfig) *Api {
 			records := database.NewRecordService(db, reflection)
 			controller.NewRecordController(router, responder, records)
 		case "columns":
-			//$definition = new DefinitionService($db, $reflection);
-			//new ColumnController($router, $responder, $reflection, $definition);
+			definition := database.NewDefinitionService(db, reflection)
+			controller.NewColumnController(router, responder, reflection, definition)
 		case "cache":
 			//new CacheController($router, $responder, $cache);
 		case "openapi":
