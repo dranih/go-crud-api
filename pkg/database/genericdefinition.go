@@ -29,11 +29,11 @@ func (gd *GenericDefinition) GetColumnType(column *ReflectedColumn, update bool)
 	columnType := gd.typeConverter.FromJdbc(column.GetType())
 	size := ""
 	if column.HasPrecision() && column.HasScale() {
-		size = fmt.Sprintf("(%s,%s)", column.GetPrecision(), column.GetScale())
+		size = fmt.Sprintf("(%d,%d)", column.GetPrecision(), column.GetScale())
 	} else if column.HasPrecision() {
-		size = fmt.Sprintf("(%s)", column.GetPrecision())
+		size = fmt.Sprintf("(%d)", column.GetPrecision())
 	} else if column.HasLength() {
-		size = fmt.Sprintf("(%s)", column.GetLength())
+		size = fmt.Sprintf("(%d)", column.GetLength())
 	}
 	null := gd.getColumnNullType(column, update)
 	auto := gd.getColumnAutoIncrement(column, update)

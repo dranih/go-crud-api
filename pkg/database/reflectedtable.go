@@ -160,7 +160,7 @@ public function removeColumn(string $columnName): bool
 */
 func (rt *ReflectedTable) Serialize() map[string]interface{} {
 	i, keys := 0, make([]interface{}, len(rt.columns))
-	for key, _ := range rt.columns {
+	for key := range rt.columns {
 		keys[i] = key
 		i++
 	}
@@ -175,7 +175,7 @@ func (rt *ReflectedTable) JsonSerialize() map[string]interface{} {
 	return rt.Serialize()
 }
 
-// json marshaling for struct ListDocument
+// json marshaling for struct ReflectedTable
 func (rt *ReflectedTable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rt.Serialize())
 }

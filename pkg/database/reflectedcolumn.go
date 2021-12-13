@@ -1,6 +1,7 @@
 package database
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -213,7 +214,7 @@ func (rc *ReflectedColumn) GetScale() int {
 }
 
 func (rc *ReflectedColumn) HasLength() bool {
-	return rc.columnType == "varchar" && rc.columnType == "varbinary"
+	return rc.columnType == "varchar" || rc.columnType == "varbinary"
 }
 
 func (rc *ReflectedColumn) HasPrecision() bool {
@@ -283,23 +284,11 @@ func (rc *ReflectedColumn) Serialize() map[string]interface{} {
 	}
 }
 
-/*
-public function serialize()
-{
-	return [
-		'name' => $this->name,
-		'type' => $this->type,
-		'length' => $this->length,
-		'precision' => $this->precision,
-		'scale' => $this->scale,
-		'nullable' => $this->nullable,
-		'pk' => $this->pk,
-		'fk' => $this->fk,
-	];
+func (rc *ReflectedColumn) jsonSerialize() map[string]interface{} {
+	return rc.Serialize()
 }
 
-public function jsonSerialize()
-{
-	return array_filter($this->serialize());
+// json marshaling for struct ReflectedTable
+func (rt *ReflectedColumn) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rt.Serialize())
 }
-*/

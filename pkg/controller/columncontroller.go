@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/gorilla/mux"
 )
 
@@ -16,6 +17,8 @@ type ColumnController struct {
 func NewColumnController(router *mux.Router, responder Responder, reflection *database.ReflectionService, definition *database.DefinitionService) *ColumnController {
 	cc := &ColumnController{responder, reflection, definition}
 	router.HandleFunc("/columns", cc.getDatabase).Methods("GET")
+	router.HandleFunc("/columns/{table}", cc.getTable).Methods("GET")
+	router.HandleFunc("/columns/{table}/{column}", cc.getColumn).Methods("GET")
 	return cc
 }
 
@@ -44,32 +47,33 @@ func (cc *ColumnController) getDatabase(w http.ResponseWriter, r *http.Request) 
 	cc.responder.Success(database, w)
 }
 
+func (cc *ColumnController) getTable(w http.ResponseWriter, r *http.Request) {
+	tableName := mux.Vars(r)["table"]
+	if !cc.reflection.HasTable(tableName) {
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
+		return
+	}
+	table := cc.reflection.GetTable(tableName)
+	cc.responder.Success(table, w)
+}
+
+func (cc *ColumnController) getColumn(w http.ResponseWriter, r *http.Request) {
+	tableName := mux.Vars(r)["table"]
+	columnName := mux.Vars(r)["column"]
+	if !cc.reflection.HasTable(tableName) {
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
+		return
+	}
+	table := cc.reflection.GetTable(tableName)
+	if !table.HasColumn(columnName) {
+		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, "")
+		return
+	}
+	column := table.GetColumn(columnName)
+	cc.responder.Success(column, w)
+}
+
 /*
-public function getTable(ServerRequestInterface $request): ResponseInterface
-{
-	$tableName = RequestUtils::getPathSegment($request, 2);
-	if (!$this->reflection->hasTable($tableName)) {
-		return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
-	}
-	$table = $this->reflection->getTable($tableName);
-	return $this->responder->success($table);
-}
-
-public function getColumn(ServerRequestInterface $request): ResponseInterface
-{
-	$tableName = RequestUtils::getPathSegment($request, 2);
-	$columnName = RequestUtils::getPathSegment($request, 3);
-	if (!$this->reflection->hasTable($tableName)) {
-		return $this->responder->error(ErrorCode::TABLE_NOT_FOUND, $tableName);
-	}
-	$table = $this->reflection->getTable($tableName);
-	if (!$table->hasColumn($columnName)) {
-		return $this->responder->error(ErrorCode::COLUMN_NOT_FOUND, $columnName);
-	}
-	$column = $table->getColumn($columnName);
-	return $this->responder->success($column);
-}
-
 public function updateTable(ServerRequestInterface $request): ResponseInterface
 {
 	$tableName = RequestUtils::getPathSegment($request, 2);
