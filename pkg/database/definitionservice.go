@@ -16,6 +16,10 @@ func (ds *DefinitionService) UpdateTable(tableName string, changes map[string]in
 		if ds.db.Definition().RenameTable(table.GetName(), newTable.GetName()) != nil {
 			return false
 		}
+		delete(ds.db.tables, table.GetName())
+		ds.db.tables[newTable.GetName()] = true
+		delete(ds.reflection.tables, table.GetName())
+		ds.reflection.tables[newTable.GetName()] = newTable
 	}
 	return true
 }

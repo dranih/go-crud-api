@@ -82,6 +82,22 @@ func TestColumnController(t *testing.T) {
 			want:       "{\"code\":1005,\"details\":\"\",\"message\":\"Column `doesnotexists` not found\"}",
 			statusCode: http.StatusNotFound,
 		},
+		{
+			name:       "update column ",
+			method:     http.MethodPut,
+			uri:        "/columns/cows",
+			body:       `{"name":"cows2"}`,
+			want:       "true",
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "update (back) column - test refresh tables",
+			method:     http.MethodPut,
+			uri:        "/columns/cows2",
+			body:       `{"name":"cows"}`,
+			want:       "true",
+			statusCode: http.StatusOK,
+		},
 	}
 
 	for _, tc := range tt {

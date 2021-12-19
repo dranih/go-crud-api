@@ -84,17 +84,15 @@ func (rs *ReflectionService) loadTable(tableName string, useCache bool) *Reflect
        }
        return $table;
    }
-
-   public function refreshTables()
-   {
-       $this->database = $this->loadDatabase(false);
-   }
-
-   public function refreshTable(string $tableName)
-   {
-       $this->tables[$tableName] = $this->loadTable($tableName, false);
-   }
 */
+func (rs *ReflectionService) RefreshTables() {
+	rs.database = rs.loadDatabase(false)
+}
+
+func (rs *ReflectionService) RefreshTable(tableName string) {
+	rs.tables[tableName] = rs.loadTable(tableName, false)
+}
+
 func (rs *ReflectionService) HasTable(tableName string) bool {
 	return rs.getDatabase().HasTable(tableName)
 }
@@ -113,6 +111,11 @@ func (rs *ReflectionService) GetTable(tableName string) *ReflectedTable {
 func (rs *ReflectionService) GetTableNames() []string {
 	return rs.getDatabase().GetTableNames()
 }
+
+/*func (rs *ReflectionService) RemoveTable(tableName string) bool {
+	delete(rs.tables, tableName)
+	return rs.getDatabase().RemoveTable(tableName)
+}*/
 
 /*
        public function removeTable(string $tableName): bool

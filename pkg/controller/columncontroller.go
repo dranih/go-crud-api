@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/dranih/go-crud-api/pkg/database"
@@ -19,6 +21,7 @@ func NewColumnController(router *mux.Router, responder Responder, reflection *da
 	router.HandleFunc("/columns", cc.getDatabase).Methods("GET")
 	router.HandleFunc("/columns/{table}", cc.getTable).Methods("GET")
 	router.HandleFunc("/columns/{table}/{column}", cc.getColumn).Methods("GET")
+	router.HandleFunc("/columns/{table}", cc.updateTable).Methods("PUT")
 	return cc
 }
 
@@ -71,6 +74,30 @@ func (cc *ColumnController) getColumn(w http.ResponseWriter, r *http.Request) {
 	}
 	column := table.GetColumn(columnName)
 	cc.responder.Success(column, w)
+}
+
+func (cc *ColumnController) updateTable(w http.ResponseWriter, r *http.Request) {
+	tableName := mux.Vars(r)["table"]
+	if !cc.reflection.HasTable(tableName) {
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
+		return
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
+		return
+	}
+	var jsonMap map[string]interface{}
+	err = json.Unmarshal(b, &jsonMap)
+	if err != nil {
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
+		return
+	}
+	success := cc.definition.UpdateTable(tableName, jsonMap)
+	if success {
+		cc.reflection.RefreshTables()
+	}
+	cc.responder.Success(success, w)
 }
 
 /*
