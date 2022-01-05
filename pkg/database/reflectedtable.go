@@ -107,12 +107,10 @@ func (rt *ReflectedTable) HasColumn(columnName string) bool {
 	return exists
 }
 
-/*
-public function hasPk(): bool
-{
-	return $this->pk != null;
+func (rt *ReflectedTable) HasPk() bool {
+	return rt.pk != nil
 }
-*/
+
 func (rt *ReflectedTable) GetPk() *ReflectedColumn {
 	return rt.pk
 }

@@ -32,144 +32,124 @@ func mergeMaps(m1, m2 map[string]interface{}) map[string]interface{} {
 	return m1
 }
 
-/*
-public function updateTable(string $tableName, $changes): bool
-{
-	$table = $this->reflection->getTable($tableName);
-	$newTable = ReflectedTable::fromJson((object) array_merge((array) $table->jsonSerialize(), (array) $changes));
-	if ($table->getName() != $newTable->getName()) {
-		if (!$this->db->definition()->renameTable($table->getName(), $newTable->getName())) {
-			return false;
-		}
-	}
-	return true;
-}
-
-public function updateColumn(string $tableName, string $columnName, $changes): bool
-{
-	$table = $this->reflection->getTable($tableName);
-	$column = $table->getColumn($columnName);
+func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes map[string]interface{}) bool {
+	table := ds.reflection.GetTable(tableName)
+	column := table.GetColumn(columnName)
 
 	// remove constraints on other column
-	$newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
-	if ($newColumn->getPk() != $column->getPk() && $table->hasPk()) {
-		$oldColumn = $table->getPk();
-		if ($oldColumn->getName() != $columnName) {
-			$oldColumn->setPk(false);
-			if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $oldColumn->getName(), $oldColumn)) {
-				return false;
+	newColumn := NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), changes))
+	if newColumn.GetPk() != column.GetPk() && table.HasPk() {
+		oldColumn := table.GetPk()
+		if oldColumn.GetName() != columnName {
+			oldColumn.SetPk(false)
+			if ds.db.definition.RemoveColumnPrimaryKey(table.GetName(), oldColumn.GetName(), oldColumn) != nil {
+				return false
 			}
 		}
 	}
 
 	// remove constraints
-	$newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), ['pk' => false, 'fk' => false]));
-	if ($newColumn->getPk() != $column->getPk() && !$newColumn->getPk()) {
-		if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $column->getName(), $newColumn)) {
-			return false;
+	newColumn = NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), map[string]interface{}{"pk": false, "fk": false}))
+	if newColumn.GetPk() != column.GetPk() && !newColumn.GetPk() {
+		if ds.db.definition.RemoveColumnPrimaryKey(table.GetName(), column.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	if ($newColumn->getFk() != $column->getFk() && !$newColumn->getFk()) {
-		if (!$this->db->definition()->removeColumnForeignKey($table->getName(), $column->getName(), $newColumn)) {
-			return false;
+	if newColumn.GetFk() != column.GetFk() && newColumn.GetFk() != "" {
+		if ds.db.definition.RemoveColumnForeignKey(table.GetName(), column.GetName(), newColumn) != nil {
+			return false
 		}
 	}
 
 	// name and type
-	$newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
-	$newColumn->setPk(false);
-	$newColumn->setFk('');
-	if ($newColumn->getName() != $column->getName()) {
-		if (!$this->db->definition()->renameColumn($table->getName(), $column->getName(), $newColumn)) {
-			return false;
+	newColumn = NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), changes))
+	newColumn.SetPk(false)
+	newColumn.SetFk("")
+	if newColumn.GetName() != column.GetName() {
+		if ds.db.definition.RenameColumn(table.GetName(), column.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	if (
-		$newColumn->getType() != $column->getType() ||
-		$newColumn->getLength() != $column->getLength() ||
-		$newColumn->getPrecision() != $column->getPrecision() ||
-		$newColumn->getScale() != $column->getScale()
-	) {
-		if (!$this->db->definition()->retypeColumn($table->getName(), $newColumn->getName(), $newColumn)) {
-			return false;
+	if newColumn.GetType() != column.GetType() ||
+		newColumn.GetLength() != column.GetLength() ||
+		newColumn.GetPrecision() != column.GetPrecision() ||
+		newColumn.GetScale() != column.GetScale() {
+		if ds.db.definition.RetypeColumn(table.GetName(), column.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	if ($newColumn->getNullable() != $column->getNullable()) {
-		if (!$this->db->definition()->setColumnNullable($table->getName(), $newColumn->getName(), $newColumn)) {
-			return false;
+	if newColumn.getNullable() != column.getNullable() {
+		if ds.db.definition.SetColumnNullable(table.GetName(), column.GetName(), newColumn) != nil {
+			return false
 		}
 	}
 
 	// add constraints
-	$newColumn = ReflectedColumn::fromJson((object) array_merge((array) $column->jsonSerialize(), (array) $changes));
-	if ($newColumn->getFk()) {
-		if (!$this->db->definition()->addColumnForeignKey($table->getName(), $newColumn->getName(), $newColumn)) {
-			return false;
+	newColumn = NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), changes))
+	if newColumn.GetFk() != "" {
+		if ds.db.definition.AddColumnForeignKey(table.GetName(), column.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	if ($newColumn->getPk()) {
-		if (!$this->db->definition()->addColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {
-			return false;
+	if newColumn.GetPk() {
+		if ds.db.definition.AddColumnPrimaryKey(table.GetName(), column.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	return true;
+
+	return true
 }
 
-public function addTable($definition)
-{
-	$newTable = ReflectedTable::fromJson($definition);
-	if (!$this->db->definition()->addTable($newTable)) {
-		return false;
+func (ds *DefinitionService) AddTable(definition map[string]interface{}) bool {
+	newTable := NewReflectedTableFromJson(definition)
+	if ds.db.definition.AddTable(newTable) != nil {
+		return false
 	}
-	return true;
+	return true
 }
 
-public function addColumn(string $tableName,  $definition)
-{
-	$newColumn = ReflectedColumn::fromJson($definition);
-	if (!$this->db->definition()->addColumn($tableName, $newColumn)) {
-		return false;
+func (ds *DefinitionService) AddColumn(tableName string, definition map[string]interface{}) bool {
+	newColumn := NewReflectedColumnFromJson(definition)
+	if ds.db.definition.AddColumn(tableName, newColumn) != nil {
+		return false
 	}
-	if ($newColumn->getFk()) {
-		if (!$this->db->definition()->addColumnForeignKey($tableName, $newColumn->getName(), $newColumn)) {
-			return false;
+	if newColumn.GetFk() != "" {
+		if ds.db.definition.AddColumnForeignKey(tableName, newColumn.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	if ($newColumn->getPk()) {
-		if (!$this->db->definition()->addColumnPrimaryKey($tableName, $newColumn->getName(), $newColumn)) {
-			return false;
+	if newColumn.GetPk() {
+		if ds.db.definition.AddColumnPrimaryKey(tableName, newColumn.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	return true;
+	return true
 }
 
-public function removeTable(string $tableName)
-{
-	if (!$this->db->definition()->removeTable($tableName)) {
-		return false;
+func (ds *DefinitionService) RemoveTable(tableName string) bool {
+	if ds.db.definition.RemoveTable(tableName) != nil {
+		return false
 	}
-	return true;
+	return true
 }
 
-public function removeColumn(string $tableName, string $columnName)
-{
-	$table = $this->reflection->getTable($tableName);
-	$newColumn = $table->getColumn($columnName);
-	if ($newColumn->getPk()) {
-		$newColumn->setPk(false);
-		if (!$this->db->definition()->removeColumnPrimaryKey($table->getName(), $newColumn->getName(), $newColumn)) {
-			return false;
+func (ds *DefinitionService) RemoveColumn(tableName, columnName string) bool {
+	table := ds.reflection.GetTable(tableName)
+	newColumn := table.GetColumn(columnName)
+	if newColumn.GetPk() {
+		newColumn.SetPk(false)
+		if ds.db.definition.RemoveColumnPrimaryKey(table.GetName(), newColumn.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	if ($newColumn->getFk()) {
-		$newColumn->setFk("");
-		if (!$this->db->definition()->removeColumnForeignKey($tableName, $columnName, $newColumn)) {
-			return false;
+	if newColumn.GetFk() != "" {
+		newColumn.SetFk("")
+		if ds.db.definition.RemoveColumnForeignKey(tableName, newColumn.GetName(), newColumn) != nil {
+			return false
 		}
 	}
-	if (!$this->db->definition()->removeColumn($tableName, $columnName)) {
-		return false;
+	if ds.db.definition.RemoveColumn(tableName, columnName) != nil {
+		return false
 	}
-	return true;
+	return true
 }
-*/

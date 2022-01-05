@@ -139,10 +139,13 @@ func (l *LazyPdo) LastInsertId($name = null): string
 */
 
 // Should check errors
-func (l *LazyPdo) Query(query string, fetchMode string, fetchModeArgs ...interface{}) []map[string]interface{} {
-	rows, _ := l.connect().Query(query, fetchModeArgs...)
-	results, _ := l.Rows2Map(rows)
-	return results
+func (l *LazyPdo) Query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
+	rows, err := l.connect().Query(sql, parameters...)
+	if err != nil {
+		return nil, err
+	}
+	results, err := l.Rows2Map(rows)
+	return results, err
 }
 
 // from https://kylewbanks.com/blog/query-result-to-map-in-golang

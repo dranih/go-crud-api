@@ -365,12 +365,7 @@ func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[stri
 }
 
 func (g *GenericDB) query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
-	rows, err := g.pdo.connect().Query(sql, parameters...)
-	if err != nil {
-		return nil, err
-	}
-	results, err := g.pdo.Rows2Map(rows)
-	return results, err
+	return g.pdo.Query(sql, parameters...)
 }
 
 func (g *GenericDB) exec(sql string, parameters ...interface{}) (sql.Result, error) {

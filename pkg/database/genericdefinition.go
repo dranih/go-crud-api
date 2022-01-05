@@ -106,350 +106,366 @@ func (gd *GenericDefinition) getTableRenameSQL(tableName, newTableName string) s
 	return ""
 }
 
-/*
+func (gd *GenericDefinition) getColumnRenameSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
+	p3 := gd.quote(newColumn.GetName())
 
-   private function getColumnRenameSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
-       $p3 = $this->quote($newColumn->getName());
+	switch gd.driver {
+	case "mysql":
+		p4 := gd.GetColumnType(newColumn, true)
+		return fmt.Sprintf("ALTER TABLE %s CHANGE %s %s %s", p1, p2, p3, p4)
+	case "pgsql":
+		return fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s", p1, p2, p3)
+	case "sqlsrv":
+		p4 := gd.quote(tableName + `.` + columnName)
+		return fmt.Sprintf("EXEC sp_rename %s, %s, 'COLUMN'", p4, p3)
+	case "sqlite":
+		return fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s", p1, p2, p3)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               $p4 = $this->getColumnType($newColumn, true);
-               return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
-           case 'pgsql':
-               return "ALTER TABLE $p1 RENAME COLUMN $p2 TO $p3";
-           case 'sqlsrv':
-               $p4 = $this->quote($tableName . '.' . $columnName);
-               return "EXEC sp_rename $p4, $p3, 'COLUMN'";
-           case 'sqlite':
-               return "ALTER TABLE $p1 RENAME COLUMN $p2 TO $p3";
-       }
-   }
+func (gd *GenericDefinition) getColumnRetypeSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
+	p3 := gd.quote(newColumn.GetName())
+	p4 := gd.GetColumnType(newColumn, true)
 
-   private function getColumnRetypeSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
-       $p3 = $this->quote($newColumn->getName());
-       $p4 = $this->getColumnType($newColumn, true);
+	switch gd.driver {
+	case "mysql":
+		return fmt.Sprintf("ALTER TABLE %s CHANGE %s %s %s", p1, p2, p3, p4)
+	case "pgsql":
+		return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s TYPE %s", p1, p3, p4)
+	case "sqlsrv":
+		return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s %s", p1, p3, p4)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
-           case 'pgsql':
-               return "ALTER TABLE $p1 ALTER COLUMN $p3 TYPE $p4";
-           case 'sqlsrv':
-               return "ALTER TABLE $p1 ALTER COLUMN $p3 $p4";
-       }
-   }
+func (gd *GenericDefinition) getSetColumnNullableSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
+	p3 := gd.quote(newColumn.GetName())
+	p4 := gd.GetColumnType(newColumn, true)
 
-   private function getSetColumnNullableSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
-       $p3 = $this->quote($newColumn->getName());
-       $p4 = $this->getColumnType($newColumn, true);
+	switch gd.driver {
+	case "mysql":
+		return fmt.Sprintf("ALTER TABLE %s CHANGE %s %s %s", p1, p2, p3, p4)
+	case "pgsql":
+		p5 := "SET NOT NULL"
+		if newColumn.getNullable() {
+			p5 = "DROP NOT NULL"
+		}
+		return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s %s", p1, p3, p5)
+	case "sqlsrv":
+		return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s %s", p1, p2, p4)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
-           case 'pgsql':
-               $p5 = $newColumn->getNullable() ? 'DROP NOT NULL' : 'SET NOT NULL';
-               return "ALTER TABLE $p1 ALTER COLUMN $p2 $p5";
-           case 'sqlsrv':
-               return "ALTER TABLE $p1 ALTER COLUMN $p2 $p4";
-       }
-   }
+func (gd *GenericDefinition) getSetColumnPkConstraintSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
+	p3 := gd.quote(tableName + "_pkey")
 
-   private function getSetColumnPkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
-       $p3 = $this->quote($tableName . '_pkey');
+	switch gd.driver {
+	case "mysql":
+		p4 := "DROP PRIMARY KEY"
+		if newColumn.GetPk() {
+			p4 = fmt.Sprintf("ADD PRIMARY KEY (%s)", p2)
+		}
+		return fmt.Sprintf("ALTER TABLE %s %s", p1, p4)
+	case "pgsql", "sqlsrv":
+		p4 := fmt.Sprintf("DROP CONSTRAINT %s", p3)
+		if newColumn.GetPk() {
+			p4 = fmt.Sprintf("ADD CONSTRAINT %s PRIMARY KEY (%s)", p3, p2)
+		}
+		return fmt.Sprintf("ALTER TABLE %s %s", p1, p4)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               $p4 = $newColumn->getPk() ? "ADD PRIMARY KEY ($p2)" : 'DROP PRIMARY KEY';
-               return "ALTER TABLE $p1 $p4";
-           case 'pgsql':
-           case 'sqlsrv':
-               $p4 = $newColumn->getPk() ? "ADD CONSTRAINT $p3 PRIMARY KEY ($p2)" : "DROP CONSTRAINT $p3";
-               return "ALTER TABLE $p1 $p4";
-       }
-   }
+func (gd *GenericDefinition) getSetColumnPkSequenceSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
+	p3 := gd.quote(tableName + "_" + columnName + "_seq")
 
-   private function getSetColumnPkSequenceSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
-       $p3 = $this->quote($tableName . '_' . $columnName . '_seq');
+	switch gd.driver {
+	case "mysql":
+		return "select 1"
+	case "pgsql":
+		if newColumn.GetPk() {
+			return fmt.Sprintf("CREATE SEQUENCE %s OWNED BY %s.%s", p3, p1, p2)
+		}
+		return fmt.Sprintf("DROP SEQUENCE %s", p3)
+	case "sqlsrv":
+		if newColumn.GetPk() {
+			return fmt.Sprintf("CREATE SEQUENCE %s", p3)
+		}
+		return fmt.Sprintf("DROP SEQUENCE %s", p3)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               return "select 1";
-           case 'pgsql':
-               return $newColumn->getPk() ? "CREATE SEQUENCE $p3 OWNED BY $p1.$p2" : "DROP SEQUENCE $p3";
-           case 'sqlsrv':
-               return $newColumn->getPk() ? "CREATE SEQUENCE $p3" : "DROP SEQUENCE $p3";
-       }
-   }
+func (gd *GenericDefinition) getSetColumnPkSequenceStartSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
 
-   private function getSetColumnPkSequenceStartSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
+	switch gd.driver {
+	case "mysql":
+		return "select 1"
+	case "pgsql":
+		p3 := gd.quote(tableName + "_" + columnName + "_seq")
+		return fmt.Sprintf("SELECT setval(%s, (SELECT max(%s)+1 FROM %s", p3, p2, p1)
+	case "sqlsrv":
+		p3 := gd.quote(tableName + "_" + columnName + "_seq")
+		p4Map, err := gd.pdo.Query(fmt.Sprintf("SELECT max(%s)+1 FROM %s", p2, p1))
+		if err != nil {
+			for _, p4Val := range p4Map[0] {
+				if p4, ok := p4Val.(string); ok {
+					return fmt.Sprintf("ALTER SEQUENCE %s RESTART WITH %s", p3, p4)
+				}
+			}
+		}
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               return "select 1";
-           case 'pgsql':
-               $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
-               return "SELECT setval($p3, (SELECT max($p2)+1 FROM $p1));";
-           case 'sqlsrv':
-               $p3 = $this->quote($tableName . '_' . $columnName . '_seq');
-               $p4 = $this->pdo->query("SELECT max($p2)+1 FROM $p1")->fetchColumn();
-               return "ALTER SEQUENCE $p3 RESTART WITH $p4";
-       }
-   }
+func (gd *GenericDefinition) getSetColumnPkDefaultSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
 
-   private function getSetColumnPkDefaultSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
+	switch gd.driver {
+	case "mysql":
+		p3 := gd.quote(newColumn.GetName())
+		p4 := gd.GetColumnType(newColumn, true)
+		return fmt.Sprintf("ALTER TABLE %s CHANGE %s %s %s", p1, p2, p3, p4)
+	case "pgsql":
+		var p4 string
+		if newColumn.GetPk() {
+			p3 := gd.quote(tableName + "_" + columnName + "_seq")
+			p4 = fmt.Sprintf("SET DEFAULT nextval(%s)", p3)
+		} else {
+			p4 = "DROP DEFAULT"
+		}
+		return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s %s", p1, p2, p4)
+	case "sqlsrv":
+		p3 := gd.quote(tableName + "_" + columnName + "_seq")
+		p4 := gd.quote(tableName + "_" + columnName + "_def")
+		if newColumn.GetPk() {
+			return fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s DEFAULT NEXT VALUE FOR %s FOR %s", p1, p4, p3, p2)
+		} else {
+			return fmt.Sprintf("ALTER TABLE %s DROP CONSTRAINT %s", p1, p4)
+		}
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               $p3 = $this->quote($newColumn->getName());
-               $p4 = $this->getColumnType($newColumn, true);
-               return "ALTER TABLE $p1 CHANGE $p2 $p3 $p4";
-           case 'pgsql':
-               if ($newColumn->getPk()) {
-                   $p3 = $this->pdo->quote($tableName . '_' . $columnName . '_seq');
-                   $p4 = "SET DEFAULT nextval($p3)";
-               } else {
-                   $p4 = 'DROP DEFAULT';
-               }
-               return "ALTER TABLE $p1 ALTER COLUMN $p2 $p4";
-           case 'sqlsrv':
-               $p3 = $this->quote($tableName . '_' . $columnName . '_seq');
-               $p4 = $this->quote($tableName . '_' . $columnName . '_def');
-               if ($newColumn->getPk()) {
-                   return "ALTER TABLE $p1 ADD CONSTRAINT $p4 DEFAULT NEXT VALUE FOR $p3 FOR $p2";
-               } else {
-                   return "ALTER TABLE $p1 DROP CONSTRAINT $p4";
-               }
-       }
-   }
+func (gd *GenericDefinition) getAddColumnFkConstraintSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
+	p3 := gd.quote(tableName + "_" + columnName + "_fkey")
+	p4 := gd.quote(newColumn.GetFk())
+	p5 := gd.quote(gd.getPrimaryKey(newColumn.GetFk()))
 
-   private function getAddColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
-       $p3 = $this->quote($tableName . '_' . $columnName . '_fkey');
-       $p4 = $this->quote($newColumn->getFk());
-       $p5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
+	return fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)", p1, p3, p2, p4, p5)
+}
 
-       return "ALTER TABLE $p1 ADD CONSTRAINT $p3 FOREIGN KEY ($p2) REFERENCES $p4 ($p5)";
-   }
+func (gd *GenericDefinition) getRemoveColumnFkConstraintSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(tableName + "_" + columnName + "_fkey")
 
-   private function getRemoveColumnFkConstraintSQL(string $tableName, string $columnName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($tableName . '_' . $columnName . '_fkey');
+	switch gd.driver {
+	case "mysql":
+		return fmt.Sprintf("ALTER TABLE %s DROP FOREIGN KEY %s", p1, p2)
+	case "pgsql", "sqlsrv":
+		return fmt.Sprintf("ALTER TABLE %s DROP CONSTRAINT %s", p1, p2)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-               return "ALTER TABLE $p1 DROP FOREIGN KEY $p2";
-           case 'pgsql':
-           case 'sqlsrv':
-               return "ALTER TABLE $p1 DROP CONSTRAINT $p2";
-       }
-   }
+func (gd *GenericDefinition) getAddTableSQL(newTable *ReflectedTable) string {
+	tableName := newTable.GetName()
+	p1 := gd.quote(tableName)
+	fields := []string{}
+	constraints := []string{}
+	pkColumn := gd.getPrimaryKey(tableName)
+	for _, columnName := range newTable.GetColumnNames() {
+		newColumn := newTable.GetColumn(columnName)
+		f1 := gd.quote(columnName)
+		f2 := gd.GetColumnType(newColumn, false)
+		f3 := gd.quote(tableName + "_" + columnName + "_fkey")
+		f4 := gd.quote(newColumn.GetFk())
+		f5 := gd.quote(gd.getPrimaryKey(newColumn.GetFk()))
+		f6 := gd.quote(tableName + "_" + pkColumn + "_pkey")
+		if gd.driver == "sqlite" {
+			if newColumn.GetPk() {
+				f2 = strings.Replace(f2, "NULL", "NULL PRIMARY KEY", -1)
+			}
+			fields = append(fields, fmt.Sprintf("%s %s", f1, f2))
+			if newColumn.GetFk() != "" {
+				constraints = append(constraints, fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s)", f1, f4, f5))
+			}
+		} else {
+			fields = append(fields, fmt.Sprintf("%s %s", f1, f2))
+			if newColumn.GetPk() {
+				constraints = append(constraints, fmt.Sprintf("CONSTRAINT %s PRIMARY KEY (%s)", f6, f1))
 
-   private function getAddTableSQL(ReflectedTable $newTable): string
-   {
-       $tableName = $newTable->getName();
-       $p1 = $this->quote($tableName);
-       $fields = [];
-       $constraints = [];
-       foreach ($newTable->getColumnNames() as $columnName) {
-           $pkColumn = $this->getPrimaryKey($tableName);
-           $newColumn = $newTable->getColumn($columnName);
-           $f1 = $this->quote($columnName);
-           $f2 = $this->getColumnType($newColumn, false);
-           $f3 = $this->quote($tableName . '_' . $columnName . '_fkey');
-           $f4 = $this->quote($newColumn->getFk());
-           $f5 = $this->quote($this->getPrimaryKey($newColumn->getFk()));
-           $f6 = $this->quote($tableName . '_' . $pkColumn . '_pkey');
-           if ($this->driver == 'sqlite') {
-               if ($newColumn->getPk()) {
-                   $f2 = str_replace('NULL', 'NULL PRIMARY KEY', $f2);
-               }
-               $fields[] = "$f1 $f2";
-               if ($newColumn->getFk()) {
-                   $constraints[] = "FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
-               }
-           } else {
-               $fields[] = "$f1 $f2";
-               if ($newColumn->getPk()) {
-                   $constraints[] = "CONSTRAINT $f6 PRIMARY KEY ($f1)";
-               }
-               if ($newColumn->getFk()) {
-                   $constraints[] = "CONSTRAINT $f3 FOREIGN KEY ($f1) REFERENCES $f4 ($f5)";
-               }
-           }
-       }
-       $p2 = implode(',', array_merge($fields, $constraints));
+			}
+			if newColumn.GetFk() != "" {
+				constraints = append(constraints, fmt.Sprintf("CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)", f3, f1, f4, f5))
+			}
+		}
+	}
+	p2 := strings.Join(append(fields, constraints...), ",")
+	return fmt.Sprintf("CREATE TABLE %s (%s);", p1, p2)
+}
 
-       return "CREATE TABLE $p1 ($p2);";
-   }
+func (gd *GenericDefinition) getAddColumnSQL(tableName string, newColumn *ReflectedColumn) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(newColumn.GetName())
+	p3 := gd.GetColumnType(newColumn, false)
 
-   private function getAddColumnSQL(string $tableName, ReflectedColumn $newColumn): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($newColumn->getName());
-       $p3 = $this->getColumnType($newColumn, false);
+	switch gd.driver {
+	case "mysql", "pgsql":
+		return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", p1, p2, p3)
+	case "sqlsrv":
+		return fmt.Sprintf("ALTER TABLE %s ADD %s %s", p1, p2, p3)
+	case "sqlite":
+		return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", p1, p2, p3)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-           case 'pgsql':
-               return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
-           case 'sqlsrv':
-               return "ALTER TABLE $p1 ADD $p2 $p3";
-           case 'sqlite':
-               return "ALTER TABLE $p1 ADD COLUMN $p2 $p3";
-       }
-   }
+func (gd *GenericDefinition) getRemoveTableSQL(tableName string) string {
+	p1 := gd.quote(tableName)
 
-   private function getRemoveTableSQL(string $tableName): string
-   {
-       $p1 = $this->quote($tableName);
+	switch gd.driver {
+	case "mysql", "pgsql":
+		return fmt.Sprintf("DROP TABLE %s CASCADE", p1)
+	case "sqlsrv":
+		return fmt.Sprintf("DROP TABLE %s", p1)
+	case "sqlite":
+		return fmt.Sprintf("DROP TABLE %s", p1)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-           case 'pgsql':
-               return "DROP TABLE $p1 CASCADE;";
-           case 'sqlsrv':
-               return "DROP TABLE $p1;";
-           case 'sqlite':
-               return "DROP TABLE $p1;";
-       }
-   }
+func (gd *GenericDefinition) getRemoveColumnSQL(tableName, columnName string) string {
+	p1 := gd.quote(tableName)
+	p2 := gd.quote(columnName)
 
-   private function getRemoveColumnSQL(string $tableName, string $columnName): string
-   {
-       $p1 = $this->quote($tableName);
-       $p2 = $this->quote($columnName);
+	switch gd.driver {
+	case "mysql", "pgsql":
+		return fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s CASCADE", p1, p2)
+	case "sqlsrv":
+		return fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s", p1, p2)
+	case "sqlite":
+		return fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s", p1, p2)
+	}
+	return ""
+}
 
-       switch ($this->driver) {
-           case 'mysql':
-           case 'pgsql':
-               return "ALTER TABLE $p1 DROP COLUMN $p2 CASCADE;";
-           case 'sqlsrv':
-               return "ALTER TABLE $p1 DROP COLUMN $p2;";
-           case 'sqlite':
-               return "ALTER TABLE $p1 DROP COLUMN $p2;";
-       }
-   }
-*/
 func (gd *GenericDefinition) RenameTable(tableName, newTableName string) error {
 	sql := gd.getTableRenameSQL(tableName, newTableName)
 	_, err := gd.exec(sql)
 	return err
 }
 
-/*
-   public function renameColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
-   {
-       $sql = $this->getColumnRenameSQL($tableName, $columnName, $newColumn);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) RenameColumn(tableName, columnName string, newColumn *ReflectedColumn) error {
+	sql := gd.getColumnRenameSQL(tableName, columnName, newColumn)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function retypeColumn(string $tableName, string $columnName, ReflectedColumn $newColumn)
-   {
-       $sql = $this->getColumnRetypeSQL($tableName, $columnName, $newColumn);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) RetypeColumn(tableName, columnName string, newColumn *ReflectedColumn) error {
+	sql := gd.getColumnRetypeSQL(tableName, columnName, newColumn)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function setColumnNullable(string $tableName, string $columnName, ReflectedColumn $newColumn)
-   {
-       $sql = $this->getSetColumnNullableSQL($tableName, $columnName, $newColumn);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) SetColumnNullable(tableName, columnName string, newColumn *ReflectedColumn) error {
+	sql := gd.getSetColumnNullableSQL(tableName, columnName, newColumn)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function addColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
-   {
-       $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-       $this->query($sql, []);
-       if ($this->canAutoIncrement($newColumn)) {
-           $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-           $this->query($sql, []);
-           $sql = $this->getSetColumnPkSequenceStartSQL($tableName, $columnName, $newColumn);
-           $this->query($sql, []);
-           $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-           $this->query($sql, []);
-       }
-       return true;
-   }
+func (gd *GenericDefinition) AddColumnPrimaryKey(tableName, columnName string, newColumn *ReflectedColumn) error {
+	sql := gd.getSetColumnPkConstraintSQL(tableName, columnName, newColumn)
+	if _, err := gd.exec(sql); err != nil {
+		return err
+	}
+	if gd.canAutoIncrement(newColumn) {
+		sql = gd.getSetColumnPkSequenceSQL(tableName, columnName, newColumn)
+		if _, err := gd.exec(sql); err != nil {
+			return err
+		}
+		sql = gd.getSetColumnPkSequenceStartSQL(tableName, columnName, newColumn)
+		if _, err := gd.exec(sql); err != nil {
+			return err
+		}
+		sql = gd.getSetColumnPkDefaultSQL(tableName, columnName, newColumn)
+		if _, err := gd.exec(sql); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-   public function removeColumnPrimaryKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
-   {
-       if ($this->canAutoIncrement($newColumn)) {
-           $sql = $this->getSetColumnPkDefaultSQL($tableName, $columnName, $newColumn);
-           $this->query($sql, []);
-           $sql = $this->getSetColumnPkSequenceSQL($tableName, $columnName, $newColumn);
-           $this->query($sql, []);
-       }
-       $sql = $this->getSetColumnPkConstraintSQL($tableName, $columnName, $newColumn);
-       $this->query($sql, []);
-       return true;
-   }
+func (gd *GenericDefinition) RemoveColumnPrimaryKey(tableName, columnName string, newColumn *ReflectedColumn) error {
 
-   public function addColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
-   {
-       $sql = $this->getAddColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-       return $this->query($sql, []);
-   }
+	if gd.canAutoIncrement(newColumn) {
+		sql := gd.getSetColumnPkDefaultSQL(tableName, columnName, newColumn)
+		if _, err := gd.exec(sql); err != nil {
+			return err
+		}
+		sql = gd.getSetColumnPkSequenceSQL(tableName, columnName, newColumn)
+		if _, err := gd.exec(sql); err != nil {
+			return err
+		}
+	}
+	sql := gd.getSetColumnPkConstraintSQL(tableName, columnName, newColumn)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function removeColumnForeignKey(string $tableName, string $columnName, ReflectedColumn $newColumn)
-   {
-       $sql = $this->getRemoveColumnFkConstraintSQL($tableName, $columnName, $newColumn);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) AddColumnForeignKey(tableName, columnName string, newColumn *ReflectedColumn) error {
+	sql := gd.getAddColumnFkConstraintSQL(tableName, columnName, newColumn)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function addTable(ReflectedTable $newTable)
-   {
-       $sql = $this->getAddTableSQL($newTable);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) RemoveColumnForeignKey(tableName, columnName string, newColumn *ReflectedColumn) error {
+	sql := gd.getRemoveColumnFkConstraintSQL(tableName, columnName, newColumn)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function addColumn(string $tableName, ReflectedColumn $newColumn)
-   {
-       $sql = $this->getAddColumnSQL($tableName, $newColumn);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) AddTable(newTable *ReflectedTable) error {
+	sql := gd.getAddTableSQL(newTable)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function removeTable(string $tableName)
-   {
-       $sql = $this->getRemoveTableSQL($tableName);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) AddColumn(tableName string, newColumn *ReflectedColumn) error {
+	sql := gd.getAddColumnSQL(tableName, newColumn)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   public function removeColumn(string $tableName, string $columnName)
-   {
-       $sql = $this->getRemoveColumnSQL($tableName, $columnName);
-       return $this->query($sql, []);
-   }
+func (gd *GenericDefinition) RemoveTable(tableName string) error {
+	sql := gd.getRemoveTableSQL(tableName)
+	_, err := gd.exec(sql)
+	return err
+}
 
-   private function query(string $sql, array $arguments): bool
-   {
-       $stmt = $this->pdo->prepare($sql);
-       // echo "- $sql -- " . json_encode($arguments) . "\n";
-       return $stmt->execute($arguments);
-   }
-*/
+func (gd *GenericDefinition) RemoveColumn(tableName, columnName string) error {
+	sql := gd.getRemoveColumnSQL(tableName, columnName)
+	_, err := gd.exec(sql)
+	return err
+}
+
 func (gd *GenericDefinition) exec(sql string, parameters ...interface{}) (sql.Result, error) {
 	res, err := gd.pdo.connect().Exec(sql, parameters...)
 	if err != nil {

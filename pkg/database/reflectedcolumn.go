@@ -284,7 +284,7 @@ func (rc *ReflectedColumn) Serialize() map[string]interface{} {
 	}
 }
 
-func (rc *ReflectedColumn) jsonSerialize() map[string]interface{} {
+func (rc *ReflectedColumn) JsonSerialize() map[string]interface{} {
 	return rc.Serialize()
 }
 
