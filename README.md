@@ -8,7 +8,8 @@ To-do :
 - [ ] Cache mecanism
 - [ ] Finishing controllers
 - [ ] Finishing middlewares
-- [ ] Review package structure
+- [ ] Review whole package structure
+- [ ] Logger options
 - [ ] https
 - [ ] Write a README
 - [ ] Comment code

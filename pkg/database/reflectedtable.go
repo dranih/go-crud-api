@@ -90,10 +90,12 @@ func NewReflectedTableFromJson(json map[string]interface{}) *ReflectedTable {
 		}
 		columns := map[string]*ReflectedColumn{}
 		if jsonColumns, exists := json["columns"]; exists {
-			if c, ok := jsonColumns.([]map[string]interface{}); ok {
+			if c, ok := jsonColumns.([]interface{}); ok {
 				for _, column := range c {
-					rcolumn := NewReflectedColumnFromJson(column)
-					columns[rcolumn.GetName()] = rcolumn
+					if tcolumn, ok := column.(map[string]interface{}); ok {
+						rcolumn := NewReflectedColumnFromJson(tcolumn)
+						columns[rcolumn.GetName()] = rcolumn
+					}
 				}
 			}
 		}
