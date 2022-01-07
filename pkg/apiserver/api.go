@@ -56,7 +56,7 @@ func NewApi(config *ApiConfig) *Api {
 			definition := database.NewDefinitionService(db, reflection)
 			controller.NewColumnController(router, responder, reflection, definition)
 		case "cache":
-			//new CacheController($router, $responder, $cache);
+			controller.NewCacheController(router, responder, cache)
 		case "openapi":
 			//$openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers(), $config->getCustomOpenApiBuilders());
 			//new OpenApiController($router, $responder, $openApi);

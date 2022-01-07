@@ -3,7 +3,8 @@ package cache
 func Create(cacheType, prefix, config string) Cache {
 	var cache interface{ Cache }
 	switch cacheType {
-	case "TempFile":
+	//Keeping tempfile for compatibility
+	case "TempFile", "Gocache":
 		cache = NewGocacheCache(prefix, config)
 	case "Redis":
 		cache = NewRedisCache(prefix, config)
