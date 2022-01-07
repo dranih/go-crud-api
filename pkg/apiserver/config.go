@@ -26,7 +26,7 @@ type ApiConfig struct {
 	CustomOpenApiBuilders string
 	CacheType             string
 	CachePath             string
-	CacheTime             int
+	CacheTime             int32
 	Debug                 bool
 	BasePath              string
 	OpenApiBase           string
@@ -118,18 +118,6 @@ func (ac *ApiConfig) getDriverDefaults(driver string) map[string]interface{} {
 	}
 }
 
-/*
-   private function applyEnvironmentVariables(array $values): array
-   {
-       $newValues = array();
-       foreach ($values as $key => $value) {
-           $environmentKey = 'PHP_CRUD_API_' . strtoupper(preg_replace('/(?<!^)[A-Z]/', '_$0', str_replace('.', '_', $key)));
-           $newValues[$key] = getenv($environmentKey, true) ?: $value;
-       }
-       return $newValues;
-   }
-*/
-
 func (ac *ApiConfig) setDriverDefaults() {
 	defaults := ac.getDriverDefaults(ac.Driver)
 	if ac.Address == "" {
@@ -145,24 +133,6 @@ func (c *Config) Init() {
 	c.Api.initMiddlewares()
 }
 
-/*
-   public function __construct(array $values)
-   {
-       $driver = $this->getDefaultDriver($values);
-       $defaults = $this->getDriverDefaults($driver);
-       $newValues = array_merge($this->values, $defaults, $values);
-       $newValues = $this->parseMiddlewares($newValues);
-       $diff = array_diff_key($newValues, $this->values);
-       if (!empty($diff)) {
-           $key = array_keys($diff)[0];
-           throw new \Exception("Config has invalid value '$key'");
-       }
-       $newValues = $this->applyEnvironmentVariables($newValues);
-       $this->values = $newValues;
-   }
-
-*/
-
 func (ac *ApiConfig) initMiddlewares() {
 	defaultMiddlewares := "cors,errors"
 	for _, defaultMiddleware := range strings.Split(defaultMiddlewares, ",") {
@@ -173,30 +143,6 @@ func (ac *ApiConfig) initMiddlewares() {
 }
 
 /*
-   private function parseMiddlewares(array $values): array
-   {
-       $newValues = array();
-       $properties = array();
-       $middlewares = array_map('trim', explode(',', $values['middlewares']));
-       foreach ($middlewares as $middleware) {
-           $properties[$middleware] = [];
-       }
-       foreach ($values as $key => $value) {
-           if (strpos($key, '.') === false) {
-               $newValues[$key] = $value;
-           } else {
-               list($middleware, $key2) = explode('.', $key, 2);
-               if (isset($properties[$middleware])) {
-                   $properties[$middleware][$key2] = $value;
-               } else {
-                   throw new \Exception("Config has invalid value '$key'");
-               }
-           }
-       }
-       $newValues['middlewares'] = array_reverse($properties, true);
-       return $newValues;
-   }
-
    public function getDriver(): string
    {
        return $this->values['driver'];
@@ -246,11 +192,6 @@ func (ac *ApiConfig) GetControllers() []string {
 }
 
 /*
-    public function getControllers(): array
-    {
-        return array_filter(array_map('trim', explode(',', $this->values['controllers'])));
-    }
-
     public function getCustomControllers(): array
     {
         return array_filter(array_map('trim', explode(',', $this->values['customControllers'])));

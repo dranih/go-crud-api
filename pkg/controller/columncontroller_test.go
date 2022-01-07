@@ -1,13 +1,16 @@
 package controller
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/dranih/go-crud-api/pkg/cache"
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/gorilla/mux"
 )
@@ -22,8 +25,9 @@ func TestColumnController(t *testing.T) {
 		"",
 		"",
 	)
-	var cache interface{}
-	reflection := database.NewReflectionService(db, cache, 0)
+	prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
+	cache := cache.Create("TempFile", prefix, "")
+	reflection := database.NewReflectionService(db, cache, 10)
 	responder := NewJsonResponder(false)
 	definition := database.NewDefinitionService(db, reflection)
 	router := mux.NewRouter()

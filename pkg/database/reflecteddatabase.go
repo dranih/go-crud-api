@@ -1,5 +1,7 @@
 package database
 
+import "encoding/json"
+
 type ReflectedDatabase struct {
 	tableTypes map[string]string
 }
@@ -28,6 +30,15 @@ func NewReflectedDatabaseFromReflection(reflection *GenericReflection) *Reflecte
 	return NewReflectedDatabase(tableTypes)
 }
 
+func NewReflectedDatabaseFromJson(data string) *ReflectedDatabase {
+	var tableTypes map[string]string
+	if err := json.Unmarshal([]byte(data), &tableTypes); err != nil {
+		return nil
+	} else {
+		return NewReflectedDatabase(tableTypes)
+	}
+}
+
 /*
 
    public static function fromJson($json): ReflectedDatabase
@@ -38,8 +49,8 @@ func NewReflectedDatabaseFromReflection(reflection *GenericReflection) *Reflecte
 */
 
 // done
-func (r *ReflectedDatabase) HasTable(tableName string) bool {
-	_, isPresent := r.tableTypes[tableName]
+func (rd *ReflectedDatabase) HasTable(tableName string) bool {
+	_, isPresent := rd.tableTypes[tableName]
 	return isPresent
 }
 
@@ -50,9 +61,9 @@ func (rd *ReflectedDatabase) GetType(tableName string) string {
 	return ""
 }
 
-func (rc *ReflectedDatabase) GetTableNames() []string {
-	i, keys := 0, make([]string, len(rc.tableTypes))
-	for key := range rc.tableTypes {
+func (rd *ReflectedDatabase) GetTableNames() []string {
+	i, keys := 0, make([]string, len(rd.tableTypes))
+	for key := range rd.tableTypes {
 		keys[i] = key
 		i++
 	}
@@ -82,3 +93,13 @@ func (rc *ReflectedDatabase) GetTableNames() []string {
        }
    }
 */
+func (rd *ReflectedDatabase) Serialize() map[string]interface{} {
+	return map[string]interface{}{
+		"tables": rd.tableTypes,
+	}
+}
+
+// json marshaling for struct ReflectedDatabase
+func (rd *ReflectedDatabase) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rd.Serialize())
+}

@@ -1,7 +1,9 @@
 package database
 
 import (
+	"crypto/md5"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -391,16 +393,14 @@ func (g *GenericDB) Ping() int {
 	return int(elapsed.Milliseconds())
 }
 
-/*
-public function getCacheKey(): string
-{
-	return md5(json_encode([
-		$this->driver,
-		$this->address,
-		$this->port,
-		$this->database,
-		$this->tables,
-		$this->username,
-	]));
+func (g *GenericDB) GetCacheKey() string {
+	gMap, _ := json.Marshal(map[string]interface{}{
+		"driver":   g.driver,
+		"address":  g.address,
+		"port":     g.port,
+		"database": g.database,
+		"tables":   g.tables,
+		"username": g.username,
+	})
+	return fmt.Sprintf("%x", md5.Sum(gMap))
 }
-}*/

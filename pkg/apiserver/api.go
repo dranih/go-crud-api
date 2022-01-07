@@ -13,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/dranih/go-crud-api/pkg/cache"
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/middleware"
@@ -33,10 +34,9 @@ func NewApi(config *ApiConfig) *Api {
 		config.GetTables(),
 		config.Username,
 		config.Password)
-	//$prefix = sprintf('phpcrudapi-%s-', substr(md5(__FILE__), 0, 8));
-	//$cache = CacheFactory::create($config->getCacheType(), $prefix, $config->getCachePath());
-	var cache interface{}
-	reflection := database.NewReflectionService(db, cache, 0)
+	prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
+	cache := cache.Create(config.CacheType, prefix, config.CachePath)
+	reflection := database.NewReflectionService(db, cache, config.CacheTime)
 	responder := controller.NewJsonResponder(config.Debug)
 	router := mux.NewRouter()
 	for middle, properties := range config.Middlewares {

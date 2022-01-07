@@ -1,27 +1,26 @@
 package database
 
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+
+	"github.com/dranih/go-crud-api/pkg/cache"
+	"github.com/dranih/go-crud-api/pkg/utils"
+)
+
 type ReflectionService struct {
 	db       *GenericDB
-	cache    interface{}
-	ttl      int
+	cache    cache.Cache
+	ttl      int32
 	database *ReflectedDatabase
 	tables   map[string]*ReflectedTable
 }
 
-func NewReflectionService(db *GenericDB, cache interface{}, ttl int) *ReflectionService {
+func NewReflectionService(db *GenericDB, cache cache.Cache, ttl int32) *ReflectionService {
 	return &ReflectionService{db, cache, ttl, nil, map[string]*ReflectedTable{}}
 }
 
-/*
-		public function __construct(GenericDB $db, Cache $cache, int $ttl)
-        {
-            $this->db = $db;
-            $this->cache = $cache;
-            $this->ttl = $ttl;
-            $this->database = null;
-            $this->tables = [];
-        }
-*/
 // done
 func (rs *ReflectionService) getDatabase() *ReflectedDatabase {
 	if rs.database != nil {
@@ -31,60 +30,74 @@ func (rs *ReflectionService) getDatabase() *ReflectedDatabase {
 	return rs.database
 }
 
-/*
-   private function database(): ReflectedDatabase
-   {
-       if ($this->database) {
-           return $this->database;
-       }
-       $this->database = $this->loadDatabase(true);
-       return $this->database;
-   }
-*/
 // to finish with cache
 func (rs *ReflectionService) loadDatabase(useCache bool) *ReflectedDatabase {
-	database := NewReflectedDatabaseFromReflection(rs.db.Reflection())
+	key := fmt.Sprintf("%s-ReflectedDatabase", rs.db.GetCacheKey())
+	var data string
+	var database *ReflectedDatabase
+	if useCache {
+		data = rs.cache.Get(key)
+	}
+	if data != "" {
+		ungzipData, err := utils.GzUncompress(data)
+		if err == nil {
+			database = NewReflectedDatabaseFromJson(ungzipData)
+		} else {
+			log.Printf("Error cache uncompress : %v", err)
+		}
+	}
+	if database == nil {
+		database = NewReflectedDatabaseFromReflection(rs.db.Reflection())
+		if jsonData, err := json.Marshal(database); err == nil {
+			if data, err := utils.GzCompress(string(jsonData)); err == nil {
+				rs.cache.Set(key, data, rs.ttl)
+			} else {
+				log.Printf("Error cache compress : %v", err)
+			}
+		} else {
+			log.Printf("Error marshaling database for caching : %v", err)
+		}
+	}
 	return database
 }
 
-/*
-   private function loadDatabase(bool $useCache): ReflectedDatabase
-   {
-       $key = sprintf('%s-ReflectedDatabase', $this->db->getCacheKey());
-       $data = $useCache ? $this->cache->get($key) : '';
-       if ($data != '') {
-           $database = ReflectedDatabase::fromJson(json_decode(gzuncompress($data)));
-       } else {
-           $database = ReflectedDatabase::fromReflection($this->db->reflection());
-           $data = gzcompress(json_encode($database, JSON_UNESCAPED_UNICODE));
-           $this->cache->set($key, $data, $this->ttl);
-       }
-       return $database;
-   }
-*/
 // to finish with cache
 func (rs *ReflectionService) loadTable(tableName string, useCache bool) *ReflectedTable {
-	tableType := rs.getDatabase().GetType(tableName)
-	table := NewReflectedTableFromReflection(rs.db.Reflection(), tableName, tableType)
+	key := fmt.Sprintf("%s-ReflectedTable(%s)", rs.db.GetCacheKey(), tableName)
+	var data string
+	var table *ReflectedTable
+	if useCache {
+		data = rs.cache.Get(key)
+	}
+	if data != "" {
+		ungzipData, err := utils.GzUncompress(data)
+		if err == nil {
+			var jsonData map[string]interface{}
+			if err := json.Unmarshal([]byte(ungzipData), &jsonData); err != nil {
+				log.Printf("Error cache table unmarshalling : %v", err)
+			} else {
+				table = NewReflectedTableFromJson(jsonData)
+			}
+		} else {
+			log.Printf("Error cache uncompress : %v", err)
+		}
+	}
+	if table == nil {
+		tableType := rs.getDatabase().GetType(tableName)
+		table = NewReflectedTableFromReflection(rs.db.Reflection(), tableName, tableType)
+		if jsonData, err := json.Marshal(table); err == nil {
+			if data, err := utils.GzCompress(string(jsonData)); err == nil {
+				rs.cache.Set(key, data, rs.ttl)
+			} else {
+				log.Printf("Error cache compress : %v", err)
+			}
+		} else {
+			log.Printf("Error marshaling table for caching : %v", err)
+		}
+	}
 	return table
 }
 
-/*
-   private function loadTable(string $tableName, bool $useCache): ReflectedTable
-   {
-       $key = sprintf('%s-ReflectedTable(%s)', $this->db->getCacheKey(), $tableName);
-       $data = $useCache ? $this->cache->get($key) : '';
-       if ($data != '') {
-           $table = ReflectedTable::fromJson(json_decode(gzuncompress($data)));
-       } else {
-           $tableType = $this->database()->getType($tableName);
-           $table = ReflectedTable::fromReflection($this->db->reflection(), $tableName, $tableType);
-           $data = gzcompress(json_encode($table, JSON_UNESCAPED_UNICODE));
-           $this->cache->set($key, $data, $this->ttl);
-       }
-       return $table;
-   }
-*/
 func (rs *ReflectionService) RefreshTables() {
 	rs.database = rs.loadDatabase(false)
 }

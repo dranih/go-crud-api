@@ -1,8 +1,6 @@
 package cache
 
-type CacheFactory struct{}
-
-func (cf *CacheFactory) Create(cacheType, prefix, config string) Cache {
+func Create(cacheType, prefix, config string) Cache {
 	var cache interface{ Cache }
 	switch cacheType {
 	case "TempFile":
