@@ -6,6 +6,8 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+var store = sessions.NewCookieStore([]byte("4d70ad3e4165e3a1dc158fdc0fc07dc9ae8c8c4ecbd7f8619debebcba5a3710d"))
+
 func GetRequestParams(request *http.Request) map[string][]string {
 	//params := map[string]string{}
 	/*query := request.URL.RawQuery
@@ -14,12 +16,8 @@ func GetRequestParams(request *http.Request) map[string][]string {
 	return request.URL.Query()
 }
 
-func SetSession(w http.ResponseWriter, request *http.Request) *sessions.Session {
-	var store = sessions.NewCookieStore([]byte("toto"))
+func GetSession(w http.ResponseWriter, request *http.Request) *sessions.Session {
 	session, _ := store.Get(request, "session")
-	// Set some session values.
-	session.Values["foo"] = "bar"
-	session.Values[42] = 43
 	// Save it before we write to the response/return from the handler.
 	err := session.Save(request, w)
 	if err != nil {

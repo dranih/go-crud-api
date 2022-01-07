@@ -17,7 +17,7 @@ type BasicAuthMiddleware struct {
 	GenericMiddleware
 }
 
-func NewBasiAuth(responder controller.Responder, properties map[string]interface{}) *BasicAuthMiddleware {
+func NewBasicAuth(responder controller.Responder, properties map[string]interface{}) *BasicAuthMiddleware {
 	return &BasicAuthMiddleware{GenericMiddleware: GenericMiddleware{Responder: responder, Properties: properties}}
 }
 
@@ -101,15 +101,15 @@ func (bam *BasicAuthMiddleware) getAuthorizationCredentials(request *http.Reques
 
 func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session := utils.SetSession(w, r)
+		session := utils.GetSession(w, r)
 		username, password, ok := bam.getAuthorizationCredentials(r)
 		if ok {
 			passwordFile := bam.getProperty("passwordFile", ".htpasswd")
 			validUser := bam.getValidUsername(username, password, passwordFile)
-			session.Values["username"] = validUser
 			if validUser == "" {
 				bam.Responder.Error(record.AUTHENTICATION_FAILED, username, w, "")
 			} else {
+				session.Values["username"] = validUser
 				if err := session.Save(r, w); err != nil {
 					bam.Responder.Error(record.INTERNAL_SERVER_ERROR, err.Error(), w, "")
 				} else {
@@ -121,7 +121,7 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 				if authenticationMode := bam.getProperty("mode", "required"); authenticationMode == "required" {
 					realm := bam.getProperty("realm", "Username and password required")
 					w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-					bam.Responder.Error(record.AUTHENTICATION_REQUIRED, "", w, "")
+					bam.Responder.Error(record.AUTHENTICATION_REQUIRED, "", w, realm)
 				} else {
 					next.ServeHTTP(w, r)
 				}
