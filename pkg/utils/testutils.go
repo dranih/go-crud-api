@@ -79,7 +79,7 @@ func RunTests(t *testing.T, ts *httptest.Server, tests []Test) {
 						t.Errorf("Regex '%s' not matching, got '%s'", tc.WantRegex, b)
 					}
 				} else if strings.TrimSpace(string(b)) != tc.Want {
-					t.Errorf("Want '%s', got '%s'", tc.Want, b)
+					t.Errorf("Want '%s', got '%s'", tc.Want, strings.TrimSpace(string(b)))
 				}
 			}
 		})
