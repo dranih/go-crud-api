@@ -16,6 +16,7 @@ import (
 	"github.com/dranih/go-crud-api/pkg/cache"
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/geojson"
 	"github.com/dranih/go-crud-api/pkg/middleware"
 )
 
@@ -61,9 +62,9 @@ func NewApi(config *ApiConfig) *Api {
 			//$openApi = new OpenApiService($reflection, $config->getOpenApiBase(), $config->getControllers(), $config->getCustomOpenApiBuilders());
 			//new OpenApiController($router, $responder, $openApi);
 		case "geojson":
-			//$records = new RecordService($db, $reflection);
-			//$geoJson = new GeoJsonService($reflection, $records);
-			//new GeoJsonController($router, $responder, $geoJson);
+			records := database.NewRecordService(db, reflection)
+			geoJson := geojson.NewGeoJsonService(reflection, records)
+			controller.NewGeoJsonController(router, responder, geoJson)
 		case "status":
 			controller.NewStatusController(router, responder, cache, db)
 		}
