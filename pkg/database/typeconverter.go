@@ -192,16 +192,16 @@ func NewTypeConverter(driver string) *TypeConverter {
 
 func (t *TypeConverter) ToJdbc(jdbcType string, size string) string {
 	jdbcType = strings.ToLower(jdbcType)
-	if _, ok := t.toJdbc[t.driver][jdbcType+"("+size+")"]; ok {
-		jdbcType = t.toJdbc[t.driver][jdbcType+"("+size+")"]
+	if val, ok := t.toJdbc[t.driver][jdbcType+"("+size+")"]; ok {
+		jdbcType = val
 	}
-	if _, ok := t.toJdbc[t.driver][jdbcType]; ok {
-		jdbcType = t.toJdbc[t.driver][jdbcType]
+	if val, ok := t.toJdbc[t.driver][jdbcType]; ok {
+		jdbcType = val
 	}
-	if _, ok := t.toJdbc["simplified"][jdbcType]; ok {
-		jdbcType = t.toJdbc["simplified"][jdbcType]
+	if val, ok := t.toJdbc["simplified"][jdbcType]; ok {
+		jdbcType = val
 	}
-	if _, ok := t.valid[jdbcType]; ok {
+	if _, ok := t.valid[jdbcType]; !ok {
 		jdbcType = "clob"
 	}
 	return jdbcType

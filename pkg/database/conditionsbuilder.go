@@ -53,7 +53,7 @@ func (cb *ConditionsBuilder) getNotConditionSql(not *NotCondition, arguments *[]
 }
 
 func (cb *ConditionsBuilder) quoteColumnName(column *ReflectedColumn) string {
-	return `"` + column.GetName() + `"`
+	return "`" + column.GetName() + "`"
 }
 
 func (cb *ConditionsBuilder) escapeLikeValue(value string) string {
@@ -175,8 +175,7 @@ func (cb *ConditionsBuilder) hasSpatialArgument(operator string) bool {
 func (cb *ConditionsBuilder) getSpatialFunctionCall(functionName, column string, hasArgument bool) string {
 	argument := ""
 	switch cb.driver {
-	case `mysql`:
-	case `pgsql`:
+	case `mysql`, `pgsql`:
 		if hasArgument {
 			argument = `ST_GeomFromText(?)`
 		} else {

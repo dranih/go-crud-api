@@ -30,7 +30,8 @@ type GenericDB struct {
 func (g *GenericDB) getDsn() string {
 	switch g.driver {
 	case "mysql":
-		return fmt.Sprintf("%s:host=%s;port=%d;dbname=%s;charset=utf8mb4", g.driver, g.address, g.port, g.database)
+		//username:password@protocol(address)/dbname?param=value
+		return fmt.Sprintf("%s:tcp(%s:%d)/%s?charset=utf8mb4", g.driver, g.address, g.port, g.database)
 	case "pgsql":
 		return fmt.Sprintf("%s:host=%s port=%d dbname=%s options=\"--client_encoding=UTF8\"", g.driver, g.address, g.port, g.database)
 	case "sqlsrv":
@@ -184,7 +185,7 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	insertColumns, parameters := g.columns.GetInsert(table, columnValues)
 	tableName := table.GetName()
 	pkName := table.GetPk().GetName()
-	sql := `INSERT INTO "` + tableName + `" ` + insertColumns
+	sql := "INSERT INTO `" + tableName + "` " + insertColumns
 	res, err := g.exec(sql, parameters...)
 	if err != nil {
 		return nil, err
@@ -228,7 +229,7 @@ func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := `SELECT ` + selectColumns + ` FROM "` + tableName + `" ` + whereClause
+	sql := "SELECT " + selectColumns + " FROM `" + tableName + "` " + whereClause
 	records, _ = g.query(sql, parameters...)
 	if len(records) <= 0 {
 		return nil
@@ -250,7 +251,7 @@ func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []str
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := `SELECT ` + selectColumns + ` FROM "` + tableName + `" ` + whereClause
+	sql := "SELECT " + selectColumns + " FROM `" + tableName + "` " + whereClause
 	records, _ = g.query(sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
@@ -262,7 +263,7 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := `SELECT COUNT(*) as c FROM "` + tableName + `"` + whereClause
+	sql := "SELECT COUNT(*) as c FROM `" + tableName + "`" + whereClause
 	stmt, _ := g.query(sql, parameters...)
 	ret, ok := stmt[0]["c"].(int64)
 	if !ok {
@@ -283,7 +284,7 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	orderBy := g.columns.GetOrderBy(table, columnOrdering)
 	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
-	sql := "SELECT " + selectColumns + ` FROM "` + tableName + `"` + whereClause + orderBy + offsetLimit
+	sql := "SELECT " + selectColumns + " FROM `" + tableName + "`" + whereClause + orderBy + offsetLimit
 	records, _ := g.query(sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
@@ -301,7 +302,7 @@ func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]
 	condition = NewColumnCondition(pk, `eq`, id)
 	condition = g.addMiddlewareConditions(tableName, condition)
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := `UPDATE "` + tableName + `" SET ` + updateColumns + whereClause
+	sql := "UPDATE `" + tableName + "` SET " + updateColumns + whereClause
 	res, err := g.exec(sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -323,7 +324,7 @@ func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (map[string]i
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := `DELETE FROM "` + tableName + `" ` + whereClause
+	sql := "DELETE FROM `" + tableName + "` " + whereClause
 	res, err := g.exec(sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -352,7 +353,7 @@ func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[stri
 	condition = NewColumnCondition(pk, `eq`, id)
 	condition = g.addMiddlewareConditions(tableName, condition)
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := `UPDATE "` + tableName + `" SET ` + updateColumns + whereClause
+	sql := "UPDATE `" + tableName + "` SET " + updateColumns + whereClause
 	res, err := g.exec(sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()

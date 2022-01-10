@@ -135,6 +135,9 @@ func (c *Config) Init() {
 
 func (ac *ApiConfig) initMiddlewares() {
 	defaultMiddlewares := "cors,errors"
+	if ac.Middlewares == nil {
+		ac.Middlewares = map[string]map[string]interface{}{}
+	}
 	for _, defaultMiddleware := range strings.Split(defaultMiddlewares, ",") {
 		if _, exists := ac.Middlewares[defaultMiddleware]; !exists {
 			ac.Middlewares[defaultMiddleware] = nil

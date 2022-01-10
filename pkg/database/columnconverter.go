@@ -31,8 +31,7 @@ func (cc *ColumnConverter) ConvertColumnValue(column *ReflectedColumn) string {
 	}
 	if column.IsGeometry() {
 		switch cc.driver {
-		case `mysql`:
-		case `pgsql`:
+		case `mysql`, `pgsql`:
 			return "ST_GeomFromText(?)"
 		case `sqlsrv`:
 			return "geometry::STGeomFromText(?,0)"
@@ -54,8 +53,7 @@ func (cc *ColumnConverter) ConvertColumnName(column *ReflectedColumn, value stri
 	}
 	if column.IsGeometry() {
 		switch cc.driver {
-		case "mysql":
-		case "pgsql":
+		case "mysql", "pgsql":
 			return "ST_AsText(" + value + ") as " + value
 		case "sqlsrv":
 			return "REPLACE(" + value + ".STAsText(),' (','(') as " + value

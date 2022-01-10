@@ -9,10 +9,10 @@ import (
 
 type Geometry struct {
 	geoType     string
-	coordinates [][2]float64
+	coordinates interface{}
 }
 
-func NewGeometry(geoType string, coordinates [][2]float64) *Geometry {
+func NewGeometry(geoType string, coordinates interface{}) *Geometry {
 	return &Geometry{geoType, coordinates}
 }
 
@@ -46,7 +46,7 @@ func NewGeometryFromWkt(wkt string) *Geometry {
 	}
 	re := strings.NewReplacer("(", "[", ")", "]", ", ", ",", " ", ",")
 	coordinates = re.Replace(coordinates)
-	var coord [][2]float64
+	var coord interface{}
 	if err := json.Unmarshal([]byte(coordinates), &coord); err != nil {
 		log.Printf("Could not decode WKT %s : %s", coordinates, err)
 		return nil

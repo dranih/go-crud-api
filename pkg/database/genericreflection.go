@@ -1,6 +1,7 @@
 package database
 
 import (
+	"log"
 	"regexp"
 )
 
@@ -28,7 +29,7 @@ func (r *GenericReflection) GetIgnoredTables() []string {
 func (r *GenericReflection) getTablesSQL() string {
 	switch r.driver {
 	case `mysql`:
-		return `SELECT "TABLE_NAME", "TABLE_TYPE" FROM "INFORMATION_SCHEMA"."TABLES" WHERE "TABLE_TYPE" IN (\BASE TABLE\' , \'VIEW\') AND "TABLE_SCHEMA" = ? ORDER BY BINARY "TABLE_NAME"`
+		return `SELECT TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE IN ('BASE TABLE' , 'VIEW') AND TABLE_SCHEMA = ? ORDER BY BINARY TABLE_NAME`
 	case `pgsql`:
 		return `SELECT c.relname as "TABLE_NAME", c.relkind as "TABLE_TYPE" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN ('r', 'v') AND n.nspname <> 'pg_catalog' AND n.nspname <> 'information_schema' AND n.nspname !~ '^pg_toast' AND pg_catalog.pg_table_is_visible(c.oid) AND '' <> ? ORDER BY "TABLE_NAME";`
 	case `sqlsrv`:
@@ -43,7 +44,7 @@ func (r *GenericReflection) getTablesSQL() string {
 func (r *GenericReflection) getTableColumnsSQL() string {
 	switch r.driver {
 	case `mysql`:
-		return `SELECT "COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH" as "CHARACTER_MAXIMUM_LENGTH", "NUMERIC_PRECISION", "NUMERIC_SCALE", "COLUMN_TYPE" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ? ORDER BY "ORDINAL_POSITION"`
+		return `SELECT COLUMN_NAME, IS_NULLABLE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH as "CHARACTER_MAXIMUM_LENGTH", NUMERIC_PRECISION, NUMERIC_SCALE, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND TABLE_SCHEMA = ? ORDER BY ORDINAL_POSITION`
 	case `pgsql`:
 		return `SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then 'NO' else 'YES' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE", '' AS "COLUMN_TYPE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND '' <> ? AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum;`
 	case `sqlsrv`:
@@ -58,7 +59,7 @@ func (r *GenericReflection) getTableColumnsSQL() string {
 func (r *GenericReflection) getTablePrimaryKeysSQL() string {
 	switch r.driver {
 	case `mysql`:
-		return `SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "CONSTRAINT_NAME" = 'PRIMARY' AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?`
+		return `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_NAME = 'PRIMARY' AND TABLE_NAME = ? AND TABLE_SCHEMA = ?`
 	case `pgsql`:
 		return `SELECT a.attname AS "COLUMN_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND '' <> ? AND c.contype = 'p'`
 	case `sqlsrv`:
@@ -73,7 +74,7 @@ func (r *GenericReflection) getTablePrimaryKeysSQL() string {
 func (r *GenericReflection) getTableForeignKeysSQL() string {
 	switch r.driver {
 	case `mysql`:
-		return `SELECT "COLUMN_NAME", "REFERENCED_TABLE_NAME" FROM "INFORMATION_SCHEMA"."KEY_COLUMN_USAGE" WHERE "REFERENCED_TABLE_NAME" IS NOT NULL AND "TABLE_NAME" = ? AND "TABLE_SCHEMA" = ?`
+		return `SELECT COLUMN_NAME, REFERENCED_TABLE_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME = ? AND TABLE_SCHEMA = ?`
 	case `pgsql`:
 		return `SELECT a.attname AS "COLUMN_NAME", c.confrelid::regclass::text AS "REFERENCED_TABLE_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = ? AND '' <> ? AND c.contype  = 'f'`
 	case `sqlsrv`:
@@ -106,14 +107,18 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 	_results := []map[string]interface{}{}
 	if len(tables) > 0 {
 		for _, result := range results {
-			if _, ok := tables[result["TABLE_NAME"].(string)]; ok {
-				_results = append(_results, result)
+			if tableName, isString := result["TABLE_NAME"].(string); isString {
+				if ok1, ok2 := tables[tableName]; ok1 && ok2 {
+					_results = append(_results, result)
+				}
 			}
 		}
 		results = _results
 	}
 	for index := range results {
-		results[index]["TABLE_TYPE"] = mapArr[results[index]["TABLE_TYPE"].(string)]
+		if tableType, isString := results[index]["TABLE_TYPE"].(string); isString {
+			results[index]["TABLE_TYPE"] = mapArr[tableType]
+		}
 	}
 	return results
 }
@@ -129,7 +134,7 @@ func (r *GenericReflection) GetTableColumns(tableName string, viewType string) [
 	if r.driver == "mysql" {
 		for index, result := range results {
 			// mysql does not properly reflect display width of types
-			re := regexp.MustCompile(`|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|`)
+			re := regexp.MustCompile(`([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?`)
 			matches := re.FindStringSubmatch(result["DATA_TYPE"].(string))
 			results[index]["DATA_TYPE"] = matches[1]
 			if _, ok := results[index]["CHARACTER_MAXIMUM_LENGTH"]; ok {
@@ -145,7 +150,7 @@ func (r *GenericReflection) GetTableColumns(tableName string, viewType string) [
 	if r.driver == "sqlite" {
 		for index, result := range results {
 			// sqlite does not reflect types on view columns
-			re := regexp.MustCompile(`|([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?|`)
+			re := regexp.MustCompile(`([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?`)
 			matches := re.FindStringSubmatch(result["DATA_TYPE"].(string))
 			if matches[1] != "" {
 				results[index]["DATA_TYPE"] = matches[1]
@@ -189,7 +194,11 @@ func (r *GenericReflection) ToJdbcType(jdbcType string, size string) string {
 
 // Should check errors
 func (r *GenericReflection) query(sql string, parameters ...interface{}) []map[string]interface{} {
-	rows, _ := r.pdo.connect().Query(sql, parameters...)
-	results, _ := r.pdo.Rows2Map(rows)
-	return results
+	if rows, err := r.pdo.connect().Query(sql, parameters...); err != nil {
+		log.Printf("Error executing request : %s got : %s", sql, err)
+		return nil
+	} else {
+		results, _ := r.pdo.Rows2Map(rows)
+		return results
+	}
 }

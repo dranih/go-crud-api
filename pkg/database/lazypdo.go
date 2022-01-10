@@ -3,9 +3,11 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"strings"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -35,18 +37,33 @@ func (l *LazyPdo) AddInitCommand(command string) {
 // should deals with compatible databases
 func (l *LazyPdo) connect() *sql.DB {
 	if l.pdo == nil {
-		splitDsn := strings.Split(l.dsn, ":")
+		var err error
+		var auth string
+		splitDsn := strings.SplitN(l.dsn, ":", 2)
+		dsn := splitDsn[1]
 		switch splitDsn[0] {
 		case "mysql":
+			//user:password@tcp(127.0.0.1:3306)/database
+			if l.user != "" && l.password != "" {
+				auth = fmt.Sprintf("%s:%s@", l.user, l.password)
+			}
+			if l.pdo, err = sql.Open("mysql", fmt.Sprintf("%s%s", auth, dsn)); err != nil {
+				log.Fatalf("Connection failed to database %s", dsn)
+			} else {
+				log.Printf("Connected to %s", dsn)
+			}
 		case "pgsql":
 		case "sqlsrv":
 		case "sqlite":
-			var err error
-			if l.pdo, err = sql.Open("sqlite3", splitDsn[1]); err != nil {
-				log.Fatalf("Connection failed to database %s", splitDsn[1])
+			//file:test.s3db?_auth&_auth_user=admin&_auth_pass=admin
+			if l.user != "" && l.password != "" {
+				auth = fmt.Sprintf("?_auth&_auth_user=%s&_auth_pass=%s", l.user, l.password)
+			}
+			if l.pdo, err = sql.Open("sqlite3", fmt.Sprintf("%s%s", dsn, auth)); err != nil {
+				log.Fatalf("Connection failed to database %s", dsn)
 				return nil
 			} else {
-				log.Printf("Connected to %s", splitDsn[1])
+				log.Printf("Connected to %s", dsn)
 			}
 		default:
 		}
@@ -174,7 +191,15 @@ func (l *LazyPdo) Rows2Map(rows *sql.Rows) ([]map[string]interface{}, error) {
 		m := make(map[string]interface{})
 		for i, colName := range cols {
 			val := columnPointers[i].(*interface{})
-			m[colName] = *val
+			switch v := (*val).(type) {
+			case string:
+				m[colName] = v
+			case []uint8:
+				m[colName] = string(v)
+			default:
+				m[colName] = *val
+			}
+
 		}
 
 		result = append(result, m)

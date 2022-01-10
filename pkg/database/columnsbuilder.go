@@ -33,7 +33,7 @@ func (cb *ColumnsBuilder) GetOffsetLimit(offset, limit int) string {
 }
 
 func (cb *ColumnsBuilder) quoteColumnName(column *ReflectedColumn) string {
-	return `"` + column.GetName() + `"`
+	return "`" + column.GetName() + "`"
 }
 
 func (cb *ColumnsBuilder) GetOrderBy(table *ReflectedTable, columnOrdering [][2]string) string {
