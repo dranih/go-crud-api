@@ -22,6 +22,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gorilla/sessions v1.2.1
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/lib/pq v1.10.4
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible

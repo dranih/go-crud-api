@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -48,11 +49,20 @@ func (l *LazyPdo) connect() *sql.DB {
 				auth = fmt.Sprintf("%s:%s@", l.user, l.password)
 			}
 			if l.pdo, err = sql.Open("mysql", fmt.Sprintf("%s%s", auth, dsn)); err != nil {
-				log.Fatalf("Connection failed to database %s", dsn)
+				log.Fatalf("Connection failed to database %s with error : %s", dsn, err)
 			} else {
 				log.Printf("Connected to %s", dsn)
 			}
 		case "pgsql":
+			if l.user != "" && l.password != "" {
+				auth = fmt.Sprintf(" user=%s password=%s ", l.user, l.password)
+			}
+			//Should add an option for ssl
+			if l.pdo, err = sql.Open("postgres", fmt.Sprintf("%s %s sslmode=disable", auth, dsn)); err != nil {
+				log.Fatalf("Connection failed to database %s with error : %s", dsn, err)
+			} else {
+				log.Printf("Connected to %s", dsn)
+			}
 		case "sqlsrv":
 		case "sqlite":
 			//file:test.s3db?_auth&_auth_user=admin&_auth_pass=admin
@@ -60,7 +70,7 @@ func (l *LazyPdo) connect() *sql.DB {
 				auth = fmt.Sprintf("?_auth&_auth_user=%s&_auth_pass=%s", l.user, l.password)
 			}
 			if l.pdo, err = sql.Open("sqlite3", fmt.Sprintf("%s%s", dsn, auth)); err != nil {
-				log.Fatalf("Connection failed to database %s", dsn)
+				log.Fatalf("Connection failed to database %s with error : %s", dsn, err)
 				return nil
 			} else {
 				log.Printf("Connected to %s", dsn)

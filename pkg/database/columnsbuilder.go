@@ -33,7 +33,12 @@ func (cb *ColumnsBuilder) GetOffsetLimit(offset, limit int) string {
 }
 
 func (cb *ColumnsBuilder) quoteColumnName(column *ReflectedColumn) string {
-	return "`" + column.GetName() + "`"
+	switch cb.driver {
+	case "mysql":
+		return "`" + column.GetName() + "`"
+	default:
+		return `"` + column.GetName() + `"`
+	}
 }
 
 func (cb *ColumnsBuilder) GetOrderBy(table *ReflectedTable, columnOrdering [][2]string) string {
@@ -71,7 +76,7 @@ func (cb *ColumnsBuilder) GetInsert(table *ReflectedTable, columnValues map[stri
 		quotedColumnName := cb.quoteColumnName(column)
 		quotedColumnName = cb.converter.ConvertColumnName(column, quotedColumnName)
 		columns = append(columns, quotedColumnName)
-		columnValue := cb.converter.ConvertColumnValue(column)
+		columnValue := cb.converter.ConvertColumnValue(column, parameters)
 		values = append(values, columnValue)
 		parameters = append(parameters, val)
 	}
@@ -98,7 +103,7 @@ func (cb *ColumnsBuilder) GetUpdate(table *ReflectedTable, columnValues map[stri
 	for columnName, val := range columnValues {
 		column := table.GetColumn(columnName)
 		quotedColumnName := cb.quoteColumnName(column)
-		columnValue := cb.converter.ConvertColumnValue(column)
+		columnValue := cb.converter.ConvertColumnValue(column, parameters)
 		results = append(results, quotedColumnName+"="+columnValue)
 		parameters = append(parameters, val)
 	}
@@ -114,7 +119,7 @@ func (cb *ColumnsBuilder) GetIncrement(table *ReflectedTable, columnValues map[s
 		case float32, float64, complex64, complex128:
 			column := table.GetColumn(columnName)
 			quotedColumnName := cb.quoteColumnName(column)
-			columnValue := cb.converter.ConvertColumnValue(column)
+			columnValue := cb.converter.ConvertColumnValue(column, parameters)
 			results = append(results, quotedColumnName+"="+quotedColumnName+"+"+columnValue)
 			parameters = append(parameters, val)
 		}

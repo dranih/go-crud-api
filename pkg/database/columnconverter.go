@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 type ColumnConverter struct {
 	driver string
 }
@@ -8,13 +10,13 @@ func NewColumnConverter(driver string) *ColumnConverter {
 	return &ColumnConverter{driver}
 }
 
-func (cc *ColumnConverter) ConvertColumnValue(column *ReflectedColumn) string {
+func (cc *ColumnConverter) ConvertColumnValue(column *ReflectedColumn, parameters []interface{}) string {
 	if column.IsBoolean() {
 		switch cc.driver {
 		case `mysql`:
 			return "IFNULL(IF(?,TRUE,FALSE),NULL)"
 		case `pgsql`:
-			return "?"
+			return fmt.Sprintf("$%d", len(parameters)+1)
 		case `sqlsrv`:
 			return "?"
 		}
@@ -24,18 +26,23 @@ func (cc *ColumnConverter) ConvertColumnValue(column *ReflectedColumn) string {
 		case `mysql`:
 			return "FROM_BASE64(?)"
 		case `pgsql`:
-			return "decode(?, 'base64')"
+			return fmt.Sprintf("decode($%d, 'base64')", len(parameters)+1)
 		case `sqlsrv`:
 			return "CONVERT(XML, ?).value('.','varbinary(max)')"
 		}
 	}
 	if column.IsGeometry() {
 		switch cc.driver {
-		case `mysql`, `pgsql`:
+		case `mysql`:
 			return "ST_GeomFromText(?)"
+		case `pgsql`:
+			return fmt.Sprintf("ST_GeomFromText($%d)", len(parameters)+1)
 		case `sqlsrv`:
 			return "geometry::STGeomFromText(?,0)"
 		}
+	}
+	if cc.driver == `pgsql` {
+		return fmt.Sprintf("$%d", len(parameters)+1)
 	}
 	return "?"
 }

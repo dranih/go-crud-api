@@ -33,7 +33,9 @@ func (g *GenericDB) getDsn() string {
 		//username:password@protocol(address)/dbname?param=value
 		return fmt.Sprintf("%s:tcp(%s:%d)/%s?charset=utf8mb4", g.driver, g.address, g.port, g.database)
 	case "pgsql":
-		return fmt.Sprintf("%s:host=%s port=%d dbname=%s options=\"--client_encoding=UTF8\"", g.driver, g.address, g.port, g.database)
+		//return fmt.Sprintf("%s:host=%s port=%d dbname=%s options=\"--client_encoding=UTF8\"", g.driver, g.address, g.port, g.database)
+		return fmt.Sprintf("%s:host=%s port=%d dbname=%s", g.driver, g.address, g.port, g.database)
+
 	case "sqlsrv":
 		return fmt.Sprintf("%s:Server=%s,%d;Database=%s", g.driver, g.address, g.port, g.database)
 	case "sqlite":
@@ -180,12 +182,23 @@ func (g *GenericDB) addMiddlewareConditions(tableName string, condition interfac
 	return condition
 }
 
+// getQuote returns the quote to use to escape columns and tables
+func (g *GenericDB) getQuote() string {
+	switch g.driver {
+	case "mysql":
+		return "`"
+	default:
+		return `"`
+	}
+}
+
 func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]interface{}) (map[string]interface{}, error) {
 	g.converter.ConvertColumnValues(table, &columnValues)
 	insertColumns, parameters := g.columns.GetInsert(table, columnValues)
 	tableName := table.GetName()
 	pkName := table.GetPk().GetName()
-	sql := "INSERT INTO `" + tableName + "` " + insertColumns
+	quote := g.getQuote()
+	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
 	res, err := g.exec(sql, parameters...)
 	if err != nil {
 		return nil, err
@@ -229,7 +242,8 @@ func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := "SELECT " + selectColumns + " FROM `" + tableName + "` " + whereClause
+	quote := g.getQuote()
+	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableName, quote, whereClause)
 	records, _ = g.query(sql, parameters...)
 	if len(records) <= 0 {
 		return nil
@@ -251,7 +265,8 @@ func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []str
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := "SELECT " + selectColumns + " FROM `" + tableName + "` " + whereClause
+	quote := g.getQuote()
+	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableName, quote, whereClause)
 	records, _ = g.query(sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
@@ -263,7 +278,8 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := "SELECT COUNT(*) as c FROM `" + tableName + "`" + whereClause
+	quote := g.getQuote()
+	sql := fmt.Sprintf("SELECT COUNT(*) as c FROM %s%s%s %s", quote, tableName, quote, whereClause)
 	stmt, _ := g.query(sql, parameters...)
 	ret, ok := stmt[0]["c"].(int64)
 	if !ok {
@@ -284,7 +300,8 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	orderBy := g.columns.GetOrderBy(table, columnOrdering)
 	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
-	sql := "SELECT " + selectColumns + " FROM `" + tableName + "`" + whereClause + orderBy + offsetLimit
+	quote := g.getQuote()
+	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s %s %s", selectColumns, quote, tableName, quote, whereClause, orderBy, offsetLimit)
 	records, _ := g.query(sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
@@ -302,7 +319,8 @@ func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]
 	condition = NewColumnCondition(pk, `eq`, id)
 	condition = g.addMiddlewareConditions(tableName, condition)
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := "UPDATE `" + tableName + "` SET " + updateColumns + whereClause
+	quote := g.getQuote()
+	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableName, quote, updateColumns, whereClause)
 	res, err := g.exec(sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -324,7 +342,8 @@ func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (map[string]i
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := "DELETE FROM `" + tableName + "` " + whereClause
+	quote := g.getQuote()
+	sql := fmt.Sprintf("DELETE FROM %s%s%s %s", quote, tableName, quote, whereClause)
 	res, err := g.exec(sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -353,7 +372,8 @@ func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[stri
 	condition = NewColumnCondition(pk, `eq`, id)
 	condition = g.addMiddlewareConditions(tableName, condition)
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
-	sql := "UPDATE `" + tableName + "` SET " + updateColumns + whereClause
+	quote := g.getQuote()
+	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableName, quote, updateColumns, whereClause)
 	res, err := g.exec(sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()

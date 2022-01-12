@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"strings"
 )
@@ -53,7 +54,12 @@ func (cb *ConditionsBuilder) getNotConditionSql(not *NotCondition, arguments *[]
 }
 
 func (cb *ConditionsBuilder) quoteColumnName(column *ReflectedColumn) string {
-	return "`" + column.GetName() + "`"
+	switch cb.driver {
+	case "mysql":
+		return "`" + column.GetName() + "`"
+	default:
+		return `"` + column.GetName() + `"`
+	}
 }
 
 func (cb *ConditionsBuilder) escapeLikeValue(value string) string {
@@ -84,35 +90,36 @@ func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, a
 	sql := "FALSE"
 	switch operator {
 	case `cs`:
-		sql = column + ` LIKE ?`
 		*arguments = append(*arguments, `%`+cb.escapeLikeValue(value)+`%`)
+		sql = column + ` LIKE ` + cb.stmtOperator(len(*arguments))
 	case `sw`:
-		sql = column + ` LIKE ?`
 		*arguments = append(*arguments, cb.escapeLikeValue(value)+`%`)
+		sql = column + ` LIKE ` + cb.stmtOperator(len(*arguments))
 	case `ew`:
-		sql = column + ` LIKE ?`
 		*arguments = append(*arguments, `%`+cb.escapeLikeValue(value))
+		sql = column + ` LIKE ` + cb.stmtOperator(len(*arguments))
 	case `eq`:
-		sql = column + ` = ?`
 		*arguments = append(*arguments, value)
+		sql = column + ` = ` + cb.stmtOperator(len(*arguments))
 	case `lt`:
-		sql = column + ` < ?`
 		*arguments = append(*arguments, value)
+		sql = column + ` < ` + cb.stmtOperator(len(*arguments))
 	case `le`:
-		sql = column + ` <= ?`
 		*arguments = append(*arguments, value)
+		sql = column + ` <= ` + cb.stmtOperator(len(*arguments))
 	case `ge`:
-		sql = column + ` >= ?`
 		*arguments = append(*arguments, value)
+		sql = column + ` >= ` + cb.stmtOperator(len(*arguments))
 	case `gt`:
-		sql = column + ` > ?`
 		*arguments = append(*arguments, value)
+		sql = column + ` > ` + cb.stmtOperator(len(*arguments))
 	case `bt`:
 		parts := strings.SplitN(value, `,`, 2)
 		count := len(parts)
 		if count == 2 {
-			sql = `(` + column + ` >= ? AND ` + column + ` <= ?)`
 			*arguments = append(*arguments, parts[0], parts[1])
+			//sql = `(` + column + ` >= ? AND ` + column + ` <= ?)`
+			sql = fmt.Sprintf("(column >= %s AND column <= %s)", cb.stmtOperator(len(*arguments)-1), cb.stmtOperator(len(*arguments)))
 		} else {
 			sql = "FALSE"
 		}
@@ -120,9 +127,12 @@ func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, a
 		parts := strings.Split(value, `,`)
 		count := len(parts)
 		if count > 0 {
-			qmarks := `?`
+			qmarks := cb.stmtOperator(len(*arguments) + 1)
 			if count > 1 {
-				qmarks = strings.Repeat(`,?`, count)
+				//qmarks = strings.Repeat(`,?`, count)
+				for i := 1; i <= count; i++ {
+					qmarks = fmt.Sprintf("%s,%s", qmarks, cb.stmtOperator(len(*arguments)+count))
+				}
 			}
 			sql = column + ` IN ( ` + qmarks + ` )`
 			s := make([]interface{}, len(parts))
@@ -138,6 +148,15 @@ func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, a
 	}
 
 	return sql
+}
+
+// stmtOperator returns the operator for the prepared statement : $x for psql else %
+func (cb *ConditionsBuilder) stmtOperator(pos int) string {
+	op := `?`
+	if cb.driver == "pgsql" {
+		op = fmt.Sprintf("$%d", pos)
+	}
+	return op
 }
 
 func (cb *ConditionsBuilder) getSpatialFunctionName(operator string) string {
@@ -172,12 +191,12 @@ func (cb *ConditionsBuilder) hasSpatialArgument(operator string) bool {
 	return map[string]bool{`ic`: true, `is`: true, `iv`: true}[operator]
 }
 
-func (cb *ConditionsBuilder) getSpatialFunctionCall(functionName, column string, hasArgument bool) string {
+func (cb *ConditionsBuilder) getSpatialFunctionCall(functionName, column string, hasArgument bool, arguments *[]interface{}) string {
 	argument := ""
 	switch cb.driver {
 	case `mysql`, `pgsql`:
 		if hasArgument {
-			argument = `ST_GeomFromText(?)`
+			argument = fmt.Sprintf("ST_GeomFromText(%s)", cb.stmtOperator(len(*arguments)+1))
 		} else {
 			argument = ``
 		}
@@ -207,7 +226,7 @@ func (cb *ConditionsBuilder) getSpatialConditionSql(condition *SpatialCondition,
 	value := condition.GetValue()
 	functionName := cb.getSpatialFunctionName(operator)
 	hasArgument := cb.hasSpatialArgument(operator)
-	sql := cb.getSpatialFunctionCall(functionName, column, hasArgument)
+	sql := cb.getSpatialFunctionCall(functionName, column, hasArgument, arguments)
 	if hasArgument {
 		*arguments = append(*arguments, value)
 	}
