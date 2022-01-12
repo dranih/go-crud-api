@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -55,8 +56,20 @@ func ReadConfig(configPaths ...string) *Config {
 	viper.AutomaticEnv()
 	var config Config
 
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file, %s", err)
+	var read bool
+	//Read config file if set in env variable GCA_CONFIG_FILE
+	if configFile, ok := os.LookupEnv("GCA_CONFIG_FILE"); ok {
+		if file, err := os.Open(configFile); err == nil {
+			defer file.Close()
+			if err := viper.ReadConfig(file); err == nil {
+				read = true
+			}
+		}
+	}
+	if !read {
+		if err := viper.ReadInConfig(); err != nil {
+			fmt.Printf("Error reading config file, %s", err)
+		}
 	}
 
 	// Set undefined variables
