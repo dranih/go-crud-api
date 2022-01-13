@@ -18,7 +18,7 @@ func (cc *ColumnConverter) ConvertColumnValue(column *ReflectedColumn, parameter
 		case `pgsql`:
 			return fmt.Sprintf("$%d", len(parameters)+1)
 		case `sqlsrv`:
-			return "?"
+			return fmt.Sprintf("@p%d", len(parameters)+1)
 		}
 	}
 	if column.IsBinary() {
@@ -28,7 +28,7 @@ func (cc *ColumnConverter) ConvertColumnValue(column *ReflectedColumn, parameter
 		case `pgsql`:
 			return fmt.Sprintf("decode($%d, 'base64')", len(parameters)+1)
 		case `sqlsrv`:
-			return "CONVERT(XML, ?).value('.','varbinary(max)')"
+			return fmt.Sprintf("CONVERT(XML, @p%d).value('.','varbinary(max)')", len(parameters)+1)
 		}
 	}
 	if column.IsGeometry() {
@@ -38,13 +38,17 @@ func (cc *ColumnConverter) ConvertColumnValue(column *ReflectedColumn, parameter
 		case `pgsql`:
 			return fmt.Sprintf("ST_GeomFromText($%d)", len(parameters)+1)
 		case `sqlsrv`:
-			return "geometry::STGeomFromText(?,0)"
+			return fmt.Sprintf("geometry::STGeomFromText(@p%d,0)", len(parameters)+1)
 		}
 	}
-	if cc.driver == `pgsql` {
+	switch cc.driver {
+	case `sqlsrv`:
+		return fmt.Sprintf("@p%d", len(parameters)+1)
+	case `pgsql`:
 		return fmt.Sprintf("$%d", len(parameters)+1)
+	default:
+		return "?"
 	}
-	return "?"
 }
 
 func (cc *ColumnConverter) ConvertColumnName(column *ReflectedColumn, value string) string {

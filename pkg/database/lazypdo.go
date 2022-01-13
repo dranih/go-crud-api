@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 
+	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -64,6 +65,15 @@ func (l *LazyPdo) connect() *sql.DB {
 				log.Printf("Connected to %s", dsn)
 			}
 		case "sqlsrv":
+			if l.user != "" && l.password != "" {
+				auth = fmt.Sprintf(";user id=%s;password=%s ", l.user, l.password)
+			}
+			if l.pdo, err = sql.Open("sqlserver", fmt.Sprintf("%s%s", dsn, auth)); err != nil {
+				log.Fatalf("Connection failed to database %s with error : %s", dsn, err)
+				return nil
+			} else {
+				log.Printf("Connected to %s", dsn)
+			}
 		case "sqlite":
 			//file:test.s3db?_auth&_auth_user=admin&_auth_pass=admin
 			if l.user != "" && l.password != "" {

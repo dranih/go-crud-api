@@ -108,8 +108,14 @@ func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResul
 	parseColumnType(columnType, &length, &precision, &scale)
 	dataSize := getDataSize(length, precision, scale)
 	jdbcType := reflection.ToJdbcType(dataType, dataSize)
-	nullableList := map[string]bool{"TRUE": true, "YES": true, "T": true, "Y": true, "1": true}
-	_, nullable := nullableList[strings.ToUpper(columnResult["IS_NULLABLE"].(string))]
+	var nullable bool
+	switch t := columnResult["IS_NULLABLE"].(type) {
+	case bool:
+		nullable = t
+	case string:
+		nullableList := map[string]bool{"TRUE": true, "YES": true, "T": true, "Y": true, "1": true}
+		_, nullable = nullableList[strings.ToUpper(columnResult["IS_NULLABLE"].(string))]
+	}
 	pk := false
 	fk := ""
 	return &ReflectedColumn{name, jdbcType, length, precision, scale, nullable, pk, fk}

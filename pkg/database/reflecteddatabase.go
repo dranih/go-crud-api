@@ -1,6 +1,8 @@
 package database
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type ReflectedDatabase struct {
 	tableTypes map[string]string

@@ -35,9 +35,8 @@ func (g *GenericDB) getDsn() string {
 	case "pgsql":
 		//return fmt.Sprintf("%s:host=%s port=%d dbname=%s options=\"--client_encoding=UTF8\"", g.driver, g.address, g.port, g.database)
 		return fmt.Sprintf("%s:host=%s port=%d dbname=%s", g.driver, g.address, g.port, g.database)
-
 	case "sqlsrv":
-		return fmt.Sprintf("%s:Server=%s,%d;Database=%s", g.driver, g.address, g.port, g.database)
+		return fmt.Sprintf("%s:server=%s;port=%d;database=%s", g.driver, g.address, g.port, g.database)
 	case "sqlite":
 		return fmt.Sprintf("%s:%s", g.driver, g.address)
 	default:

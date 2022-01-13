@@ -152,11 +152,14 @@ func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, a
 
 // stmtOperator returns the operator for the prepared statement : $x for psql else %
 func (cb *ConditionsBuilder) stmtOperator(pos int) string {
-	op := `?`
-	if cb.driver == "pgsql" {
-		op = fmt.Sprintf("$%d", pos)
+	switch cb.driver {
+	case "pgsql":
+		return fmt.Sprintf("$%d", pos)
+	case "sqlsrv":
+		return fmt.Sprintf("@p%d", pos)
+	default:
+		return `?`
 	}
-	return op
 }
 
 func (cb *ConditionsBuilder) getSpatialFunctionName(operator string) string {
@@ -204,7 +207,7 @@ func (cb *ConditionsBuilder) getSpatialFunctionCall(functionName, column string,
 	case `sqlsrv`:
 		functionName = strings.Replace(functionName, `ST_`, `ST`, -1)
 		if hasArgument {
-			argument = `geometry::STGeomFromText(?,0)`
+			argument = fmt.Sprintf("geometry::STGeomFromText(%s,0)", cb.stmtOperator(len(*arguments)+1))
 		} else {
 			argument = ``
 		}

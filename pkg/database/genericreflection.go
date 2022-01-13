@@ -3,6 +3,7 @@ package database
 import (
 	"log"
 	"regexp"
+	"strings"
 )
 
 type GenericReflection struct {
@@ -48,7 +49,7 @@ func (r *GenericReflection) getTableColumnsSQL() string {
 	case `pgsql`:
 		return `SELECT a.attname AS "COLUMN_NAME", case when a.attnotnull then 'NO' else 'YES' end as "IS_NULLABLE", pg_catalog.format_type(a.atttypid, -1) as "DATA_TYPE", case when a.atttypmod < 0 then NULL else a.atttypmod-4 end as "CHARACTER_MAXIMUM_LENGTH", case when a.atttypid != 1700 then NULL else ((a.atttypmod - 4) >> 16) & 65535 end as "NUMERIC_PRECISION", case when a.atttypid != 1700 then NULL else (a.atttypmod - 4) & 65535 end as "NUMERIC_SCALE", '' AS "COLUMN_TYPE" FROM pg_attribute a JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = $1 AND '' <> $2 AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum;`
 	case `sqlsrv`:
-		return `SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", '' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(?) AND '' <> ? ORDER BY c.column_id`
+		return `SELECT c.name AS "COLUMN_NAME", c.is_nullable AS "IS_NULLABLE", t.Name AS "DATA_TYPE", (c.max_length/2) AS "CHARACTER_MAXIMUM_LENGTH", c.precision AS "NUMERIC_PRECISION", c.scale AS "NUMERIC_SCALE", '' AS "COLUMN_TYPE" FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID(@p1) AND '' <> @p2 ORDER BY c.column_id`
 	case `sqlite`:
 		return `SELECT "name" AS "COLUMN_NAME", case when "notnull"==1 then 'no' else 'yes' end as "IS_NULLABLE", lower("type") AS "DATA_TYPE", 2147483647 AS "CHARACTER_MAXIMUM_LENGTH", 0 AS "NUMERIC_PRECISION", 0 AS "NUMERIC_SCALE", '' AS "COLUMN_TYPE" FROM pragma_table_info(?) WHERE '' <> ? ORDER BY "cid"`
 	default:
@@ -63,7 +64,7 @@ func (r *GenericReflection) getTablePrimaryKeysSQL() string {
 	case `pgsql`:
 		return `SELECT a.attname AS "COLUMN_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = $1 AND '' <> $2 AND c.contype = 'p'`
 	case `sqlsrv`:
-		return `SELECT c.NAME as "COLUMN_NAME" FROM sys.key_constraints kc inner join sys.objects t on t.object_id = kc.parent_object_id INNER JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id and kc.unique_index_id = ic.index_id INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id WHERE kc.type = 'PK' and t.object_id = OBJECT_ID(?) and '' <> ?`
+		return `SELECT c.NAME as "COLUMN_NAME" FROM sys.key_constraints kc inner join sys.objects t on t.object_id = kc.parent_object_id INNER JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id and kc.unique_index_id = ic.index_id INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id WHERE kc.type = 'PK' and t.object_id = OBJECT_ID(@p1) and '' <> @p2`
 	case `sqlite`:
 		return `SELECT "name" as "COLUMN_NAME" FROM pragma_table_info(?) WHERE "pk"=1 AND '' <> ?`
 	default:
@@ -78,7 +79,7 @@ func (r *GenericReflection) getTableForeignKeysSQL() string {
 	case `pgsql`:
 		return `SELECT a.attname AS "COLUMN_NAME", c.confrelid::regclass::text AS "REFERENCED_TABLE_NAME" FROM pg_attribute a JOIN pg_constraint c ON (c.conrelid, c.conkey[1]) = (a.attrelid, a.attnum) JOIN pg_class pgc ON pgc.oid = a.attrelid WHERE pgc.relname = $1 AND '' <> $2 AND c.contype  = 'f'`
 	case `sqlsrv`:
-		return `SELECT COL_NAME(fc.parent_object_id, fc.parent_column_id) AS "COLUMN_NAME", OBJECT_NAME (f.referenced_object_id) AS "REFERENCED_TABLE_NAME" FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id WHERE f.parent_object_id = OBJECT_ID(?) and '' <> ?`
+		return `SELECT COL_NAME(fc.parent_object_id, fc.parent_column_id) AS "COLUMN_NAME", OBJECT_NAME (f.referenced_object_id) AS "REFERENCED_TABLE_NAME" FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id WHERE f.parent_object_id = OBJECT_ID(@p1) and '' <> @p2`
 	case `sqlite`:
 		return `SELECT "from" AS "COLUMN_NAME", "table" AS "REFERENCED_TABLE_NAME" FROM pragma_foreign_key_list(?) WHERE '' <> ?`
 	default:
@@ -117,7 +118,7 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 	}
 	for index := range results {
 		if tableType, isString := results[index]["TABLE_TYPE"].(string); isString {
-			results[index]["TABLE_TYPE"] = mapArr[tableType]
+			results[index]["TABLE_TYPE"] = mapArr[strings.TrimSpace(tableType)]
 		}
 	}
 	return results
