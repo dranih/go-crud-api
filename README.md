@@ -6,7 +6,7 @@ To-do :
 - [ ] Tests (golang unit tests and using Dockerfiles) : reuse php-crud-api tests
 - [X] Other drivers (only sqlite now)
 - [ ] Cache mecanism
-- [ ] Finishing controllers (missing OpenApiController)
+- [X] Finishing controllers
 - [ ] Finishing middlewares
 - [ ] Review whole package structure
 - [ ] Logger options

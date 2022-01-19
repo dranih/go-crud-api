@@ -88,7 +88,7 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 			return false
 		}
 	}
-	if newColumn.getNullable() != column.getNullable() {
+	if newColumn.GetNullable() != column.GetNullable() {
 		if err := ds.db.definition.SetColumnNullable(table.GetName(), column.GetName(), newColumn); err != nil {
 			log.Printf("Error : %v", err)
 			return false

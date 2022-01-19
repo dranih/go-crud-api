@@ -8,6 +8,8 @@ import (
 	"log"
 	"strings"
 	"time"
+
+	"github.com/dranih/go-crud-api/pkg/utils"
 )
 
 type GenericDB struct {
@@ -24,7 +26,7 @@ type GenericDB struct {
 	conditions    *ConditionsBuilder
 	columns       *ColumnsBuilder
 	converter     *DataConverter
-	variablestore *VariableStore
+	variablestore *utils.VariableStore
 }
 
 func (g *GenericDB) getDsn() string {
@@ -112,7 +114,7 @@ func NewGenericDB(driver string, address string, port int, database string, tabl
 	g.tables = tables
 	g.username = username
 	g.password = password
-	g.variablestore = &VariableStore{}
+	g.variablestore = utils.VStore
 	g.initPdo()
 	return g
 }

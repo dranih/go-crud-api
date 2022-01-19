@@ -84,7 +84,7 @@ func (gd *GenericDefinition) getColumnNullType(column *ReflectedColumn, update b
 	if gd.driver == "pgsql" && update {
 		return ""
 	}
-	if column.getNullable() {
+	if column.GetNullable() {
 		return " NULL"
 	}
 	return " NOT NULL"
@@ -154,7 +154,7 @@ func (gd *GenericDefinition) getSetColumnNullableSQL(tableName, columnName strin
 		return fmt.Sprintf("ALTER TABLE %s CHANGE %s %s %s", p1, p2, p3, p4)
 	case "pgsql":
 		p5 := "SET NOT NULL"
-		if newColumn.getNullable() {
+		if newColumn.GetNullable() {
 			p5 = "DROP NOT NULL"
 		}
 		return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s %s", p1, p3, p5)

@@ -21,10 +21,10 @@ type GenericMiddleware struct {
 }
 
 func (gm *GenericMiddleware) getArrayProperty(key, defaut string) []string {
-	return strings.Split(gm.getProperty(key, defaut), ",")
+	return strings.Split(fmt.Sprint(gm.getProperty(key, defaut)), ",")
 }
 
-func (gm *GenericMiddleware) getProperty(key, defaut string) string {
+func (gm *GenericMiddleware) getProperty(key, defaut string) interface{} {
 	if val, exists := gm.Properties[key]; exists {
 		return fmt.Sprint(val)
 	}

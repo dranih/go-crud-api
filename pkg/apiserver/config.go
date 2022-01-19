@@ -30,7 +30,7 @@ type ApiConfig struct {
 	CacheTime             int32
 	Debug                 bool
 	BasePath              string
-	OpenApiBase           string
+	OpenApiBase           map[string]interface{}
 }
 
 type ServerConfig struct {
@@ -77,7 +77,7 @@ func ReadConfig(configPaths ...string) *Config {
 	viper.SetDefault("api.controllers", "records,geojson,openapi,status")
 	viper.SetDefault("api.cachetype", "TempFile")
 	viper.SetDefault("api.cachetime", 10)
-	viper.SetDefault("api.openapibase", `{"info":{"title":"GO-CRUD-API","version":"0.0.1"}}`)
+	viper.SetDefault("api.openapibase", map[string]map[string]string{"info": {"title": "GO-CRUD-API", "version": "0.0.1"}})
 	viper.SetDefault("server.address", "0.0.0.0")
 	viper.SetDefault("server.port", 8080)
 	viper.SetDefault("server.gracefultimeout", 15)
@@ -203,21 +203,31 @@ func (ac *ApiConfig) GetTables() map[string]bool {
        return $this->values['middlewares'];
    }
 */
-func (ac *ApiConfig) GetControllers() []string {
-	return strings.Split(ac.Controllers, ",")
+func (ac *ApiConfig) GetControllers() map[string]bool {
+	controllersMap := map[string]bool{}
+	for _, controller := range strings.Split(ac.Controllers, ",") {
+		controllersMap[strings.TrimSpace(controller)] = true
+	}
+	return controllersMap
+}
+
+func (ac *ApiConfig) GetCustomControllers() map[string]bool {
+	controllersMap := map[string]bool{}
+	for _, controller := range strings.Split(ac.CustomControllers, ",") {
+		controllersMap[strings.TrimSpace(controller)] = true
+	}
+	return controllersMap
+}
+
+func (ac *ApiConfig) GetCustomOpenApiBuilders() map[string]bool {
+	buildersMap := map[string]bool{}
+	for _, builder := range strings.Split(ac.CustomOpenApiBuilders, ",") {
+		buildersMap[strings.TrimSpace(builder)] = true
+	}
+	return buildersMap
 }
 
 /*
-    public function getCustomControllers(): array
-    {
-        return array_filter(array_map('trim', explode(',', $this->values['customControllers'])));
-    }
-
-    public function getCustomOpenApiBuilders(): array
-    {
-        return array_filter(array_map('trim', explode(',', $this->values['customOpenApiBuilders'])));
-    }
-
     public function getCacheType(): string
     {
         return $this->values['cacheType'];

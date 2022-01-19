@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -104,7 +105,7 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 		session := utils.GetSession(w, r)
 		username, password, ok := bam.getAuthorizationCredentials(r)
 		if ok {
-			passwordFile := bam.getProperty("passwordFile", ".htpasswd")
+			passwordFile := fmt.Sprint(bam.getProperty("passwordFile", ".htpasswd"))
 			validUser := bam.getValidUsername(username, password, passwordFile)
 			if validUser == "" {
 				bam.Responder.Error(record.AUTHENTICATION_FAILED, username, w, "")
@@ -119,7 +120,7 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 		} else {
 			if val, exists := session.Values["username"]; !exists || val == nil {
 				if authenticationMode := bam.getProperty("mode", "required"); authenticationMode == "required" {
-					realm := bam.getProperty("realm", "Username and password required")
+					realm := fmt.Sprint(bam.getProperty("realm", "Username and password required"))
 					w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 					bam.Responder.Error(record.AUTHENTICATION_REQUIRED, "", w, realm)
 				} else {

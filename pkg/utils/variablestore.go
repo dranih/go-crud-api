@@ -1,8 +1,10 @@
-package database
+package utils
 
 type VariableStore struct {
 	values map[string]interface{}
 }
+
+var VStore = &VariableStore{}
 
 func (vs *VariableStore) Get(key string) interface{} {
 	res, exists := vs.values[key]

@@ -189,7 +189,7 @@ func (rc *ReflectedColumn) GetName() string {
 	return rc.name
 }
 
-func (rc *ReflectedColumn) getNullable() bool {
+func (rc *ReflectedColumn) GetNullable() bool {
 	return rc.nullable
 }
 
