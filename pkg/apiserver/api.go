@@ -43,6 +43,9 @@ func NewApi(config *ApiConfig) *Api {
 	router := mux.NewRouter()
 	for middle, properties := range config.Middlewares {
 		switch middle {
+		case "cors":
+			corsMiddleware := middleware.NewCorsMiddleware(responder, properties, config.Debug)
+			router.Use(corsMiddleware.Process)
 		case "basicAuth":
 			bamMiddle := middleware.NewBasicAuth(responder, properties)
 			router.Use(bamMiddle.Process)
