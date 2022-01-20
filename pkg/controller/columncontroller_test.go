@@ -57,7 +57,7 @@ func TestColumnController(t *testing.T) {
 			Method:     http.MethodGet,
 			Uri:        "/columns/doesnotexists",
 			Body:       ``,
-			Want:       "{\"code\":1001,\"details\":\"\",\"message\":\"Table `doesnotexists` not found\"}",
+			Want:       "{\"code\":1001,\"details\":\"\",\"message\":\"Table 'doesnotexists' not found\"}",
 			StatusCode: http.StatusNotFound,
 		},
 		{
@@ -73,7 +73,7 @@ func TestColumnController(t *testing.T) {
 			Method:     http.MethodGet,
 			Uri:        "/columns/cows/doesnotexists",
 			Body:       ``,
-			Want:       "{\"code\":1005,\"details\":\"\",\"message\":\"Column `doesnotexists` not found\"}",
+			Want:       "{\"code\":1005,\"details\":\"\",\"message\":\"Column 'doesnotexists' not found\"}",
 			StatusCode: http.StatusNotFound,
 		},
 		{
