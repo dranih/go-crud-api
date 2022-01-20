@@ -30,17 +30,18 @@ func TestGetUrl(t *testing.T, url string, response interface{}) {
 }
 
 type Test struct {
-	Name       string
-	Method     string
-	Uri        string
-	Body       string
-	Want       string
-	WantRegex  string
-	StatusCode int
-	Username   string
-	Password   string
-	AuthMethod string
-	Jar        http.CookieJar
+	Name        string
+	Method      string
+	Uri         string
+	Body        string
+	Want        string
+	WantRegex   string
+	StatusCode  int
+	Username    string
+	Password    string
+	AuthMethod  string
+	Jar         http.CookieJar
+	ContentType string
 }
 
 func RunTests(t *testing.T, ts *httptest.Server, tests []Test) {
@@ -49,6 +50,11 @@ func RunTests(t *testing.T, ts *httptest.Server, tests []Test) {
 			request, err := http.NewRequest(tc.Method, ts.URL+tc.Uri, strings.NewReader(tc.Body))
 			if err != nil {
 				t.Fatal(err)
+			}
+			if tc.ContentType != "" {
+				request.Header.Set("Content-Type", tc.ContentType)
+			} else {
+				request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 			}
 			if tc.AuthMethod == "basicauth" && tc.Username != "" {
 				request.SetBasicAuth(tc.Username, tc.Password)

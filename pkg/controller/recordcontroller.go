@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -111,13 +109,7 @@ func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Create", w, "")
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
-		return
-	}
-	var jsonMap interface{}
-	err = json.Unmarshal(b, &jsonMap)
+	jsonMap, err := utils.GetBodyData(r)
 	if err != nil {
 		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
@@ -153,13 +145,7 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Update", w, "")
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
-		return
-	}
-	var jsonMap interface{}
-	err = json.Unmarshal(b, &jsonMap)
+	jsonMap, err := utils.GetBodyData(r)
 	if err != nil {
 		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
@@ -236,13 +222,7 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Update", w, "")
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
-		return
-	}
-	var jsonMap interface{}
-	err = json.Unmarshal(b, &jsonMap)
+	jsonMap, err := utils.GetBodyData(r)
 	if err != nil {
 		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return

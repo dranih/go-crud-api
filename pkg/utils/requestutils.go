@@ -1,7 +1,11 @@
 package utils
 
 import (
+	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/sessions"
 )
@@ -25,4 +29,40 @@ func GetSession(w http.ResponseWriter, request *http.Request) *sessions.Session 
 		return nil
 	}
 	return session
+}
+
+//GetBodyData tries to get data from body request, as a urlencoded content type or as json by default
+func GetBodyData(r *http.Request) (interface{}, error) {
+	headerContentTtype := r.Header.Get("Content-Type")
+	if headerContentTtype == "application/x-www-form-urlencoded" {
+		if err := r.ParseForm(); err != nil {
+			return nil, err
+		}
+		res := map[string]interface{}{}
+		for key, val := range r.PostForm {
+			res[key] = strings.Join(val, ",")
+		}
+		return res, nil
+	} else {
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		var jsonMap interface{}
+		err = json.Unmarshal(b, &jsonMap)
+		if err != nil {
+			return nil, err
+		}
+		return jsonMap, nil
+	}
+}
+
+func GetBodyMapData(r *http.Request) (map[string]interface{}, error) {
+	if res, err := GetBodyData(r); err != nil {
+		return nil, err
+	} else if resMap, ok := res.(map[string]interface{}); !ok {
+		return nil, errors.New("unable to decode body")
+	} else {
+		return resMap, nil
+	}
 }

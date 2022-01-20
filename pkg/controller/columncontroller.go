@@ -1,12 +1,11 @@
 package controller
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/record"
+	"github.com/dranih/go-crud-api/pkg/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -71,13 +70,7 @@ func (cc *ColumnController) updateTable(w http.ResponseWriter, r *http.Request) 
 		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
-		return
-	}
-	var jsonMap map[string]interface{}
-	err = json.Unmarshal(b, &jsonMap)
+	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
 		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
@@ -101,13 +94,7 @@ func (cc *ColumnController) updateColumn(w http.ResponseWriter, r *http.Request)
 		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, "")
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
-		return
-	}
-	var jsonMap map[string]interface{}
-	err = json.Unmarshal(b, &jsonMap)
+	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
 		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
@@ -120,13 +107,7 @@ func (cc *ColumnController) updateColumn(w http.ResponseWriter, r *http.Request)
 }
 
 func (cc *ColumnController) addTable(w http.ResponseWriter, r *http.Request) {
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
-		return
-	}
-	var jsonMap map[string]interface{}
-	err = json.Unmarshal(b, &jsonMap)
+	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
 		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
@@ -158,13 +139,7 @@ func (cc *ColumnController) addColumn(w http.ResponseWriter, r *http.Request) {
 		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
-		return
-	}
-	var jsonMap map[string]interface{}
-	err = json.Unmarshal(b, &jsonMap)
+	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
 		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
