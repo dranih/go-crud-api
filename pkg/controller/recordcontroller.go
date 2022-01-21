@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -128,7 +127,8 @@ func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 	} else {
 		response, err := rc.service.Create(table, params, jsonMap)
 		if response == nil || err != nil {
-			rc.responder.Error(record.INTERNAL_SERVER_ERROR, fmt.Sprint(records), w, "")
+			//rc.responder.Error(record.INTERNAL_SERVER_ERROR, fmt.Sprint(records), w, "")
+			rc.responder.Exception(err, w)
 			return
 		}
 		rc.responder.Success(response, w)

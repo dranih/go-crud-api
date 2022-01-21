@@ -1,6 +1,9 @@
 package record
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type ErrorCode struct {
 	code    int
@@ -82,7 +85,10 @@ func (ec *ErrorCode) GetCode() int {
 }
 
 func (ec *ErrorCode) GetMessage(argument string) string {
-	return fmt.Sprintf(ec.message, argument)
+	if strings.Contains(ec.message, "%s") {
+		return fmt.Sprintf(ec.message, argument)
+	}
+	return ec.message
 }
 
 func (ec *ErrorCode) GetStatus() int {
