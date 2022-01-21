@@ -19,7 +19,7 @@ func (oi *OrderingInfo) GetColumnOrdering(table *ReflectedTable, params map[stri
 			}
 			ascending := `ASC`
 			if len(parts) > 1 {
-				if strings.ToUpper(parts[1])[:4] == `DESC` {
+				if len(parts[1]) == 4 && strings.ToUpper(parts[1])[:4] == `DESC` {
 					ascending = `DESC`
 				}
 			}
