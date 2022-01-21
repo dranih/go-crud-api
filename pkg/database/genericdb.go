@@ -193,11 +193,11 @@ func (g *GenericDB) getQuote() string {
 	}
 }
 
-func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]interface{}) (map[string]interface{}, error) {
+func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]interface{}) (interface{}, error) {
 	g.converter.ConvertColumnValues(table, &columnValues)
 	insertColumns, parameters := g.columns.GetInsert(table, columnValues)
 	tableName := table.GetName()
-	pkName := table.GetPk().GetName()
+	//pkName := table.GetPk().GetName()
 	quote := g.getQuote()
 	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
 	res, err := g.exec(sql, parameters...)
@@ -208,7 +208,7 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	if err != nil {
 		return nil, err
 	}
-	return map[string]interface{}{pkName: id}, nil
+	return id, nil
 	/*if pkValue, exists := columnValues[pkName]; exists {
 		return map[string]interface{}{pkName: pkValue}, nil
 	}
@@ -308,9 +308,9 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	return records
 }
 
-func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (map[string]interface{}, error) {
+func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (int64, error) {
 	if len(columnValues) <= 0 {
-		return map[string]interface{}{"RowsAffected": 0}, nil
+		return 0, nil
 	}
 	g.converter.ConvertColumnValues(table, &columnValues)
 	updateColumns, parameters := g.columns.GetUpdate(table, columnValues)
@@ -326,16 +326,16 @@ func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]
 	if err == nil {
 		count, err := res.RowsAffected()
 		if err != nil {
-			return nil, err
+			return 0, err
 		} else {
-			return map[string]interface{}{"RowsAffected": count}, nil
+			return count, nil
 		}
 	} else {
-		return nil, err
+		return 0, err
 	}
 }
 
-func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (map[string]interface{}, error) {
+func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (int64, error) {
 	tableName := table.GetName()
 	var condition interface{ Condition }
 	pk := table.GetPk()
@@ -349,23 +349,23 @@ func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (map[string]i
 	if err == nil {
 		count, err := res.RowsAffected()
 		if err != nil {
-			return nil, err
+			return 0, err
 		} else {
-			return map[string]interface{}{"RowsAffected": count}, nil
+			return count, nil
 		}
 	} else {
-		return nil, err
+		return 0, err
 	}
 }
 
-func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (map[string]interface{}, error) {
+func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (int64, error) {
 	if len(columnValues) <= 0 {
-		return map[string]interface{}{"RowsAffected": 0}, nil
+		return 0, nil
 	}
 	g.converter.ConvertColumnValues(table, &columnValues)
 	updateColumns, parameters := g.columns.GetIncrement(table, columnValues)
 	if updateColumns == "" {
-		return map[string]interface{}{"RowsAffected": 0}, nil
+		return 0, nil
 	}
 	tableName := table.GetName()
 	var condition interface{ Condition }
@@ -379,12 +379,12 @@ func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[stri
 	if err == nil {
 		count, err := res.RowsAffected()
 		if err != nil {
-			return nil, err
+			return 0, err
 		} else {
-			return map[string]interface{}{"RowsAffected": count}, nil
+			return count, nil
 		}
 	} else {
-		return nil, err
+		return 0, err
 	}
 }
 

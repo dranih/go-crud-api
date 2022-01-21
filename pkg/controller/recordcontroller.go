@@ -76,8 +76,8 @@ func (rc *RecordController) read(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (rc *RecordController) multiCall(callback func(string, map[string][]string, ...interface{}) (map[string]interface{}, error), argumentLists []*argumentList) (*[]map[string]interface{}, []error) {
-	result := []map[string]interface{}{}
+func (rc *RecordController) multiCall(callback func(string, map[string][]string, ...interface{}) (interface{}, error), argumentLists []*argumentList) (*[]interface{}, []error) {
+	result := []interface{}{}
 	var errs []error
 	success := true
 	tx, _ := rc.service.BeginTransaction()

@@ -68,14 +68,14 @@ func (rs *RecordService) RollBackTransaction(tx *sql.Tx) {
 	rs.db.RollBackTransaction(tx)
 }
 
-func (rs *RecordService) Create(tableName string, params map[string][]string, record ...interface{}) (map[string]interface{}, error) {
+func (rs *RecordService) Create(tableName string, params map[string][]string, record ...interface{}) (interface{}, error) {
 	recordMap := rs.sanitizeRecord(tableName, record[0], "")
 	table := rs.reflection.GetTable(tableName)
 	columnValues := rs.columns.GetValues(table, true, recordMap, params)
 	return rs.db.CreateSingle(table, columnValues)
 }
 
-func (rs *RecordService) Read(tableName string, params map[string][]string, id ...interface{}) (map[string]interface{}, error) {
+func (rs *RecordService) Read(tableName string, params map[string][]string, id ...interface{}) (interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
@@ -87,9 +87,9 @@ func (rs *RecordService) Read(tableName string, params map[string][]string, id .
 	return records[0], nil
 }
 
-func (rs *RecordService) Update(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+func (rs *RecordService) Update(tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	if len(args) < 2 {
-		return nil, fmt.Errorf("Not enought arguments : %v", args)
+		return 0, fmt.Errorf("Not enought arguments : %v", args)
 	}
 	id := fmt.Sprint(args[0])
 	record := args[1]
@@ -99,14 +99,14 @@ func (rs *RecordService) Update(tableName string, params map[string][]string, ar
 	return rs.db.UpdateSingle(table, columnValues, id)
 }
 
-func (rs *RecordService) Delete(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+func (rs *RecordService) Delete(tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
 	return rs.db.DeleteSingle(table, fmt.Sprint(args[0]))
 }
 
-func (rs *RecordService) Increment(tableName string, params map[string][]string, args ...interface{}) (map[string]interface{}, error) {
+func (rs *RecordService) Increment(tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	if len(args) < 2 {
-		return nil, fmt.Errorf("Not enought arguments : %v", args)
+		return 0, fmt.Errorf("Not enought arguments : %v", args)
 	}
 	id := fmt.Sprint(args[0])
 	record := args[1]

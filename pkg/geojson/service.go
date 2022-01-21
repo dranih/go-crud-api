@@ -78,22 +78,26 @@ func (s *Service) convertTileToLatLonOfUpperLeftCorner(z, x, y float64) []float6
 	return []float64{lon, lat}
 }
 
-func (s *Service) convertRecordToFeature(record map[string]interface{}, primaryKeyColumnName, geometryColumnName string) *Feature {
+func (s *Service) convertRecordToFeature(record interface{}, primaryKeyColumnName, geometryColumnName string) *Feature {
 	var id int
-	if primaryKeyColumnName != "" {
-		if v1, exists := record[primaryKeyColumnName]; exists {
-			if v, err := strconv.Atoi(fmt.Sprint(v1)); err == nil {
-				id = v
-				delete(record, primaryKeyColumnName)
+	if recordMap, ok := record.(map[string]interface{}); ok {
+		if primaryKeyColumnName != "" {
+			if v1, exists := recordMap[primaryKeyColumnName]; exists {
+				if v, err := strconv.Atoi(fmt.Sprint(v1)); err == nil {
+					id = v
+					delete(recordMap, primaryKeyColumnName)
+				}
 			}
 		}
+		var geometry *Geometry
+		if v, exists := recordMap[geometryColumnName]; exists {
+			geometry = NewGeometryFromWkt(fmt.Sprint(v))
+			delete(recordMap, geometryColumnName)
+		}
+		return &Feature{id, recordMap, geometry}
+	} else {
+		return nil
 	}
-	var geometry *Geometry
-	if v, exists := record[geometryColumnName]; exists {
-		geometry = NewGeometryFromWkt(fmt.Sprint(v))
-		delete(record, geometryColumnName)
-	}
-	return &Feature{id, record, geometry}
 }
 
 func (s *Service) getPrimaryKeyColumnName(tableName string, params *map[string][]string) string {
