@@ -153,15 +153,15 @@ func (r *GenericReflection) GetTableColumns(tableName string, viewType string) [
 			// sqlite does not reflect types on view columns
 			re := regexp.MustCompile(`([a-z]+)(\(([0-9]+)(,([0-9]+))?\))?`)
 			matches := re.FindStringSubmatch(result["DATA_TYPE"].(string))
-			if matches[1] != "" {
+			if len(matches) > 0 && matches[1] != "" {
 				results[index]["DATA_TYPE"] = matches[1]
 			} else {
 				results[index]["DATA_TYPE"] = "text"
 			}
-			if matches[5] != "" {
+			if len(matches) >= 5 && matches[5] != "" {
 				results[index]["NUMERIC_PRECISION"] = matches[3]
 				results[index]["NUMERIC_SCALE"] = matches[5]
-			} else if matches[3] != "" {
+			} else if len(matches) >= 3 && matches[3] != "" {
 				results[index]["CHARACTER_MAXIMUM_LENGTH"] = matches[3]
 			}
 		}

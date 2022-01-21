@@ -62,7 +62,7 @@ func NewReflectedTableFromReflection(reflection *GenericReflection, name, viewTy
 	if viewType == "view" {
 		tables := reflection.GetTables()
 		for columnName, column := range columns {
-			if columnName[len(columnName)-3:] == "_id" {
+			if len(columnName)-3 >= 0 && columnName[len(columnName)-3:] == "_id" {
 				for _, table := range tables {
 					tableName := table["TABLE_NAME"].(string)
 					suffix := tableName + "_id"
