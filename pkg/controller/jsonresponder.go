@@ -33,7 +33,7 @@ func (jr *JsonResponder) Exception(err error, w http.ResponseWriter) http.Respon
 	return response
 }
 
-func (jr *JsonResponder) Multi(results *[]map[string]interface{}, errs []error, w http.ResponseWriter) http.ResponseWriter {
+func (jr *JsonResponder) Multi(results *[]interface{}, errs []error, w http.ResponseWriter) http.ResponseWriter {
 	success := true
 	documents := []interface{}{}
 	errors := []record.ErrorDocument{}
