@@ -130,7 +130,7 @@ func (cb *ConditionsBuilder) getColumnConditionSql(condition *ColumnCondition, a
 			qmarks := cb.stmtOperator(len(*arguments) + 1)
 			if count > 1 {
 				//qmarks = strings.Repeat(`,?`, count)
-				for i := 1; i <= count; i++ {
+				for i := 1; i < count; i++ {
 					qmarks = fmt.Sprintf("%s,%s", qmarks, cb.stmtOperator(len(*arguments)+count))
 				}
 			}

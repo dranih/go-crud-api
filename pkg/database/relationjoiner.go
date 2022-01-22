@@ -266,9 +266,8 @@ func (rj *RelationJoiner) getHabtmEmptyValues(t1, t2, t3 *ReflectedTable, db *Ge
 	limitInt := -1
 	if limit := db.variablestore.Get("joinLimits.maxRecords"); limit != nil {
 		columnOrdering = rj.ordering.GetDefaultColumnOrdering(t3)
-		var err error
-		if limitInt, err = strconv.Atoi(fmt.Sprint(limit)); err != nil {
-			limitInt = -1
+		if tempLimitInt, err := strconv.Atoi(fmt.Sprint(limit)); err == nil {
+			limitInt = tempLimitInt
 		}
 	}
 	for _, record := range db.SelectAll(t3, columnNames, condition, columnOrdering, 0, limitInt) {
@@ -287,8 +286,10 @@ func (rj *RelationJoiner) setHabtmValues(t1, t2 *ReflectedTable, records *[]map[
 		key := record[pkName]
 		var val []map[string]interface{}
 		fks := habtmValues.PkValues[fmt.Sprint(key)]
-		for _, fk := range fks {
-			val = append(val, habtmValues.FkValues[fmt.Sprint(fk)])
+		for _, fkMap := range fks {
+			for fk := range fkMap {
+				val = append(val, habtmValues.FkValues[fmt.Sprint(fk)])
+			}
 		}
 		(*records)[i][t2Name] = val
 	}

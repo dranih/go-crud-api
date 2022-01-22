@@ -54,6 +54,7 @@ func (dc *DataConverter) getRecordValueConversion(column *ReflectedColumn) strin
 	return "none"
 }
 
+//Something nasty here in type conversion
 func (dc *DataConverter) ConvertRecords(table *ReflectedTable, columnNames []string, records *[]map[string]interface{}) {
 	for _, columnName := range columnNames {
 		column := table.GetColumn(columnName)
@@ -64,7 +65,7 @@ func (dc *DataConverter) ConvertRecords(table *ReflectedTable, columnNames []str
 				if !ok {
 					continue
 				}
-				(*records)[i][columnName] = dc.convertRecordValue(conversion, value.(string))
+				(*records)[i][columnName] = dc.convertRecordValue(conversion, fmt.Sprint(value))
 			}
 		}
 
