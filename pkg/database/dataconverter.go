@@ -1,8 +1,8 @@
 package database
 
 import (
-	"encoding/base64"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -72,7 +72,6 @@ func (dc *DataConverter) ConvertRecords(table *ReflectedTable, columnNames []str
 	}
 }
 
-// Not sure for base64url_to_base64
 func (dc *DataConverter) convertInputValue(conversion, value string) interface{} {
 	switch conversion {
 	case `boolean`:
@@ -83,23 +82,14 @@ func (dc *DataConverter) convertInputValue(conversion, value string) interface{}
 			return false
 		}
 	case `base64url_to_base64`:
-		return base64.StdEncoding.EncodeToString([]byte(value))
+		value = strings.ReplaceAll(value, `-`, `+`)
+		value = strings.ReplaceAll(value, `_`, `/`)
+		padLen := int(math.Ceil(float64(len(value))/4) * 4)
+		return value + strings.Repeat(`=`, padLen-len(value))
 	}
 	return value
 }
 
-/*
-private function convertInputValue($conversion, $value)
-{
-	switch ($conversion) {
-		case 'boolean':
-			return $value ? 1 : 0;
-		case 'base64url_to_base64':
-			return str_pad(strtr($value, '-_', '+/'), ceil(strlen($value) / 4) * 4, '=', STR_PAD_RIGHT);
-	}
-	return $value;
-}
-*/
 func (dc *DataConverter) getInputValueConversion(column *ReflectedColumn) string {
 	if column.IsBoolean() {
 		return `boolean`
@@ -116,7 +106,11 @@ func (dc *DataConverter) ConvertColumnValues(table *ReflectedTable, columnValues
 		conversion := dc.getInputValueConversion(column)
 		if conversion != `none` {
 			if value, exists := (*columnValues)[columnName]; exists {
-				(*columnValues)[columnName] = dc.convertInputValue(conversion, fmt.Sprintf("%v", value))
+				if value == nil {
+					(*columnValues)[columnName] = nil
+				} else {
+					(*columnValues)[columnName] = dc.convertInputValue(conversion, fmt.Sprintf("%v", value))
+				}
 			}
 		}
 	}

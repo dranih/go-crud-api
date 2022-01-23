@@ -40,7 +40,11 @@ func GetBodyData(r *http.Request) (interface{}, error) {
 		}
 		res := map[string]interface{}{}
 		for key, val := range r.PostForm {
-			res[key] = strings.Join(val, ",")
+			if strings.HasSuffix(key, "__is_null") {
+				res[strings.TrimSuffix(key, "__is_null")] = nil
+			} else {
+				res[key] = strings.Join(val, ",")
+			}
 		}
 		return res, nil
 	} else {
