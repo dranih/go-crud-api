@@ -53,9 +53,9 @@ func (pt *PathTree) Put(path []string, value interface{ Condition }) {
 			key = `0`
 		}
 		if _, exists := pt.tree.branches[key]; !exists {
-			pt.tree.branches[key] = NewTree()
+			tree.branches[key] = NewTree()
 		}
-		tree = pt.tree.branches[key]
+		tree = tree.branches[key]
 	}
 	tree.values = append(tree.values, value)
 }

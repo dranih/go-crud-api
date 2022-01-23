@@ -37,14 +37,14 @@ func (rj *RelationJoiner) AddMandatoryColumns(table *ReflectedTable, params *map
 			t2 := rj.reflection.GetTable(tableName)
 			fks1 := t1.GetFksTo(t2.GetName())
 			t3 := rj.hasAndBelongsToMany(t1, t2)
-			if t3 != nil && len(fks1) > 0 {
+			if t3 != nil || len(fks1) > 0 {
 				(*params)["mandatory"] = append((*params)["mandatory"], t2.GetName()+"."+t2.GetPk().GetName())
 			}
 			for _, fk := range fks1 {
 				(*params)["mandatory"] = append((*params)["mandatory"], t1.GetName()+"."+fk.GetName())
 			}
 			fks2 := t2.GetFksTo(t1.GetName())
-			if t3 != nil && len(fks2) > 0 {
+			if t3 != nil || len(fks2) > 0 {
 				(*params)["mandatory"] = append((*params)["mandatory"], t1.GetName()+"."+t1.GetPk().GetName())
 			}
 			for _, fk := range fks2 {
