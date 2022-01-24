@@ -1,0 +1,12 @@
+api:
+  driver: "sqlite"
+  address: "../../test/tests.db"
+  database: "test"
+
+  middlewares:
+  - basicAuth:
+      - mode: "optional"
+      - realm: "GoCrudApi : Username and password required"
+      - passwordFile: "../../test/test.pwd"
+  - json:
+  - cors:

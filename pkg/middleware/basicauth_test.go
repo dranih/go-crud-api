@@ -93,7 +93,7 @@ func TestBasicAuth(t *testing.T) {
 			StatusCode: http.StatusUnauthorized,
 		},
 	}
-	utils.RunTests(t, ts, tt)
+	utils.RunTests(t, ts.URL, tt)
 }
 
 func allowedTest(w http.ResponseWriter, r *http.Request) {

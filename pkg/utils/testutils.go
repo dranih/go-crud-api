@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -30,31 +29,32 @@ func TestGetUrl(t *testing.T, url string, response interface{}) {
 }
 
 type Test struct {
-	Name        string
-	Method      string
-	Uri         string
-	Body        string
-	Want        string
-	WantRegex   string
-	StatusCode  int
-	Username    string
-	Password    string
-	AuthMethod  string
-	Jar         http.CookieJar
-	ContentType string
+	Name          string
+	Method        string
+	Uri           string
+	Body          string
+	Want          string
+	WantRegex     string
+	StatusCode    int
+	Username      string
+	Password      string
+	AuthMethod    string
+	Jar           http.CookieJar
+	RequestHeader map[string]string
+	WantHeader    map[string]string
 }
 
-func RunTests(t *testing.T, ts *httptest.Server, tests []Test) {
+func RunTests(t *testing.T, serverUrl string, tests []Test) {
 	for _, tc := range tests {
 		t.Run(tc.Name, func(t *testing.T) {
-			request, err := http.NewRequest(tc.Method, ts.URL+tc.Uri, strings.NewReader(tc.Body))
+			request, err := http.NewRequest(tc.Method, serverUrl+tc.Uri, strings.NewReader(tc.Body))
 			if err != nil {
 				t.Fatal(err)
 			}
-			if tc.ContentType != "" {
-				request.Header.Set("Content-Type", tc.ContentType)
-			} else {
-				request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+			if tc.RequestHeader != nil {
+				for header, value := range tc.RequestHeader {
+					request.Header.Set(header, value)
+				}
 			}
 			if tc.AuthMethod == "basicauth" && tc.Username != "" {
 				request.SetBasicAuth(tc.Username, tc.Password)
@@ -76,6 +76,15 @@ func RunTests(t *testing.T, ts *httptest.Server, tests []Test) {
 			if resp.StatusCode != tc.StatusCode {
 				t.Errorf("Want status '%d', got '%d' at url '%s'", tc.StatusCode, resp.StatusCode, resp.Request.URL)
 			}
+
+			if tc.WantHeader != nil {
+				for header, value := range tc.WantHeader {
+					if gotValue := resp.Header.Get(header); gotValue != value {
+						t.Errorf("Want header '%s : %s', got '%s : %s'", header, value, header, gotValue)
+					}
+				}
+			}
+
 			if b, err := io.ReadAll(resp.Body); err != nil {
 				t.Errorf("Error reading response '%s'", err)
 			} else {

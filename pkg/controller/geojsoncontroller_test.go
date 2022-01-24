@@ -46,5 +46,5 @@ func TestGeoJsonController(t *testing.T) {
 			StatusCode: http.StatusOK,
 		},
 	}
-	utils.RunTests(t, ts, tt)
+	utils.RunTests(t, ts.URL, tt)
 }
