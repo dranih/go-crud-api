@@ -77,7 +77,7 @@ func (l *LazyPdo) connect() *sql.DB {
 		case "sqlite":
 			//file:test.s3db?_auth&_auth_user=admin&_auth_pass=admin
 			if l.user != "" && l.password != "" {
-				auth = fmt.Sprintf("?_auth&_auth_user=%s&_auth_pass=%s", l.user, l.password)
+				auth = fmt.Sprintf("&_auth&_auth_user=%s&_auth_pass=%s", l.user, l.password)
 			}
 			if l.pdo, err = sql.Open("sqlite3", fmt.Sprintf("%s%s", dsn, auth)); err != nil {
 				log.Fatalf("Connection failed to database %s with error : %s", dsn, err)
