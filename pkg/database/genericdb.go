@@ -199,7 +199,6 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	//pkName := table.GetPk().GetName()
 	quote := g.getQuote()
 	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
-	log.Printf("sql : %s, parameters : %s", sql, parameters)
 	res, err := g.exec(sql, parameters...)
 	if err != nil {
 		return nil, err
