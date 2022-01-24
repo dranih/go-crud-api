@@ -109,7 +109,9 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 	if len(tables) > 0 {
 		for _, result := range results {
 			if tableName, isString := result["TABLE_NAME"].(string); isString {
-				if ok1, ok2 := tables[tableName]; ok1 && ok2 {
+				if tables == nil {
+					_results = append(_results, result)
+				} else if ok1, ok2 := tables[tableName]; ok1 && ok2 {
 					_results = append(_results, result)
 				}
 			}

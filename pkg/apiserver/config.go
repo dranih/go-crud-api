@@ -190,6 +190,9 @@ func (ac *ApiConfig) initMiddlewares() {
    }
 */
 func (ac *ApiConfig) GetTables() map[string]bool {
+	if ac.Tables == "" {
+		return nil
+	}
 	result := map[string]bool{}
 	for _, table := range strings.Split(ac.Tables, ",") {
 		result[table] = true

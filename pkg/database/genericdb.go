@@ -82,7 +82,6 @@ func (g *GenericDB) getOptions() map[string]string {
 	return options
 }
 
-// not finished
 func (g *GenericDB) initPdo() bool {
 	var result bool
 	if g.pdo != nil {
