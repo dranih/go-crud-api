@@ -17,15 +17,15 @@ func NewConditionsBuilder(driver string) *ConditionsBuilder {
 func (cb *ConditionsBuilder) getConditionSql(condition interface{ Condition }, arguments *[]interface{}) string {
 	switch v := condition.(type) {
 	case *AndCondition:
-		return cb.getAndConditionSql(condition.(*AndCondition), arguments)
+		return cb.getAndConditionSql(v, arguments)
 	case *OrCondition:
-		return cb.getOrConditionSql(condition.(*OrCondition), arguments)
+		return cb.getOrConditionSql(v, arguments)
 	case *NotCondition:
-		return cb.getNotConditionSql(condition.(*NotCondition), arguments)
+		return cb.getNotConditionSql(v, arguments)
 	case *SpatialCondition:
-		return cb.getSpatialConditionSql(condition.(*SpatialCondition), arguments)
+		return cb.getSpatialConditionSql(v, arguments)
 	case *ColumnCondition:
-		return cb.getColumnConditionSql(condition.(*ColumnCondition), arguments)
+		return cb.getColumnConditionSql(v, arguments)
 	default:
 		log.Panicf("Unknown Condition: %T\n", v)
 	}

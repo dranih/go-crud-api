@@ -11,13 +11,14 @@ func (ft *FilterInfo) getConditionsAsPathTree(table *ReflectedTable, params map[
 	conditions := NewPathTree(nil)
 	for key, filters := range params {
 		if len(key) >= 6 && key[0:6] == `filter` {
-			re := regexp.MustCompile(`\d+|\D+`)
+			re := regexp.MustCompile(`\[.*\]`)
+			key = re.ReplaceAllString(key, "")
+			re = regexp.MustCompile(`\d+|\D+`)
 			matches := re.FindAllString(key[6:], -1)
-			match := ``
+			path := []string{"filter"}
 			if len(matches) > 0 {
-				match = matches[0]
+				path = append(path, matches[0])
 			}
-			path := []string{match}
 			for _, filter := range filters {
 				condition := ConditionFromString(table, filter)
 				switch condition.(type) {

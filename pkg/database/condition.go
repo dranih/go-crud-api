@@ -28,7 +28,7 @@ func (gc *GenericCondition) And(condition interface{ Condition }) interface{ Con
 func (gc *GenericCondition) Or(condition interface{ Condition }) interface{ Condition } {
 	switch condition.(type) {
 	case *NoCondition:
-		return condition
+		return gc.condition
 	default:
 		return NewOrCondition(gc.condition, condition)
 	}
@@ -122,6 +122,24 @@ func NewNotCondition(condition interface{ Condition }) *NotCondition {
 	return &NotCondition{condition, GenericCondition{condition}}
 }
 
+func (nc *NotCondition) And(condition interface{ Condition }) interface{ Condition } {
+	switch condition.(type) {
+	case *NoCondition:
+		return nc
+	default:
+		return NewAndCondition(nc.condition, condition)
+	}
+}
+
+func (nc *NotCondition) Or(condition interface{ Condition }) interface{ Condition } {
+	switch condition.(type) {
+	case *NoCondition:
+		return nc
+	default:
+		return NewOrCondition(nc.condition, condition)
+	}
+}
+
 func (nc *NotCondition) GetCondition() interface{ Condition } {
 	return nc.condition
 }
@@ -141,7 +159,7 @@ func NewOrCondition(condition1, condition2 interface{ Condition }) *OrCondition 
 func (oc *OrCondition) Or(condition interface{ Condition }) interface{ Condition } {
 	switch condition.(type) {
 	case *NoCondition:
-		return condition
+		return oc
 	default:
 		oc.conditions = append(oc.conditions, condition)
 		return oc
