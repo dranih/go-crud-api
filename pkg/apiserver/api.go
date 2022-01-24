@@ -44,6 +44,7 @@ func NewApi(config *ApiConfig) *Api {
 	for middle, properties := range config.Middlewares {
 		switch middle {
 		case "cors":
+			router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}).Methods("OPTIONS")
 			corsMiddleware := middleware.NewCorsMiddleware(responder, properties, config.Debug)
 			router.Use(corsMiddleware.Process)
 		case "basicAuth":
