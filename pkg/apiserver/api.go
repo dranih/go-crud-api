@@ -19,6 +19,7 @@ import (
 	"github.com/dranih/go-crud-api/pkg/geojson"
 	"github.com/dranih/go-crud-api/pkg/middleware"
 	"github.com/dranih/go-crud-api/pkg/openapi"
+	"github.com/dranih/go-crud-api/pkg/record"
 )
 
 type Api struct {
@@ -74,6 +75,11 @@ func NewApi(config *ApiConfig) *Api {
 			controller.NewStatusController(router, responder, cache, db)
 		}
 	}
+
+	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		responder.Error(record.ROUTE_NOT_FOUND, r.RequestURI, w, "")
+	}).Methods("OPTIONS", "GET", "PUT", "POST", "DELETE", "PATCH")
+
 	return &Api{router, config.Debug}
 }
 
