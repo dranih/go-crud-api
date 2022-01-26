@@ -14,7 +14,7 @@ type ReflectedTable struct {
 }
 
 func NewReflectedTable(name, tableType string, columns map[string]*ReflectedColumn) *ReflectedTable {
-	r := &ReflectedTable{name, tableType, map[string]*ReflectedColumn{}, &ReflectedColumn{}, map[string]string{}}
+	r := &ReflectedTable{name, tableType, map[string]*ReflectedColumn{}, nil, map[string]string{}}
 	// set columns
 	for _, column := range columns {
 		columnName := column.GetName()

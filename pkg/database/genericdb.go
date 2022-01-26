@@ -196,40 +196,42 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	g.converter.ConvertColumnValues(table, &columnValues)
 	insertColumns, parameters := g.columns.GetInsert(table, columnValues)
 	tableName := table.GetName()
-	//pkName := table.GetPk().GetName()
+	pkName := table.GetPk().GetName()
 	quote := g.getQuote()
 	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
 	res, err := g.exec(sql, parameters...)
 	if err != nil {
 		return nil, err
 	}
+	// return primary key value if specified in the input
+	if pkValue, exists := columnValues[pkName]; exists {
+		return pkValue, nil
+	}
 	id, err := res.LastInsertId()
 	if err != nil {
 		return nil, err
 	}
 	return id, nil
-	/*if pkValue, exists := columnValues[pkName]; exists {
-		return map[string]interface{}{pkName: pkValue}, nil
-	}
-	// work around missing "returning" or "output" in mysql
-	switch g.driver {
-	case `mysql`:
-		records, err = g.query("SELECT LAST_INSERT_ID()")
-	case `sqlite`:
-		records, err = g.query("SELECT LAST_INSERT_ROWID()")
-	}
-	if err != nil {
-		return nil, err
-	}
-	for _, pkValue := range records[0] {
-		if table.GetPk().GetType() == `bigint` || table.GetPk().GetType() == `int` {
-			if pkValueInt, ok := pkValue.(int); ok {
-				return map[string]interface{}{pkName: pkValueInt}, nil
-			}
+	/*
+		// work around missing "returning" or "output" in mysql
+		switch g.driver {
+		case `mysql`:
+			records, err = g.query("SELECT LAST_INSERT_ID()")
+		case `sqlite`:
+			records, err = g.query("SELECT LAST_INSERT_ROWID()")
 		}
-		return map[string]interface{}{pkName: pkValue}, nil
-	}
-	return nil, errors.New("No Inserted ID")*/
+		if err != nil {
+			return nil, err
+		}
+		for _, pkValue := range records[0] {
+			if table.GetPk().GetType() == `bigint` || table.GetPk().GetType() == `int` {
+				if pkValueInt, ok := pkValue.(int); ok {
+					return map[string]interface{}{pkName: pkValueInt}, nil
+				}
+			}
+			return map[string]interface{}{pkName: pkValue}, nil
+		}
+		return nil, errors.New("No Inserted ID")*/
 }
 
 // Should check error
