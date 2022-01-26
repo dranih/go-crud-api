@@ -63,7 +63,7 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 		if command[0:1] == "n" {
 			negate = true
 			command = command[1:]
-		} else if command[0:1] == "n" {
+		} else if command[0:1] == "s" {
 			spatial = true
 			command = command[1:]
 		}
@@ -72,9 +72,7 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 		if map[string]bool{"co": true, "cr": true, "di": true, "eq": true, "in": true, "ov": true, "to": true, "wi": true, "ic": true, "is": true, "iv": true}[command] {
 			condition = NewSpatialCondition(field, command, parts[2])
 		}
-	} else {
-		if map[string]bool{"cs": true, "sw": true, "ew": true, "eq": true, "lt": true, "le": true, "ge": true, "gt": true, "bt": true, "in": true, "is": true}[command] {
-		}
+	} else if map[string]bool{"cs": true, "sw": true, "ew": true, "eq": true, "lt": true, "le": true, "ge": true, "gt": true, "bt": true, "in": true, "is": true}[command] {
 		condition = NewColumnCondition(field, command, parts[2])
 	}
 	if negate {
@@ -127,7 +125,7 @@ func (nc *NotCondition) And(condition interface{ Condition }) interface{ Conditi
 	case *NoCondition:
 		return nc
 	default:
-		return NewAndCondition(nc.condition, condition)
+		return NewAndCondition(nc, condition)
 	}
 }
 
@@ -136,7 +134,7 @@ func (nc *NotCondition) Or(condition interface{ Condition }) interface{ Conditio
 	case *NoCondition:
 		return nc
 	default:
-		return NewOrCondition(nc.condition, condition)
+		return NewOrCondition(nc, condition)
 	}
 }
 
@@ -255,4 +253,22 @@ func NewSpatialCondition(column *ReflectedColumn, operator, value string) *Spati
 	condition := &ColumnCondition{column, operator, value, GenericCondition{}}
 	condition.GenericCondition = GenericCondition{condition}
 	return &SpatialCondition{*condition}
+}
+
+func (sc *SpatialCondition) And(condition interface{ Condition }) interface{ Condition } {
+	switch condition.(type) {
+	case *NoCondition:
+		return sc
+	default:
+		return NewAndCondition(sc, condition)
+	}
+}
+
+func (sc *SpatialCondition) Or(condition interface{ Condition }) interface{ Condition } {
+	switch condition.(type) {
+	case *NoCondition:
+		return sc
+	default:
+		return NewOrCondition(sc, condition)
+	}
 }

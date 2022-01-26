@@ -191,7 +191,7 @@ func (cb *ConditionsBuilder) getSpatialFunctionName(operator string) string {
 }
 
 func (cb *ConditionsBuilder) hasSpatialArgument(operator string) bool {
-	return map[string]bool{`ic`: true, `is`: true, `iv`: true}[operator]
+	return !map[string]bool{`ic`: true, `is`: true, `iv`: true}[operator]
 }
 
 func (cb *ConditionsBuilder) getSpatialFunctionCall(functionName, column string, hasArgument bool, arguments *[]interface{}) string {
