@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/dranih/go-crud-api/pkg/record"
@@ -28,6 +29,7 @@ func (jr *JsonResponder) Exception(err error, w http.ResponseWriter) http.Respon
 	document := record.NewErrorDocumentFromError(err, jr.debug)
 	if jr.debug {
 		addExceptionHeaders(w, err)
+		log.Printf("Error : %s", err.Error())
 	}
 	response := jr.rf.FromObject(document.GetStatus(), document, w)
 	return response

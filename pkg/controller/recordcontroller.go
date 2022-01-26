@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -105,7 +104,7 @@ func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Create", w, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "create", w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyData(r)
@@ -127,7 +126,6 @@ func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 	} else {
 		response, err := rc.service.Create(table, params, jsonMap)
 		if response == nil || err != nil {
-			//rc.responder.Error(record.INTERNAL_SERVER_ERROR, fmt.Sprint(records), w, "")
 			rc.responder.Exception(err, w)
 			return
 		}
@@ -142,7 +140,7 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Update", w, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "update", w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyData(r)
@@ -173,8 +171,7 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 		}
 		response, err := rc.service.Update(table, params, id, jsonMap)
 		if response == nil || err != nil {
-			log.Printf("%v", err)
-			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+			rc.responder.Exception(err, w)
 			return
 		}
 		rc.responder.Success(response, w)
@@ -188,7 +185,7 @@ func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Delete", w, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "delete", w, "")
 		return
 	}
 	params := utils.GetRequestParams(r)
@@ -205,7 +202,7 @@ func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 	} else {
 		response, err := rc.service.Delete(table, params, id)
 		if response == nil || err != nil {
-			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+			rc.responder.Exception(err, w)
 			return
 		}
 		rc.responder.Success(response, w)
@@ -219,7 +216,7 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "Update", w, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "update", w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyData(r)
@@ -250,7 +247,7 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 		}
 		response, err := rc.service.Increment(table, params, id, jsonMap)
 		if response == nil || err != nil {
-			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+			rc.responder.Exception(err, w)
 			return
 		}
 		rc.responder.Success(response, w)
