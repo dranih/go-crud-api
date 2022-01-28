@@ -200,19 +200,38 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	pkName := table.GetPk().GetName()
 	quote := g.getQuote()
 	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
-	res, err := g.exec(sql, parameters...)
-	if err != nil {
-		return nil, err
+	//For pgsql, get id from returning value
+	if g.driver == "pgsql" {
+		res, err := g.query(sql, parameters...)
+		if err != nil {
+			return nil, err
+		}
+		if len(res) == 1 {
+			for _, pkValue := range res[0] {
+				if table.GetPk().GetType() == `bigint` || table.GetPk().GetType() == `int` {
+					if pkValueInt, ok := pkValue.(int); ok {
+						return pkValueInt, nil
+					}
+				}
+				return pkValue, nil
+			}
+		}
+		return -1, fmt.Errorf("Insert did not returned id")
+	} else {
+		res, err := g.exec(sql, parameters...)
+		if err != nil {
+			return nil, err
+		}
+		// return primary key value if specified in the input
+		if pkValue, exists := columnValues[pkName]; exists {
+			return pkValue, nil
+		}
+		id, err := res.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		return id, nil
 	}
-	// return primary key value if specified in the input
-	if pkValue, exists := columnValues[pkName]; exists {
-		return pkValue, nil
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-	return id, nil
 	/*
 		// work around missing "returning" or "output" in mysql
 		switch g.driver {
