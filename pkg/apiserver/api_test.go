@@ -3,7 +3,7 @@ package apiserver
 import (
 	"fmt"
 	"net/http"
-	"os"
+	"net/url"
 	"sync"
 	"testing"
 
@@ -24,7 +24,7 @@ func TestNewApi(t *testing.T) {
 // Global API tests for records
 // To check compatibility with php-crud-api
 func TestRecordsApi(t *testing.T) {
-	os.Setenv("GCA_CONFIG_FILE", "../../test/gcaconfig_testrecordsapi.yaml")
+	utils.SelectConfig()
 	config := ReadConfig()
 	config.Init()
 	serverStarted := new(sync.WaitGroup)
@@ -814,6 +814,279 @@ func TestRecordsApi(t *testing.T) {
 			Uri:        "/records/posts/1?include=content,tags.name&join=tags",
 			Body:       ``,
 			Want:       `{"content":"blog started","id":1,"tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}`,
+			StatusCode: http.StatusOK,
+		},
+		/* Needs authorization middlware
+		{
+			Name:       "062_read_kunsthandvaerk",
+			Method:     http.MethodGet,
+			Uri:        "/records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d",
+			Body:       ``,
+			Want:       `{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","Umlauts ä_ö_ü-COUNT":1,"user_id":1}`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "063_list_kunsthandvaerk",
+			Method:     http.MethodGet,
+			Uri:        "/records/kunsthåndværk",
+			Body:       ``,
+			Want:       `{"records":[{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","Umlauts ä_ö_ü-COUNT":1,"user_id":1}]}`,
+			StatusCode: http.StatusOK,
+		},
+		*/
+		{
+			Name:   "064_add_kunsthandvaerk",
+			Method: http.MethodPost,
+			Uri:    "/records/kunsthåndværk",
+			//Adding a user_id as it should be not null
+			Body:       `{"id":"34451583-a747-4417-bdf0-bec7a5eacffa","Umlauts ä_ö_ü-COUNT":3,"user_id":1}`,
+			Want:       `"34451583-a747-4417-bdf0-bec7a5eacffa"`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "065_edit_kunsthandvaerk",
+			Method:     http.MethodPut,
+			Uri:        "/records/kunsthåndværk/34451583-a747-4417-bdf0-bec7a5eacffa",
+			Body:       `{"Umlauts ä_ö_ü-COUNT":3}`,
+			Want:       `1`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "066_delete_kunsthandvaerk",
+			Method:     http.MethodDelete,
+			Uri:        "/records/kunsthåndværk/34451583-a747-4417-bdf0-bec7a5eacffa",
+			Body:       ``,
+			Want:       `1`,
+			StatusCode: http.StatusOK,
+		},
+		/* Needs validation middleware
+		{
+			Name:       "067_edit_comment_with_validation",
+			Method:     http.MethodPut,
+			Uri:        "/records/comments/4",
+			Body:       `{"post_id":"two"}`,
+			Want:       `{"code":1013,"details":{"post_id":"must be numeric"},"message":"Input validation failed for 'comments'"}`,
+			StatusCode: http.StatusUnprocessableEntity,
+		},
+		*/
+		/* Needs sanitation middleware
+		{
+			Name:       "068_add_comment_with_sanitation_A",
+			Method:     http.MethodPost,
+			Uri:        "/records/comments",
+			Body:       `{"user_id":1,"post_id":2,"message":"<h1>Title</h1> <p>Body</p>","category_id":3}`,
+			Want:       `5`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "068_add_comment_with_sanitation_B",
+			Method:     http.MethodGet,
+			Uri:        "/records/comments/5",
+			Body:       ``,
+			Want:       `{"category_id":3,"id":5,"post_id":2,"message":"Title Body"}`,
+			StatusCode: http.StatusOK,
+		},
+		*/
+		{
+			Name:       "069_increment_event_visitors_A",
+			Method:     http.MethodGet,
+			Uri:        "/records/events/1?include=visitors",
+			Body:       ``,
+			Want:       `{"visitors":0}`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "069_increment_event_visitors_B",
+			Method:     http.MethodPatch,
+			Uri:        "/records/events/1",
+			Body:       `{"visitors":1}`,
+			Want:       `1`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "069_increment_event_visitors_C",
+			Method:     http.MethodPatch,
+			Uri:        "/records/events/1",
+			Body:       `{"visitors":1}`,
+			Want:       `1`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "069_increment_event_visitors_D",
+			Method:     http.MethodPatch,
+			Uri:        "/records/events/1,1",
+			Body:       `[{"visitors":1},{"visitors":1}]`,
+			Want:       `[1,1]`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "069_increment_event_visitors_E",
+			Method:     http.MethodGet,
+			Uri:        "/records/events/1?include=visitors",
+			Body:       ``,
+			Want:       `{"visitors":4}`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "069_increment_event_visitors_F",
+			Method:     http.MethodPatch,
+			Uri:        "/records/events/1",
+			Body:       `{"visitors":-4}`,
+			Want:       `1`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "069_increment_event_visitors_G",
+			Method:     http.MethodGet,
+			Uri:        "/records/events/1?include=visitors",
+			Body:       ``,
+			Want:       `{"visitors":0}`,
+			StatusCode: http.StatusOK,
+		},
+		/* Needs authorization middleware
+		{
+			Name:       "070_list_invisibles",
+			Method:     http.MethodGet,
+			Uri:        "/records/invisibles",
+			Body:       ``,
+			Want:       `{"code":1001,"message":"Table 'invisibles' not found"}`,
+			StatusCode: http.StatusNotFound,
+		},
+		*/
+		{
+			Name:   "071_add_comment_with_invisible_record_A",
+			Method: http.MethodPost,
+			Uri:    "/records/comments",
+			Body:   `{"user_id":1,"post_id":2,"message":"invisible","category_id":3}`,
+			//6 when activate test for sanitation middleware
+			Want:       `5`,
+			StatusCode: http.StatusOK,
+		},
+		/* Needs authorization middleware
+		{
+			Name:       "071_add_comment_with_invisible_record_B",
+			Method:     http.MethodGet,
+			Uri:        "/records/comments/6",
+			Body:       ``,
+			Want:       `{"code":1003,"message":"Record '6' not found"}`,
+			StatusCode: http.StatusNotFound,
+		},
+		*/
+		{
+			Name:       "072_list_nopk",
+			Method:     http.MethodGet,
+			Uri:        "/records/nopk",
+			Body:       ``,
+			Want:       `{"records":[{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}]}`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "073_multi_tenancy_kunsthandvaerk_A",
+			Method:     http.MethodPost,
+			Uri:        "/records/kunsthåndværk",
+			Body:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":2}`,
+			Want:       `"b55decba-8eb5-436b-af3e-148f7b4eacda"`,
+			StatusCode: http.StatusOK,
+		},
+		/* Needs authorization middlware
+		{
+			Name:       "073_multi_tenancy_kunsthandvaerk_B",
+			Method:     http.MethodGet,
+			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
+			Body:       ``,
+			Want:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"Umlauts ä_ö_ü-COUNT":4,"user_id":1}`,
+			StatusCode: http.StatusOK,
+		},
+		*/
+		{
+			Name:       "073_multi_tenancy_kunsthandvaerk_C",
+			Method:     http.MethodPut,
+			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
+			Body:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","Umlauts ä_ö_ü-COUNT":4,"user_id":2}`,
+			Want:       `1`,
+			StatusCode: http.StatusOK,
+		},
+		/* Needs authorization middlware
+		{
+			Name:       "073_multi_tenancy_kunsthandvaerk_D",
+			Method:     http.MethodGet,
+			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
+			Body:       ``,
+			Want:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"Umlauts ä_ö_ü-COUNT":4,"user_id":1}`,
+			StatusCode: http.StatusOK,
+		},
+		*/
+		/* Needs multitenancy middlware
+		{
+			Name:       "073_multi_tenancy_kunsthandvaerk_E",
+			Method:     http.MethodDelete,
+			Uri:        "/records/kunsthåndværk/e31ecfe6-591f-4660-9fbd-1a232083037f",
+			Body:       ``,
+			Want:       `0`,
+			StatusCode: http.StatusOK,
+		},
+		*/
+		{
+			Name:       "073_multi_tenancy_kunsthandvaerk_F",
+			Method:     http.MethodDelete,
+			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
+			Body:       ``,
+			Want:       `1`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:   "074_custom_kunsthandvaerk_A",
+			Method: http.MethodPatch,
+			Uri:    "/records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d",
+			Body:   `{"Umlauts ä_ö_ü-COUNT":10}`,
+			Want:   `1`,
+			/* Needs customization middleware
+			WantHeader: map[string]string{"X-Time-Taken": "0.003"},
+			*/
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:   "074_custom_kunsthandvaerk_B",
+			Method: http.MethodPatch,
+			Uri:    "/records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d",
+			Body:   `{"Umlauts ä_ö_ü-COUNT":-10}`,
+			Want:   `1`,
+			/* Needs customization middleware
+			WantHeader: map[string]string{"X-Time-Taken": "0.003"},
+			*/
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "075_list_tag_usage_A",
+			Method:     http.MethodGet,
+			Uri:        "/records/tag_usage",
+			Body:       ``,
+			Want:       `{"records":[{"count":2,"id":1,"name":"funny"},{"count":2,"id":2,"name":"important"}]}`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "075_list_tag_usage_B",
+			Method:     http.MethodGet,
+			Uri:        "/records/tag_usage/1",
+			Body:       ``,
+			Want:       `{"count":2,"id":1,"name":"funny"}`,
+			StatusCode: http.StatusOK,
+		},
+		{
+			Name:       "075_list_tag_usage_C",
+			Method:     http.MethodDelete,
+			Uri:        "/records/tag_usage/1",
+			Body:       ``,
+			Want:       `{"code":1015,"message":"Operation 'delete' not supported"}`,
+			StatusCode: http.StatusMethodNotAllowed,
+		},
+		// Spatial and sqlite
+		{
+			Name:       "076_list_user_locations_within_geometry",
+			Method:     http.MethodGet,
+			Uri:        "/records/users?include=id,location&filter=location,swi," + url.QueryEscape("POLYGON((10 10,10 50,50 50,50 10,10 10))"),
+			Body:       ``,
+			Want:       `{"records":[{"id":1,"location":"POINT(30 20)"}]}`,
 			StatusCode: http.StatusOK,
 		},
 	}

@@ -1,10 +1,13 @@
 package utils
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -99,4 +102,46 @@ func RunTests(t *testing.T, serverUrl string, tests []Test) {
 			}
 		})
 	}
+}
+
+//For tests, if there is no GCA_CONFIG_FILE env var provided, we create a sqlite db and we use a default config file
+func SelectConfig() {
+	if configFile := os.Getenv("GCA_CONFIG_FILE"); configFile != "" {
+		return
+	}
+	//We create a sqlite db for the tests
+	filePath := "/tmp/gocrudtests.db"
+	if _, err := os.Stat(filePath); err == nil {
+		if err = os.Remove(filePath); err != nil {
+			panic(err)
+		}
+	}
+
+	dsn := fmt.Sprintf("%s?_fk=1&_auth&_auth_user=go-crud-api&_auth_pass=go-crud-api", filePath)
+	if conn, err := sql.Open("sqlite3", dsn); err != nil {
+		panic(fmt.Sprintf("Connection failed to database %s with error : %s", dsn, err))
+	} else {
+		sqlFile := "../../test/sql/blog_sqlite.sql"
+		if err := loadSqlFile(sqlFile, conn); err != nil {
+			conn.Close()
+			panic(err)
+		}
+		conn.Close()
+	}
+	os.Setenv("GCA_CONFIG_FILE", "../../test/yaml/gcaconfig_sqlite.yaml")
+}
+
+func loadSqlFile(sqlFile string, db *sql.DB) error {
+	// Read file
+	file, err := ioutil.ReadFile(sqlFile)
+	if err != nil {
+		return err
+	}
+
+	// Execute all
+	_, err = db.Exec(string(file))
+	if err != nil {
+		return err
+	}
+	return nil
 }
