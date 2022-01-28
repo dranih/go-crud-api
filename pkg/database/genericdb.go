@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,7 +34,7 @@ func (g *GenericDB) getDsn() string {
 	switch g.driver {
 	case "mysql":
 		//username:password@protocol(address)/dbname?param=value
-		return fmt.Sprintf("%s:tcp(%s:%d)/%s?charset=utf8mb4", g.driver, g.address, g.port, g.database)
+		return fmt.Sprintf("%s:tcp(%s:%d)/%s?charset=utf8mb4&clientFoundRows=true", g.driver, g.address, g.port, g.database)
 	case "pgsql":
 		//return fmt.Sprintf("%s:host=%s port=%d dbname=%s options=\"--client_encoding=UTF8\"", g.driver, g.address, g.port, g.database)
 		return fmt.Sprintf("%s:host=%s port=%d dbname=%s", g.driver, g.address, g.port, g.database)
@@ -283,11 +284,22 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	quote := g.getQuote()
 	sql := fmt.Sprintf("SELECT COUNT(*) as c FROM %s%s%s %s", quote, tableName, quote, whereClause)
 	stmt, _ := g.query(sql, parameters...)
-	ret, ok := stmt[0]["c"].(int64)
-	if !ok {
-		log.Printf("Error converting count from table %s\n", tableName)
+	if len(stmt) > 0 {
+		if c, ok := stmt[0]["c"]; ok {
+			switch ct := c.(type) {
+			case int:
+				return ct
+			case int64:
+				return int(ct)
+			case string:
+				if i, err := strconv.Atoi(ct); err == nil {
+					return i
+				}
+			}
+		}
 	}
-	return int(ret)
+	log.Printf("Error processing count return value from table %s\n", tableName)
+	return 0
 }
 
 // Should check error

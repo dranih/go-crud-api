@@ -16,21 +16,37 @@ func NewDataConverter(driver string) *DataConverter {
 }
 
 // Should check conv errors
-func (dc *DataConverter) convertRecordValue(conversion, value string) interface{} {
+func (dc *DataConverter) convertRecordValue(conversion string, value interface{}) interface{} {
 	args := strings.Split(conversion, "|")
 	switch args[0] {
 	case "boolean":
-		res, _ := strconv.ParseBool(value)
-		return res
+		switch v := value.(type) {
+		case string:
+			//If we have only 1 byte, we test it
+			if b := []byte(v); len(b) == 1 {
+				return b[0] == byte(1)
+			}
+			res, _ := strconv.ParseBool(v)
+			return res
+		case bool:
+			return v
+		}
 	case "integer":
-		res, _ := strconv.Atoi(value)
-		return res
-	case "float":
-		res, _ := strconv.ParseFloat(value, 32)
-		return res
-	case "decimal":
-		res, _ := strconv.ParseFloat(value, 32)
-		return res
+		switch v := value.(type) {
+		case string:
+			res, _ := strconv.Atoi(v)
+			return res
+		case int, int64:
+			return v
+		}
+	case "float", "decimal":
+		switch v := value.(type) {
+		case string:
+			res, _ := strconv.ParseFloat(v, 32)
+			return res
+		case float32, float64:
+			return v
+		}
 	}
 	return value
 }
@@ -40,11 +56,9 @@ func (dc *DataConverter) getRecordValueConversion(column *ReflectedColumn) strin
 		return "boolean"
 	}
 	switch column.GetType() {
-	case "integer":
-	case "bigint":
+	case "integer", "bigint":
 		return "integer"
-	case "float":
-	case "double":
+	case "float", "double":
 		return "float"
 	case "decimal":
 		if dc.driver == "sqlite" {
@@ -65,7 +79,7 @@ func (dc *DataConverter) ConvertRecords(table *ReflectedTable, columnNames []str
 				if !ok {
 					continue
 				}
-				(*records)[i][columnName] = dc.convertRecordValue(conversion, fmt.Sprint(value))
+				(*records)[i][columnName] = dc.convertRecordValue(conversion, value)
 			}
 		}
 

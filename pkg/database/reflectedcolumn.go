@@ -66,7 +66,7 @@ func parseColumnType(columnType string, length, precision, scale *int) {
 					*precision = -1
 					log.Printf("Error parsing column type precision : %v", err)
 				}
-				*scale = 0
+				*scale = -1
 			}
 		}
 	}
@@ -131,14 +131,14 @@ func NewReflectedColumnFromJson(json map[string]interface{}) *ReflectedColumn {
 			length = i
 		}
 	}
-	precision := 0
+	precision := -1
 	if l, exists := json["precision"]; exists {
 		i, e := strconv.Atoi(fmt.Sprint(l))
 		if e == nil {
 			precision = i
 		}
 	}
-	scale := 0
+	scale := -1
 	if l, exists := json["scale"]; exists {
 		i, e := strconv.Atoi(fmt.Sprint(l))
 		if e == nil {
