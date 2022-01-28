@@ -1,0 +1,16 @@
+api:
+  driver: "pgsql"
+  controllers: "records,columns,geojson,openapi,status"
+  address: "localhost"
+  port: 5432
+  database: "go-crud-api"
+  username: "go-crud-api"
+  password: "go-crud-api"
+
+  middlewares:
+  - basicAuth:
+      - mode: "optional"
+      - realm: "GoCrudApi : Username and password required"
+      - passwordFile: "../../test/test.pwd"
+  - json:
+  - cors:

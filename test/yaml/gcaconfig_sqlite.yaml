@@ -1,7 +1,10 @@
 api:
   driver: "sqlite"
-  address: "../../test/tests.db"
-  database: "test"
+  controllers: "records,columns,geojson,openapi,status"
+  address: "/tmp/gocrudtests.db"
+  database: "go-crud-api"
+  username: "go-crud-api"
+  password: "go-crud-api"
 
   middlewares:
   - basicAuth:
