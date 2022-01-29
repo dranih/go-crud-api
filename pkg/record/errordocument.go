@@ -50,7 +50,7 @@ func (ed *ErrorDocument) MarshalJSON() ([]byte, error) {
 
 func NewErrorDocumentFromError(err error, debug bool) *ErrorDocument {
 	switch err.(type) {
-	case sqlite3.Error, *pq.Error, *mysql.MySQLError, *mssql.Error:
+	case sqlite3.Error, *pq.Error, *mysql.MySQLError, mssql.Error:
 		if strings.Contains(strings.ToLower(err.Error()), "duplicate") {
 			return NewErrorDocument(NewErrorCode(DUPLICATE_KEY_EXCEPTION), "", "")
 		} else if strings.Contains(strings.ToLower(err.Error()), "unique constraint") {

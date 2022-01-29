@@ -201,22 +201,17 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 	quote := g.getQuote()
 	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
 	//For pgsql, get id from returning value
-	if g.driver == "pgsql" {
-		res, err := g.query(sql, parameters...)
+	if g.driver == "pgsql" || g.driver == "sqlsrv" {
+		res, err := g.queryRowSingleColumn(sql, parameters...)
 		if err != nil {
 			return nil, err
 		}
-		if len(res) == 1 {
-			for _, pkValue := range res[0] {
-				if table.GetPk().GetType() == `bigint` || table.GetPk().GetType() == `int` {
-					if pkValueInt, ok := pkValue.(int); ok {
-						return pkValueInt, nil
-					}
-				}
-				return pkValue, nil
+		if table.GetPk().GetType() == `bigint` || table.GetPk().GetType() == `int` {
+			if pkValueInt, ok := res.(int); ok {
+				return pkValueInt, nil
 			}
 		}
-		return -1, fmt.Errorf("Insert did not returned id")
+		return res, nil
 	} else {
 		res, err := g.exec(sql, parameters...)
 		if err != nil {
@@ -302,22 +297,22 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("SELECT COUNT(*) as c FROM %s%s%s %s", quote, tableName, quote, whereClause)
-	stmt, _ := g.query(sql, parameters...)
-	if len(stmt) > 0 {
-		if c, ok := stmt[0]["c"]; ok {
-			switch ct := c.(type) {
-			case int:
-				return ct
-			case int64:
-				return int(ct)
-			case string:
-				if i, err := strconv.Atoi(ct); err == nil {
-					return i
-				}
-			}
+	stmt, _ := g.queryRowSingleColumn(sql, parameters...)
+	switch ct := stmt.(type) {
+	case int:
+		return ct
+	case int64:
+		return int(ct)
+	case string:
+		if i, err := strconv.Atoi(ct); err == nil {
+			return i
+		}
+	case []byte:
+		if i, err := strconv.Atoi(string(ct)); err == nil {
+			return i
 		}
 	}
-	log.Printf("Error processing count return value from table %s\n", tableName)
+	log.Printf("Error processing count return value : %v of type % T from table %s\n", stmt, stmt, tableName)
 	return 0
 }
 
@@ -418,6 +413,10 @@ func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[stri
 	} else {
 		return 0, err
 	}
+}
+
+func (g *GenericDB) queryRowSingleColumn(sql string, parameters ...interface{}) (interface{}, error) {
+	return g.pdo.QueryRowSingleColumn(sql, parameters...)
 }
 
 func (g *GenericDB) query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {

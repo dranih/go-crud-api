@@ -175,7 +175,6 @@ func (l *LazyPdo) LastInsertId($name = null): string
 }
 */
 
-// Should check errors
 func (l *LazyPdo) Query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
 	rows, err := l.connect().Query(sql, parameters...)
 	if err != nil {
@@ -183,6 +182,16 @@ func (l *LazyPdo) Query(sql string, parameters ...interface{}) ([]map[string]int
 	}
 	results, err := l.Rows2Map(rows)
 	return results, err
+}
+
+func (l *LazyPdo) QueryRowSingleColumn(sql string, parameters ...interface{}) (interface{}, error) {
+	row := l.connect().QueryRow(sql, parameters...)
+	var result interface{}
+	if err := row.Scan(&result); err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
 }
 
 // from https://kylewbanks.com/blog/query-result-to-map-in-golang
