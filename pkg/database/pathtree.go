@@ -26,9 +26,8 @@ func NewTree() *tree {
 }
 
 func (t *tree) GetKeys() []string {
-	branches := t.branches
 	keys := []string{}
-	for key := range branches {
+	for key := range t.branches {
 		keys = append(keys, key)
 	}
 	return keys
@@ -52,7 +51,7 @@ func (pt *PathTree) Put(path []string, value interface{ Condition }) {
 		if key == `` {
 			key = `0`
 		}
-		if _, exists := pt.tree.branches[key]; !exists {
+		if _, exists := tree.branches[key]; !exists {
 			tree.branches[key] = NewTree()
 		}
 		tree = tree.branches[key]

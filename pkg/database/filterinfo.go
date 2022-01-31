@@ -38,7 +38,9 @@ func (ft *FilterInfo) combinePathTreeOfConditions(tree *PathTree) interface{ Con
 	and := AndConditionFromArray(andConditions)
 	orConditions := []interface{ Condition }{}
 	for _, p := range tree.tree.GetKeys() {
-		orConditions = append(orConditions, ft.combinePathTreeOfConditions(tree.tree.Get(p)))
+		if pt := tree.tree.Get(p); pt.tree != nil {
+			orConditions = append(orConditions, ft.combinePathTreeOfConditions(pt))
+		}
 	}
 	or := OrConditionFromArray(orConditions)
 	cond := and.And(or)

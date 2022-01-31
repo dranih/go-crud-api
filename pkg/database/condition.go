@@ -164,6 +164,15 @@ func (oc *OrCondition) Or(condition interface{ Condition }) interface{ Condition
 	}
 }
 
+func (oc *OrCondition) And(condition interface{ Condition }) interface{ Condition } {
+	switch condition.(type) {
+	case *NoCondition:
+		return oc
+	default:
+		return NewAndCondition(oc, condition)
+	}
+}
+
 func (ac *OrCondition) GetConditions() []interface{ Condition } {
 	return ac.conditions
 }
@@ -196,6 +205,15 @@ func (ac *AndCondition) And(condition interface{ Condition }) interface{ Conditi
 	default:
 		ac.conditions = append(ac.conditions, condition)
 		return ac
+	}
+}
+
+func (ac *AndCondition) Or(condition interface{ Condition }) interface{ Condition } {
+	switch condition.(type) {
+	case *NoCondition:
+		return ac
+	default:
+		return NewOrCondition(ac, condition)
 	}
 }
 

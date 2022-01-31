@@ -74,7 +74,6 @@ func (cb *ColumnsBuilder) GetInsert(table *ReflectedTable, columnValues map[stri
 	for columnName, val := range columnValues {
 		column := table.GetColumn(columnName)
 		quotedColumnName := cb.quoteColumnName(column)
-		quotedColumnName = cb.converter.ConvertColumnName(column, quotedColumnName)
 		columns = append(columns, quotedColumnName)
 		columnValue := cb.converter.ConvertColumnValue(column, parameters)
 		values = append(values, columnValue)
