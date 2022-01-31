@@ -29,8 +29,11 @@ func (gc *GeoJsonController) list(w http.ResponseWriter, r *http.Request) {
 		gc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
-	result := gc.service.List(table, params)
-	gc.responder.Success(result, w)
+	if result, err := gc.service.List(table, params); err != nil {
+		gc.responder.Exception(err, w)
+	} else {
+		gc.responder.Success(result, w)
+	}
 	return
 }
 
@@ -53,16 +56,25 @@ func (gc *GeoJsonController) read(w http.ResponseWriter, r *http.Request) {
 			features []*geojson.Feature
 		}{"FeatureCollection", nil}
 		for i := 0; i < len(ids); i++ {
-			results.features = append(results.features, gc.service.Read(table, ids[i], params))
+			if f, err := gc.service.Read(table, ids[i], params); err != nil {
+				gc.responder.Exception(err, w)
+				return
+			} else {
+				results.features = append(results.features, f)
+			}
 		}
 		gc.responder.Success(results, w)
 		return
 	} else {
-		response := gc.service.Read(table, id, params)
-		if response == nil {
-			gc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+		if response, err := gc.service.Read(table, id, params); err != nil {
+			gc.responder.Exception(err, w)
 			return
+		} else {
+			if response == nil {
+				gc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
+				return
+			}
+			gc.responder.Success(response, w)
 		}
-		gc.responder.Success(response, w)
 	}
 }

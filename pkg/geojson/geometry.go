@@ -2,6 +2,7 @@ package geojson
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -16,7 +17,7 @@ func NewGeometry(geoType string, coordinates interface{}) *Geometry {
 	return &Geometry{geoType, coordinates}
 }
 
-func NewGeometryFromWkt(wkt string) *Geometry {
+func NewGeometryFromWkt(wkt string) (*Geometry, error) {
 	geoTypes := []string{
 		"Point",
 		"MultiPoint",
@@ -36,11 +37,11 @@ func NewGeometryFromWkt(wkt string) *Geometry {
 		}
 	}
 	if !supported {
-		log.Printf("Geometry type not supported : %s", geoType)
-		return nil
+		err := fmt.Errorf("Geometry type not supported: %s", geoType)
+		return nil, err
 	}
 	coordinates := wkt[bracket:]
-	if !strings.HasSuffix(geoType, "Point") || (geoType == "MultiPoint" && coordinates[1:1] != "(") {
+	if !strings.HasSuffix(geoType, "Point") || (geoType == "MultiPoint" && coordinates[1:2] != "(") {
 		re := regexp.MustCompile(`([0-9\-\.]+ )+([0-9\-\.]+)`)
 		coordinates = re.ReplaceAllString(coordinates, "[${1}${2}]")
 	}
@@ -49,9 +50,9 @@ func NewGeometryFromWkt(wkt string) *Geometry {
 	var coord interface{}
 	if err := json.Unmarshal([]byte(coordinates), &coord); err != nil {
 		log.Printf("Could not decode WKT %s : %s", coordinates, err)
-		return nil
+		return nil, err
 	} else {
-		return &Geometry{geoType, coord}
+		return &Geometry{geoType, coord}, nil
 	}
 }
 

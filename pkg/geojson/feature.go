@@ -34,10 +34,18 @@ func NewFeatureCollection(features []*Feature, results int) *FeatureCollection {
 
 // json marshaling for struct FeatureCollection
 func (fc *FeatureCollection) MarshalJSON() ([]byte, error) {
-	return json.Marshal(
-		map[string]interface{}{
-			"type":     "FeatureCollection",
-			"features": fc.features,
-			"results":  fc.results,
-		})
+	if fc.results == -1 {
+		return json.Marshal(
+			map[string]interface{}{
+				"type":     "FeatureCollection",
+				"features": fc.features,
+			})
+	} else {
+		return json.Marshal(
+			map[string]interface{}{
+				"type":     "FeatureCollection",
+				"features": fc.features,
+				"results":  fc.results,
+			})
+	}
 }

@@ -78,7 +78,7 @@ func (s *Service) convertTileToLatLonOfUpperLeftCorner(z, x, y float64) []float6
 	return []float64{lon, lat}
 }
 
-func (s *Service) convertRecordToFeature(record interface{}, primaryKeyColumnName, geometryColumnName string) *Feature {
+func (s *Service) convertRecordToFeature(record interface{}, primaryKeyColumnName, geometryColumnName string) (*Feature, error) {
 	var id int
 	if recordMap, ok := record.(map[string]interface{}); ok {
 		if primaryKeyColumnName != "" {
@@ -90,13 +90,21 @@ func (s *Service) convertRecordToFeature(record interface{}, primaryKeyColumnNam
 			}
 		}
 		var geometry *Geometry
+		var err error
 		if v, exists := recordMap[geometryColumnName]; exists {
-			geometry = NewGeometryFromWkt(fmt.Sprint(v))
+			if v == nil {
+				geometry = nil
+			} else {
+				geometry, err = NewGeometryFromWkt(fmt.Sprint(v))
+				if err != nil {
+					return nil, err
+				}
+			}
 			delete(recordMap, geometryColumnName)
 		}
-		return &Feature{id, recordMap, geometry}
+		return &Feature{id, recordMap, geometry}, nil
 	} else {
-		return nil
+		return nil, nil
 	}
 }
 
@@ -110,23 +118,28 @@ func (s *Service) getPrimaryKeyColumnName(tableName string, params *map[string][
 	return primaryKeyColumnName
 }
 
-func (s *Service) List(tableName string, params map[string][]string) *FeatureCollection {
+func (s *Service) List(tableName string, params map[string][]string) (*FeatureCollection, error) {
 	geometryColumnName := s.getGeometryColumnName(tableName, &params)
 	s.setBoudingBoxFilter(geometryColumnName, &params)
 	primaryColumnName := s.getPrimaryKeyColumnName(tableName, &params)
 	records := s.records.List(tableName, params)
 	var features []*Feature
 	for _, record := range records.GetRecords() {
-		features = append(features, s.convertRecordToFeature(record, primaryColumnName, geometryColumnName))
+		if f, err := s.convertRecordToFeature(record, primaryColumnName, geometryColumnName); err != nil {
+			return nil, err
+		} else {
+			features = append(features, f)
+		}
 	}
-	return NewFeatureCollection(features, records.GetResults())
+	return NewFeatureCollection(features, records.GetResults()), nil
 }
 
-func (s *Service) Read(tableName, id string, params map[string][]string) *Feature {
+func (s *Service) Read(tableName, id string, params map[string][]string) (*Feature, error) {
 	geometryColumnName := s.getGeometryColumnName(tableName, &params)
 	primaryColumnName := s.getPrimaryKeyColumnName(tableName, &params)
-	if record, err := s.records.Read(tableName, params, id); err == nil {
+	if record, err := s.records.Read(nil, tableName, params, id); err == nil {
 		return s.convertRecordToFeature(record, primaryColumnName, geometryColumnName)
+	} else {
+		return nil, err
 	}
-	return nil
 }
