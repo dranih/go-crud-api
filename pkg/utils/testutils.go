@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -45,59 +46,67 @@ type Test struct {
 	Jar           http.CookieJar
 	RequestHeader map[string]string
 	WantHeader    map[string]string
+	SkipFor       map[string]bool
+	Driver        string
 }
 
 func RunTests(t *testing.T, serverUrl string, tests []Test) {
 	for _, tc := range tests {
 		t.Run(tc.Name, func(t *testing.T) {
-			request, err := http.NewRequest(tc.Method, serverUrl+tc.Uri, strings.NewReader(tc.Body))
-			if err != nil {
-				t.Fatal(err)
-			}
-			if tc.RequestHeader != nil {
-				for header, value := range tc.RequestHeader {
-					request.Header.Set(header, value)
-				}
-			}
-			if tc.AuthMethod == "basicauth" && tc.Username != "" {
-				request.SetBasicAuth(tc.Username, tc.Password)
-			}
-			var client *http.Client
-			if tc.Jar != nil {
-				client = &http.Client{
-					Jar: tc.Jar,
-				}
+			log.Printf("*************** Running test : %s ***************", tc.Name)
+			//Skip test if requireGeo and sqlite
+			if tc.SkipFor != nil && tc.Driver != "" && tc.SkipFor[tc.Driver] {
+				log.Printf("Skipping test %s for driver %s", tc.Name, tc.Driver)
 			} else {
-				client = http.DefaultClient
-			}
-			resp, err := client.Do(request)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != tc.StatusCode {
-				t.Errorf("Want status '%d', got '%d' at url '%s'", tc.StatusCode, resp.StatusCode, resp.Request.URL)
-			}
-
-			if tc.WantHeader != nil {
-				for header, value := range tc.WantHeader {
-					if gotValue := resp.Header.Get(header); gotValue != value {
-						t.Errorf("Want header '%s : %s', got '%s : %s'", header, value, header, gotValue)
+				request, err := http.NewRequest(tc.Method, serverUrl+tc.Uri, strings.NewReader(tc.Body))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if tc.RequestHeader != nil {
+					for header, value := range tc.RequestHeader {
+						request.Header.Set(header, value)
 					}
 				}
-			}
-
-			if b, err := io.ReadAll(resp.Body); err != nil {
-				t.Errorf("Error reading response '%s'", err)
-			} else {
-				if tc.WantRegex != "" {
-					re, _ := regexp.Compile(tc.WantRegex)
-					if !re.Match(b) {
-						t.Errorf("Regex '%s' not matching, got '%s'", tc.WantRegex, b)
+				if tc.AuthMethod == "basicauth" && tc.Username != "" {
+					request.SetBasicAuth(tc.Username, tc.Password)
+				}
+				var client *http.Client
+				if tc.Jar != nil {
+					client = &http.Client{
+						Jar: tc.Jar,
 					}
-				} else if strings.TrimSpace(string(b)) != tc.Want {
-					t.Errorf("Want '%s', got '%s'", tc.Want, strings.TrimSpace(string(b)))
+				} else {
+					client = http.DefaultClient
+				}
+				resp, err := client.Do(request)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer resp.Body.Close()
+
+				if resp.StatusCode != tc.StatusCode {
+					t.Errorf("Want status '%d', got '%d' at url '%s'", tc.StatusCode, resp.StatusCode, resp.Request.URL)
+				}
+
+				if tc.WantHeader != nil {
+					for header, value := range tc.WantHeader {
+						if gotValue := resp.Header.Get(header); gotValue != value {
+							t.Errorf("Want header '%s : %s', got '%s : %s'", header, value, header, gotValue)
+						}
+					}
+				}
+
+				if b, err := io.ReadAll(resp.Body); err != nil {
+					t.Errorf("Error reading response '%s'", err)
+				} else {
+					if tc.WantRegex != "" {
+						re, _ := regexp.Compile(tc.WantRegex)
+						if !re.Match(b) {
+							t.Errorf("Regex '%s' not matching, got '%s'", tc.WantRegex, b)
+						}
+					} else if strings.TrimSpace(string(b)) != tc.Want {
+						t.Errorf("Want '%s', got '%s'", tc.Want, strings.TrimSpace(string(b)))
+					}
 				}
 			}
 		})
