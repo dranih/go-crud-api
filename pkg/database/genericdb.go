@@ -41,7 +41,7 @@ func (g *GenericDB) getDsn() string {
 	case "sqlsrv":
 		return fmt.Sprintf("%s:server=%s;port=%d;database=%s", g.driver, g.address, g.port, g.database)
 	case "sqlite":
-		return fmt.Sprintf("%s:%s?_fk=1", g.driver, g.address)
+		return fmt.Sprintf("%s:%s?_fk=1&defer_fk=1", g.driver, g.address)
 	default:
 		return ""
 	}
@@ -193,16 +193,16 @@ func (g *GenericDB) getQuote() string {
 	}
 }
 
-func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]interface{}) (interface{}, error) {
+func (g *GenericDB) CreateSingle(tx *sql.Tx, table *ReflectedTable, columnValues map[string]interface{}) (interface{}, error) {
 	g.converter.ConvertColumnValues(table, &columnValues)
 	insertColumns, parameters := g.columns.GetInsert(table, columnValues)
 	tableName := table.GetName()
 	pkName := table.GetPk().GetName()
 	quote := g.getQuote()
 	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
-	//For pgsql, get id from returning value
+	//For pgsql and sqlsrv, get id from returning value
 	if g.driver == "pgsql" || g.driver == "sqlsrv" {
-		res, err := g.queryRowSingleColumn(sql, parameters...)
+		res, err := g.queryRowSingleColumn(tx, sql, parameters...)
 		if err != nil {
 			return nil, err
 		}
@@ -213,7 +213,7 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 		}
 		return res, nil
 	} else {
-		res, err := g.exec(sql, parameters...)
+		res, err := g.exec(tx, sql, parameters...)
 		if err != nil {
 			return nil, err
 		}
@@ -250,7 +250,7 @@ func (g *GenericDB) CreateSingle(table *ReflectedTable, columnValues map[string]
 }
 
 // Should check error
-func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id string) []map[string]interface{} {
+func (g *GenericDB) SelectSingle(tx *sql.Tx, table *ReflectedTable, columnNames []string, id string) []map[string]interface{} {
 	records := []map[string]interface{}{}
 	selectColumns := g.columns.GetSelect(table, columnNames)
 	tableName := table.GetName()
@@ -261,7 +261,7 @@ func (g *GenericDB) SelectSingle(table *ReflectedTable, columnNames []string, id
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableName, quote, whereClause)
-	records, _ = g.query(sql, parameters...)
+	records, _ = g.query(tx, sql, parameters...)
 	if len(records) <= 0 {
 		return nil
 	}
@@ -284,7 +284,7 @@ func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []str
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableName, quote, whereClause)
-	records, _ = g.query(sql, parameters...)
+	records, _ = g.query(nil, sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
@@ -297,7 +297,7 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("SELECT COUNT(*) as c FROM %s%s%s %s", quote, tableName, quote, whereClause)
-	stmt, _ := g.queryRowSingleColumn(sql, parameters...)
+	stmt, _ := g.queryRowSingleColumn(nil, sql, parameters...)
 	switch ct := stmt.(type) {
 	case int:
 		return ct
@@ -330,12 +330,12 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s %s %s", selectColumns, quote, tableName, quote, whereClause, orderBy, offsetLimit)
-	records, _ := g.query(sql, parameters...)
+	records, _ := g.query(nil, sql, parameters...)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
 
-func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (int64, error) {
+func (g *GenericDB) UpdateSingle(tx *sql.Tx, table *ReflectedTable, columnValues map[string]interface{}, id string) (int64, error) {
 	if len(columnValues) <= 0 {
 		return 0, nil
 	}
@@ -349,7 +349,7 @@ func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableName, quote, updateColumns, whereClause)
-	res, err := g.exec(sql, parameters...)
+	res, err := g.exec(tx, sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
 		if err != nil {
@@ -362,7 +362,7 @@ func (g *GenericDB) UpdateSingle(table *ReflectedTable, columnValues map[string]
 	}
 }
 
-func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (int64, error) {
+func (g *GenericDB) DeleteSingle(tx *sql.Tx, table *ReflectedTable, id string) (int64, error) {
 	tableName := table.GetName()
 	var condition interface{ Condition }
 	pk := table.GetPk()
@@ -372,7 +372,7 @@ func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (int64, error
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("DELETE FROM %s%s%s %s", quote, tableName, quote, whereClause)
-	res, err := g.exec(sql, parameters...)
+	res, err := g.exec(tx, sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
 		if err != nil {
@@ -385,7 +385,7 @@ func (g *GenericDB) DeleteSingle(table *ReflectedTable, id string) (int64, error
 	}
 }
 
-func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[string]interface{}, id string) (int64, error) {
+func (g *GenericDB) IncrementSingle(tx *sql.Tx, table *ReflectedTable, columnValues map[string]interface{}, id string) (int64, error) {
 	if len(columnValues) <= 0 {
 		return 0, nil
 	}
@@ -402,7 +402,7 @@ func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[stri
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableName, quote, updateColumns, whereClause)
-	res, err := g.exec(sql, parameters...)
+	res, err := g.exec(tx, sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
 		if err != nil {
@@ -415,20 +415,16 @@ func (g *GenericDB) IncrementSingle(table *ReflectedTable, columnValues map[stri
 	}
 }
 
-func (g *GenericDB) queryRowSingleColumn(sql string, parameters ...interface{}) (interface{}, error) {
-	return g.pdo.QueryRowSingleColumn(sql, parameters...)
+func (g *GenericDB) queryRowSingleColumn(tx *sql.Tx, sql string, parameters ...interface{}) (interface{}, error) {
+	return g.pdo.QueryRowSingleColumn(tx, sql, parameters...)
 }
 
-func (g *GenericDB) query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
-	return g.pdo.Query(sql, parameters...)
+func (g *GenericDB) query(tx *sql.Tx, sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
+	return g.pdo.Query(tx, sql, parameters...)
 }
 
-func (g *GenericDB) exec(sql string, parameters ...interface{}) (sql.Result, error) {
-	res, err := g.pdo.connect().Exec(sql, parameters...)
-	if err != nil {
-		return nil, err
-	}
-	return res, err
+func (g *GenericDB) exec(tx *sql.Tx, sql string, parameters ...interface{}) (sql.Result, error) {
+	return g.pdo.Exec(tx, sql, parameters...)
 }
 
 func (g *GenericDB) Ping() int {

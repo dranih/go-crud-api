@@ -68,18 +68,18 @@ func (rs *RecordService) RollBackTransaction(tx *sql.Tx) {
 	rs.db.RollBackTransaction(tx)
 }
 
-func (rs *RecordService) Create(tableName string, params map[string][]string, record ...interface{}) (interface{}, error) {
+func (rs *RecordService) Create(tx *sql.Tx, tableName string, params map[string][]string, record ...interface{}) (interface{}, error) {
 	recordMap := rs.sanitizeRecord(tableName, record[0], "")
 	table := rs.reflection.GetTable(tableName)
 	columnValues := rs.columns.GetValues(table, true, recordMap, params)
-	return rs.db.CreateSingle(table, columnValues)
+	return rs.db.CreateSingle(tx, table, columnValues)
 }
 
-func (rs *RecordService) Read(tableName string, params map[string][]string, id ...interface{}) (interface{}, error) {
+func (rs *RecordService) Read(tx *sql.Tx, tableName string, params map[string][]string, id ...interface{}) (interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
-	records := rs.db.SelectSingle(table, columnNames, fmt.Sprint(id[0]))
+	records := rs.db.SelectSingle(tx, table, columnNames, fmt.Sprint(id[0]))
 	if records == nil || len(records) < 0 {
 		return nil, nil
 	}
@@ -87,7 +87,7 @@ func (rs *RecordService) Read(tableName string, params map[string][]string, id .
 	return records[0], nil
 }
 
-func (rs *RecordService) Update(tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
+func (rs *RecordService) Update(tx *sql.Tx, tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	if len(args) < 2 {
 		return 0, fmt.Errorf("Not enought arguments : %v", args)
 	}
@@ -96,15 +96,15 @@ func (rs *RecordService) Update(tableName string, params map[string][]string, ar
 	recordMap := rs.sanitizeRecord(tableName, record, id)
 	table := rs.reflection.GetTable(tableName)
 	columnValues := rs.columns.GetValues(table, true, recordMap, params)
-	return rs.db.UpdateSingle(table, columnValues, id)
+	return rs.db.UpdateSingle(tx, table, columnValues, id)
 }
 
-func (rs *RecordService) Delete(tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
+func (rs *RecordService) Delete(tx *sql.Tx, tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	table := rs.reflection.GetTable(tableName)
-	return rs.db.DeleteSingle(table, fmt.Sprint(args[0]))
+	return rs.db.DeleteSingle(tx, table, fmt.Sprint(args[0]))
 }
 
-func (rs *RecordService) Increment(tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
+func (rs *RecordService) Increment(tx *sql.Tx, tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	if len(args) < 2 {
 		return 0, fmt.Errorf("Not enought arguments : %v", args)
 	}
@@ -113,7 +113,7 @@ func (rs *RecordService) Increment(tableName string, params map[string][]string,
 	recordMap := rs.sanitizeRecord(tableName, record, id)
 	table := rs.reflection.GetTable(tableName)
 	columnValues := rs.columns.GetValues(table, true, recordMap, params)
-	return rs.db.IncrementSingle(table, columnValues, id)
+	return rs.db.IncrementSingle(tx, table, columnValues, id)
 }
 
 // done

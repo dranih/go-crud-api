@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"net/http"
 	"strings"
 
@@ -65,7 +66,7 @@ func (rc *RecordController) read(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Multi(result, errs, w)
 		return
 	} else {
-		response, err := rc.service.Read(table, params, id)
+		response, err := rc.service.Read(nil, table, params, id)
 		if response == nil || err != nil {
 			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
 			return
@@ -74,13 +75,13 @@ func (rc *RecordController) read(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (rc *RecordController) multiCall(callback func(string, map[string][]string, ...interface{}) (interface{}, error), argumentLists []*argumentList) (*[]interface{}, []error) {
+func (rc *RecordController) multiCall(callback func(*sql.Tx, string, map[string][]string, ...interface{}) (interface{}, error), argumentLists []*argumentList) (*[]interface{}, []error) {
 	result := []interface{}{}
 	var errs []error
 	success := true
 	tx, _ := rc.service.BeginTransaction()
 	for _, arguments := range argumentLists {
-		if tmp_result, err := callback(arguments.table, arguments.params, arguments.payload...); err == nil {
+		if tmp_result, err := callback(tx, arguments.table, arguments.params, arguments.payload...); err == nil {
 			result = append(result, tmp_result)
 			errs = append(errs, nil)
 		} else {
@@ -124,7 +125,7 @@ func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Multi(result, errs, w)
 		return
 	} else {
-		response, err := rc.service.Create(table, params, jsonMap)
+		response, err := rc.service.Create(nil, table, params, jsonMap)
 		if response == nil || err != nil {
 			rc.responder.Exception(err, w)
 			return
@@ -169,7 +170,7 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
-		response, err := rc.service.Update(table, params, id, jsonMap)
+		response, err := rc.service.Update(nil, table, params, id, jsonMap)
 		if response == nil || err != nil {
 			rc.responder.Exception(err, w)
 			return
@@ -200,7 +201,7 @@ func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 		rc.responder.Multi(result, errs, w)
 		return
 	} else {
-		response, err := rc.service.Delete(table, params, id)
+		response, err := rc.service.Delete(nil, table, params, id)
 		if response == nil || err != nil {
 			rc.responder.Exception(err, w)
 			return
@@ -245,7 +246,7 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
-		response, err := rc.service.Increment(table, params, id, jsonMap)
+		response, err := rc.service.Increment(nil, table, params, id, jsonMap)
 		if response == nil || err != nil {
 			rc.responder.Exception(err, w)
 			return

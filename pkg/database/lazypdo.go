@@ -88,7 +88,7 @@ func (l *LazyPdo) connect() *sql.DB {
 		default:
 		}
 		for _, command := range l.commands {
-			l.Query(command, "")
+			l.Query(nil, command, "")
 		}
 	}
 	return l.pdo
@@ -175,8 +175,22 @@ func (l *LazyPdo) LastInsertId($name = null): string
 }
 */
 
-func (l *LazyPdo) Query(sql string, parameters ...interface{}) ([]map[string]interface{}, error) {
-	rows, err := l.connect().Query(sql, parameters...)
+func (l *LazyPdo) Exec(tx *sql.Tx, req string, parameters ...interface{}) (sql.Result, error) {
+	if tx == nil {
+		return l.connect().Exec(req, parameters...)
+	} else {
+		return tx.Exec(req, parameters...)
+	}
+}
+
+func (l *LazyPdo) Query(tx *sql.Tx, req string, parameters ...interface{}) ([]map[string]interface{}, error) {
+	var err error
+	var rows *sql.Rows
+	if tx == nil {
+		rows, err = l.connect().Query(req, parameters...)
+	} else {
+		rows, err = tx.Query(req, parameters...)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -184,8 +198,13 @@ func (l *LazyPdo) Query(sql string, parameters ...interface{}) ([]map[string]int
 	return results, err
 }
 
-func (l *LazyPdo) QueryRowSingleColumn(sql string, parameters ...interface{}) (interface{}, error) {
-	row := l.connect().QueryRow(sql, parameters...)
+func (l *LazyPdo) QueryRowSingleColumn(tx *sql.Tx, req string, parameters ...interface{}) (interface{}, error) {
+	var row *sql.Row
+	if tx == nil {
+		row = l.connect().QueryRow(req, parameters...)
+	} else {
+		row = tx.QueryRow(req, parameters...)
+	}
 	var result interface{}
 	if err := row.Scan(&result); err != nil {
 		return nil, err
