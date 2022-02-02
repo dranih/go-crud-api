@@ -72,29 +72,14 @@ func (rd *ReflectedDatabase) GetTableNames() []string {
 	return keys
 }
 
-/*
-       public function removeTable(string $tableName): bool
-       {
-           if (!isset($this->tableTypes[$tableName])) {
-               return false;
-           }
-           unset($this->tableTypes[$tableName]);
-           return true;
-       }
+func (rd *ReflectedDatabase) RemoveTable(tableName string) bool {
+	if _, exists := rd.tableTypes[tableName]; !exists {
+		return false
+	}
+	delete(rd.tableTypes, tableName)
+	return true
+}
 
-       public function serialize()
-       {
-           return [
-               'tables' => $this->tableTypes,
-           ];
-       }
-
-       public function jsonSerialize()
-       {
-           return $this->serialize();
-       }
-   }
-*/
 func (rd *ReflectedDatabase) Serialize() map[string]interface{} {
 	return map[string]interface{}{
 		"tables": rd.tableTypes,

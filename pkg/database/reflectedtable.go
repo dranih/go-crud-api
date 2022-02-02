@@ -147,17 +147,14 @@ func (rt *ReflectedTable) GetFksTo(tableName string) []*ReflectedColumn {
 	return columns
 }
 
-/*
-
-public function removeColumn(string $columnName): bool
-{
-	if (!isset($this->columns[$columnName])) {
-		return false;
+func (rt *ReflectedTable) RemoveColumn(columnName string) bool {
+	if _, exists := rt.columns[columnName]; !exists {
+		return false
 	}
-	unset($this->columns[$columnName]);
-	return true;
+	delete(rt.columns, columnName)
+	return true
 }
-*/
+
 func (rt *ReflectedTable) Serialize() map[string]interface{} {
 	i, keys := 0, make([]interface{}, len(rt.columns))
 	for key := range rt.columns {

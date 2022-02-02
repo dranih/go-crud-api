@@ -70,3 +70,86 @@ func GetBodyMapData(r *http.Request) (map[string]interface{}, error) {
 		return resMap, nil
 	}
 }
+
+func GetPathSegment(r *http.Request, part int) string {
+	path := r.URL.Path
+	pathSegments := strings.Split(strings.TrimRight(path, "/"), "/")
+	if part < 0 || part >= len(pathSegments) {
+		return ""
+	}
+	return pathSegments[part]
+}
+
+func GetOperation(r *http.Request) string {
+	method := r.Method
+	path := GetPathSegment(r, 1)
+	hasPk := false
+	if GetPathSegment(r, 3) != "" {
+		hasPk = true
+	}
+	switch path {
+	case "openapi":
+		return "document"
+	case "columns":
+		if method == "get" {
+			return "reflect"
+		} else {
+			return "remodel"
+		}
+	case "geojson":
+	case "records":
+		switch method {
+		case "POST":
+			return "create"
+		case "GET":
+			if hasPk {
+				return "read"
+			} else {
+				return "list"
+			}
+		case "PUT":
+			return "update"
+		case "DELETE":
+			return "delete"
+		case "PATCH":
+			return "increment"
+		}
+	}
+	return "unknown"
+}
+
+func GetTableNames(r *http.Request, allTableNames []string) []string {
+	path := GetPathSegment(r, 1)
+	tableName := GetPathSegment(r, 2)
+	switch path {
+	case "openapi":
+		return allTableNames
+	case "columns":
+		if tableName != "" {
+			return []string{tableName}
+		} else {
+			return allTableNames
+		}
+	case "records":
+		return getJoinTables(tableName, GetRequestParams(r))
+	}
+	return allTableNames
+}
+
+func getJoinTables(tableName string, parameters map[string][]string) []string {
+	uniqueTableNames := map[string]bool{}
+	uniqueTableNames[tableName] = true
+	if join, exists := parameters["join"]; exists {
+		for _, parameter := range join {
+			tableNames := strings.Split(strings.TrimSpace(parameter), ",")
+			for _, tableNamef := range tableNames {
+				uniqueTableNames[tableNamef] = true
+			}
+		}
+	}
+	var keys []string
+	for key := range uniqueTableNames {
+		keys = append(keys, key)
+	}
+	return keys
+}

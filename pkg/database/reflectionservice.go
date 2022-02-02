@@ -125,16 +125,7 @@ func (rs *ReflectionService) GetTableNames() []string {
 	return rs.getDatabase().GetTableNames()
 }
 
-/*func (rs *ReflectionService) RemoveTable(tableName string) bool {
+func (rs *ReflectionService) RemoveTable(tableName string) bool {
 	delete(rs.tables, tableName)
 	return rs.getDatabase().RemoveTable(tableName)
-}*/
-
-/*
-       public function removeTable(string $tableName): bool
-       {
-           unset($this->tables[$tableName]);
-           return $this->database()->removeTable($tableName);
-       }
-   }
-*/
+}

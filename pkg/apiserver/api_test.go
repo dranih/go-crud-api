@@ -816,21 +816,21 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"content":"blog started","id":1,"tags":[{"id":1,"name":"funny"},{"id":2,"name":"important"}]}`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs authorization middlware
 		{
 			Name:       "062_read_kunsthandvaerk",
 			Method:     http.MethodGet,
 			Uri:        "/records/kunsthåndværk/e42c77c6-06a4-4502-816c-d112c7142e6d",
 			Body:       ``,
-			Want:       `{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","Umlauts ä_ö_ü-COUNT":1,"user_id":1}`,
+			Want:       `{"Umlauts ä_ö_ü-COUNT":1,"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
+		/* Needs multitenancy middleware
 		{
 			Name:       "063_list_kunsthandvaerk",
 			Method:     http.MethodGet,
 			Uri:        "/records/kunsthåndværk",
 			Body:       ``,
-			Want:       `{"records":[{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","Umlauts ä_ö_ü-COUNT":1,"user_id":1}]}`,
+			Want:       `{"records":[{"Umlauts ä_ö_ü-COUNT":1,"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","user_id":1}]}`,
 			StatusCode: http.StatusOK,
 		},
 		*/
@@ -943,7 +943,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"visitors":0}`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs authorization middleware
 		{
 			Name:       "070_list_invisibles",
 			Method:     http.MethodGet,
@@ -952,7 +951,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"code":1001,"message":"Table 'invisibles' not found"}`,
 			StatusCode: http.StatusNotFound,
 		},
-		*/
 		{
 			Name:   "071_add_comment_with_invisible_record_A",
 			Method: http.MethodPost,
@@ -962,7 +960,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `5`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs authorization middleware
 		{
 			Name:       "071_add_comment_with_invisible_record_B",
 			Method:     http.MethodGet,
@@ -971,7 +968,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"code":1003,"message":"Record '6' not found"}`,
 			StatusCode: http.StatusNotFound,
 		},
-		*/
 		{
 			Name:       "072_list_nopk",
 			Method:     http.MethodGet,
@@ -988,13 +984,13 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `"b55decba-8eb5-436b-af3e-148f7b4eacda"`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs authorization middlware
+		/* Needs multitenancy middlware
 		{
 			Name:       "073_multi_tenancy_kunsthandvaerk_B",
 			Method:     http.MethodGet,
 			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
 			Body:       ``,
-			Want:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"Umlauts ä_ö_ü-COUNT":4,"user_id":1}`,
+			Want:       `{"Umlauts ä_ö_ü-COUNT":4,"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
 		*/
@@ -1006,13 +1002,13 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `1`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs authorization middlware
+		/* Needs multitenancy middlware
 		{
 			Name:       "073_multi_tenancy_kunsthandvaerk_D",
 			Method:     http.MethodGet,
 			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
 			Body:       ``,
-			Want:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"Umlauts ä_ö_ü-COUNT":4,"user_id":1}`,
+			Want:       `{"Umlauts ä_ö_ü-COUNT":4,"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
 		*/

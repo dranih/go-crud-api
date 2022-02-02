@@ -4,7 +4,7 @@ type VariableStore struct {
 	values map[string]interface{}
 }
 
-var VStore = &VariableStore{}
+var VStore = &VariableStore{values: map[string]interface{}{}}
 
 func (vs *VariableStore) Get(key string) interface{} {
 	res, exists := vs.values[key]

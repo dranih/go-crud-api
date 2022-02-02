@@ -13,3 +13,7 @@ api:
       - passwordFile: "../../test/test.pwd"
   - json:
   - cors:
+  - authorization:
+    - columnHandler: "{{ if eq .ColumnName \"invisible\"}} false {{ else }} true {{ end }}"
+    - tableHandler: "{{ if eq .TableName \"invisibles\"}} false {{ else }} true {{ end }}"
+    - recordsHandler: "{{ if eq .TableName \"comments\"}} filter=message,neq,invisible {{ else }}{{ end }}"

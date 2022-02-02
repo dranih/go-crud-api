@@ -51,6 +51,9 @@ func NewApi(config *ApiConfig) *Api {
 		case "basicAuth":
 			bamMiddle := middleware.NewBasicAuth(responder, properties)
 			router.Use(bamMiddle.Process)
+		case "authorization":
+			authMiddle := middleware.NewAuthorizationMiddleware(responder, properties, reflection)
+			router.Use(authMiddle.Process)
 		}
 	}
 
