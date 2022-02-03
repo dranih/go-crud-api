@@ -824,7 +824,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"Umlauts ä_ö_ü-COUNT":1,"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs multitenancy middleware
 		{
 			Name:       "063_list_kunsthandvaerk",
 			Method:     http.MethodGet,
@@ -833,7 +832,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"records":[{"Umlauts ä_ö_ü-COUNT":1,"id":"e42c77c6-06a4-4502-816c-d112c7142e6d","invisible_id":"e42c77c6-06a4-4502-816c-d112c7142e6d","user_id":1}]}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		{
 			Name:   "064_add_kunsthandvaerk",
 			Method: http.MethodPost,
@@ -984,7 +982,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `"b55decba-8eb5-436b-af3e-148f7b4eacda"`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs multitenancy middlware
 		{
 			Name:       "073_multi_tenancy_kunsthandvaerk_B",
 			Method:     http.MethodGet,
@@ -993,7 +990,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"Umlauts ä_ö_ü-COUNT":4,"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		{
 			Name:       "073_multi_tenancy_kunsthandvaerk_C",
 			Method:     http.MethodPut,
@@ -1002,7 +998,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `1`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs multitenancy middlware
 		{
 			Name:       "073_multi_tenancy_kunsthandvaerk_D",
 			Method:     http.MethodGet,
@@ -1011,8 +1006,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"Umlauts ä_ö_ü-COUNT":4,"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
-		/* Needs multitenancy middlware
 		{
 			Name:       "073_multi_tenancy_kunsthandvaerk_E",
 			Method:     http.MethodDelete,
@@ -1021,7 +1014,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `0`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		{
 			Name:       "073_multi_tenancy_kunsthandvaerk_F",
 			Method:     http.MethodDelete,
@@ -1444,16 +1436,14 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `"b55decba-8eb5-436b-af3e-148f7b4eacda"`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs authorization middleware
 		{
 			Name:       "085_update_invisble_column_kunsthandvaerk_B",
 			Method:     http.MethodGet,
 			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
 			Body:       ``,
-			Want:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"Umlauts ä_ö_ü-COUNT":4,"user_id":1}`,
+			Want:       `{"Umlauts ä_ö_ü-COUNT":4,"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		{
 			Name:       "085_update_invisble_column_kunsthandvaerk_C",
 			Method:     http.MethodPut,
@@ -1462,16 +1452,14 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `1`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs authorization middlware
 		{
 			Name:       "085_update_invisble_column_kunsthandvaerk_D",
 			Method:     http.MethodGet,
 			Uri:        "/records/kunsthåndværk/b55decba-8eb5-436b-af3e-148f7b4eacda",
 			Body:       ``,
-			Want:       `{"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"Umlauts ä_ö_ü-COUNT":4,"user_id":1}`,
+			Want:       `{"Umlauts ä_ö_ü-COUNT":3,"id":"b55decba-8eb5-436b-af3e-148f7b4eacda","invisible_id":null,"user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		//Sequence ID not consistent after rollback between drivers
 		{
 			Name:       "Preserve IDs (sqlite)",
