@@ -51,6 +51,9 @@ func NewApi(config *ApiConfig) *Api {
 		case "basicAuth":
 			bamMiddle := middleware.NewBasicAuth(responder, properties)
 			router.Use(bamMiddle.Process)
+		case "sanitation":
+			sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
+			router.Use(sanitationMiddle.Process)
 		case "multiTenancy":
 			multiTenancyMiddle := middleware.NewMultiTenancyMiddleware(responder, properties, reflection)
 			router.Use(multiTenancyMiddle.Process)

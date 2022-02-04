@@ -16,6 +16,9 @@ api:
   - authorization:
     - columnHandler: "{{ if eq .ColumnName \"invisible\"}} false {{ else }} true {{ end }}"
     - tableHandler: "{{ if eq .TableName \"invisibles\"}} false {{ else }} true {{ end }}"
-    - recordsHandler: "{{ if eq .TableName \"comments\"}} filter=message,neq,invisible {{ else }}{{ end }}"
+    - recordHandler: "{{ if eq .TableName \"comments\"}} filter=message,neq,invisible {{ else }}{{ end }}"
   - multiTenancy:
     - handler: "{{ if eq .TableName \"kunsthåndværk\"}}{\"user_id\":1}{{ else }}{}{{ end }}"
+  - sanitation:
+    - handler: "{{ if kindIs \"string\" .Value }}{{regexReplaceAllLiteral \"<(.|\\n)*?>\" .Value \"\"}}{{ else }}{{ .Value| print }}{{ end }}"
+    - table: "forgiving"

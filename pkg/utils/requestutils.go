@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -52,6 +53,8 @@ func GetBodyData(r *http.Request) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		r.Body.Close() //  must close
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 		var jsonMap interface{}
 		err = json.Unmarshal(b, &jsonMap)
 		if err != nil {

@@ -867,7 +867,6 @@ func TestRecordsApi(t *testing.T) {
 			StatusCode: http.StatusUnprocessableEntity,
 		},
 		*/
-		/* Needs sanitation middleware
 		{
 			Name:       "068_add_comment_with_sanitation_A",
 			Method:     http.MethodPost,
@@ -881,10 +880,9 @@ func TestRecordsApi(t *testing.T) {
 			Method:     http.MethodGet,
 			Uri:        "/records/comments/5",
 			Body:       ``,
-			Want:       `{"category_id":3,"id":5,"post_id":2,"message":"Title Body"}`,
+			Want:       `{"category_id":3,"id":5,"message":"Title Body","post_id":2}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		{
 			Name:       "069_increment_event_visitors_A",
 			Method:     http.MethodGet,
@@ -950,12 +948,11 @@ func TestRecordsApi(t *testing.T) {
 			StatusCode: http.StatusNotFound,
 		},
 		{
-			Name:   "071_add_comment_with_invisible_record_A",
-			Method: http.MethodPost,
-			Uri:    "/records/comments",
-			Body:   `{"user_id":1,"post_id":2,"message":"invisible","category_id":3}`,
-			//6 when activate test for sanitation middleware
-			Want:       `5`,
+			Name:       "071_add_comment_with_invisible_record_A",
+			Method:     http.MethodPost,
+			Uri:        "/records/comments",
+			Body:       `{"user_id":1,"post_id":2,"message":"invisible","category_id":3}`,
+			Want:       `6`,
 			StatusCode: http.StatusOK,
 		},
 		{
@@ -1659,15 +1656,6 @@ func TestRecordsApi(t *testing.T) {
 			StatusCode: http.StatusMovedPermanently,
 		},
 		*/
-		//Temp hack while some tests are skipped to keep id
-		{
-			Name:       "to_be_removed",
-			Method:     http.MethodPost,
-			Uri:        "/records/comments",
-			Body:       `{"user_id":1,"post_id":5,"message":"multi 1","category_id":3}`,
-			Want:       `6`,
-			StatusCode: http.StatusOK,
-		},
 		{
 			Name:       "090_add_multiple_comments_A",
 			Method:     http.MethodPost,

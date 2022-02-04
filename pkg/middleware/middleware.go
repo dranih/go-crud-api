@@ -9,7 +9,7 @@ import (
 )
 
 type Middleware interface {
-	getArrayProperty(key, defaut string) []string
+	getArrayProperty(key, defaut string) map[string]bool
 	getProperty(key, defaut string) string
 	getMapProperty(key, defaut string) map[string]string
 	Process(next http.Handler) http.Handler
@@ -20,8 +20,12 @@ type GenericMiddleware struct {
 	Properties map[string]interface{}
 }
 
-func (gm *GenericMiddleware) getArrayProperty(key, defaut string) []string {
-	return strings.Split(fmt.Sprint(gm.getProperty(key, defaut)), ",")
+func (gm *GenericMiddleware) getArrayProperty(key, defaut string) map[string]bool {
+	propMap := map[string]bool{}
+	for _, prop := range strings.Split(fmt.Sprint(gm.getProperty(key, defaut)), ",") {
+		propMap[prop] = true
+	}
+	return propMap
 }
 
 func (gm *GenericMiddleware) getProperty(key, defaut string) interface{} {
@@ -34,7 +38,7 @@ func (gm *GenericMiddleware) getProperty(key, defaut string) interface{} {
 func (gm *GenericMiddleware) getMapProperty(key, defaut string) map[string]string {
 	pairs := gm.getArrayProperty(key, defaut)
 	result := map[string]string{}
-	for _, pair := range pairs {
+	for pair := range pairs {
 		if strings.Contains(pair, ":") {
 			val := strings.SplitN(pair, ":", 2)
 			result[val[1]] = val[2]
