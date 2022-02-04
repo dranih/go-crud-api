@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Masterminds/sprig"
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/utils"
@@ -29,7 +30,7 @@ func (am *AuthorizationMiddleware) handleColumns(operation, tableName string) {
 	columnHandler := fmt.Sprint(am.getProperty("columnHandler", ""))
 	if columnHandler != "" {
 		table := am.reflection.GetTable(tableName)
-		if t, err := template.New("columnHandler").Parse(columnHandler); err == nil {
+		if t, err := template.New("columnHandler").Funcs(sprig.TxtFuncMap()).Parse(columnHandler); err == nil {
 			for _, columnName := range table.GetColumnNames() {
 				var res bytes.Buffer
 				data := struct {
@@ -57,7 +58,7 @@ func (am *AuthorizationMiddleware) handleTable(operation, tableName string) {
 	allowed := true
 	tableHandler := fmt.Sprint(am.getProperty("tableHandler", ""))
 	if tableHandler != "" {
-		if t, err := template.New("tableHandler").Parse(tableHandler); err == nil {
+		if t, err := template.New("tableHandler").Funcs(sprig.TxtFuncMap()).Parse(tableHandler); err == nil {
 			var res bytes.Buffer
 			data := struct {
 				Operation string
@@ -85,14 +86,14 @@ func (am *AuthorizationMiddleware) handleRecords(operation, tableName string) {
 	}
 	recordHandler := fmt.Sprint(am.getProperty("recordHandler", ""))
 	if recordHandler != "" {
-		if t, err := template.New("recordHandler").Parse(recordHandler); err == nil {
+		if t, err := template.New("recordHandler").Funcs(sprig.TxtFuncMap()).Parse(recordHandler); err == nil {
 			var res bytes.Buffer
 			data := struct {
 				Operation string
 				TableName string
 			}{Operation: operation, TableName: tableName}
 			if err := t.Execute(&res, data); err == nil {
-				query := res.String()
+				query := strings.TrimSpace(res.String())
 				filters := &database.FilterInfo{}
 				table := am.reflection.GetTable(tableName)
 				query = strings.Replace(strings.Replace(query, "=", "[]=", -1), "][]=", "]=", -1)

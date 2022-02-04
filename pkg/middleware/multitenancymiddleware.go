@@ -12,6 +12,8 @@ import (
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/utils"
 
+	"github.com/Masterminds/sprig"
+
 	"text/template"
 )
 
@@ -36,7 +38,7 @@ func (mt *MultiTenancy) getCondition(tableName string, pairs map[string]string) 
 
 func (mt *MultiTenancy) getPairs(handler, operation, tableName string) map[string]string {
 	result := map[string]string{}
-	if t, err := template.New("handler").Parse(handler); err == nil {
+	if t, err := template.New("handler").Funcs(sprig.TxtFuncMap()).Parse(handler); err == nil {
 		var res bytes.Buffer
 		data := struct {
 			Operation string
