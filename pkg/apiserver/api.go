@@ -54,6 +54,9 @@ func NewApi(config *ApiConfig) *Api {
 		case "validation":
 			validationMiddle := middleware.NewValidationMiddleware(responder, properties, reflection)
 			router.Use(validationMiddle.Process)
+		case "ipAddress":
+			ipAddressMiddle := middleware.NewIpAddressMiddleware(responder, properties, reflection)
+			router.Use(ipAddressMiddle.Process)
 		case "sanitation":
 			sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
 			router.Use(sanitationMiddle.Process)

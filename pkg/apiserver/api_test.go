@@ -1186,13 +1186,12 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `2`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs ipAddress middlware
 		{
 			Name:       "080_add_barcode_with_ip_address_B",
 			Method:     http.MethodGet,
 			Uri:        "/records/barcodes/2",
-			Body:       `{"bin":"","hex":"","id":2,"ip_address":"127.0.0.1","product_id":1}`,
-			Want:       `2`,
+			Body:       ``,
+			WantRegex:  `{"bin":"","hex":"","id":2,"ip_address":"127.0.0.1:\d+","product_id":1}`,
 			StatusCode: http.StatusOK,
 		},
 		{
@@ -1207,11 +1206,10 @@ func TestRecordsApi(t *testing.T) {
 			Name:       "080_add_barcode_with_ip_address_D",
 			Method:     http.MethodGet,
 			Uri:        "/records/barcodes/2",
-			Body:       `{"bin":"","hex":"","id":2,"ip_address":"127.0.0.1","product_id":1}`,
-			Want:       `2`,
+			Body:       ``,
+			WantRegex:  `{"bin":"","hex":"","id":2,"ip_address":"127.0.0.1:\d+","product_id":1}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		{
 			Name:       "080_add_barcode_with_ip_address_E",
 			Method:     http.MethodDelete,

@@ -31,4 +31,7 @@ api:
     - depth: 2
     - tables: 4
     - records: 10
-  
+  - ipAddress:
+    - tables: "barcodes"
+    - columns: "ip_address"
+    
