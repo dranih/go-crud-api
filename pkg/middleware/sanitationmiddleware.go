@@ -118,17 +118,17 @@ func (sm *SanitationMiddleware) sanitizeType(table *database.ReflectedTable, col
 				newValue = v
 			}
 		case "date":
-			if v, err := strtotime.Parse("next Friday 3pm", time.Now().Unix()); err != nil {
+			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
 				t := time.Unix(v, 0)
 				newValue = fmt.Sprintf("%d-%02d-%02d", t.Year(), int(t.Month()), t.Day())
 			}
 		case "time":
-			if v, err := strtotime.Parse("next Friday 3pm", time.Now().Unix()); err != nil {
+			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
 				t := time.Unix(v, 0)
 				newValue = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), int(t.Minute()), t.Second())
 			}
 		case "timestamp":
-			if v, err := strtotime.Parse("next Friday 3pm", time.Now().Unix()); err != nil {
+			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
 				t := time.Unix(v, 0)
 				newValue = fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), int(t.Month()), t.Day(), t.Hour(), int(t.Minute()), t.Second())
 			}

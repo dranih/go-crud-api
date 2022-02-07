@@ -16,7 +16,7 @@ func NewJsonResponder(debug bool) *JsonResponder {
 	return &JsonResponder{debug, &ResponseFactory{}}
 }
 
-func (jr *JsonResponder) Error(errorCode int, argument string, w http.ResponseWriter, details string) http.ResponseWriter {
+func (jr *JsonResponder) Error(errorCode int, argument string, w http.ResponseWriter, details interface{}) http.ResponseWriter {
 	document := record.NewErrorDocument(record.NewErrorCode(errorCode), argument, details)
 	return jr.rf.FromObject(document.GetStatus(), document, w)
 }

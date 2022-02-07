@@ -22,3 +22,5 @@ api:
   - sanitation:
     - handler: "{{ if kindIs \"string\" .Value }}{{regexReplaceAllLiteral \"<(.|\\n)*?>\" .Value \"\"}}{{ else }}{{ .Value| print }}{{ end }}"
     - table: "forgiving"
+  - validation:
+    - handler: "{{ if and (eq .Column.GetName \"post_id\") (and (not (kindIs \"float64\" .Value)) (not (kindIs \"int\" .Value))) }}must be numeric{{ else }}true{{ end }}"

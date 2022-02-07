@@ -13,10 +13,10 @@ import (
 type ErrorDocument struct {
 	errorCode *ErrorCode
 	argument  string
-	details   string
+	details   interface{}
 }
 
-func NewErrorDocument(errorCode *ErrorCode, argument, details string) *ErrorDocument {
+func NewErrorDocument(errorCode *ErrorCode, argument string, details interface{}) *ErrorDocument {
 	return &ErrorDocument{errorCode, argument, details}
 }
 

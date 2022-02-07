@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type DataConverter struct {
@@ -47,6 +48,18 @@ func (dc *DataConverter) convertRecordValue(conversion string, value interface{}
 		case float32, float64:
 			return v
 		}
+	case "date":
+		if t, ok := value.(time.Time); ok {
+			return fmt.Sprintf("%d-%02d-%02d", t.Year(), int(t.Month()), t.Day())
+		}
+	case "time":
+		if t, ok := value.(time.Time); ok {
+			return fmt.Sprintf("%02d:%02d:%02d", t.Hour(), int(t.Minute()), t.Second())
+		}
+	case "timestamp":
+		if t, ok := value.(time.Time); ok {
+			return fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), int(t.Month()), t.Day(), t.Hour(), int(t.Minute()), t.Second())
+		}
 	}
 	return value
 }
@@ -64,6 +77,8 @@ func (dc *DataConverter) getRecordValueConversion(column *ReflectedColumn) strin
 		if dc.driver == "sqlite" {
 			return "decimal|" + fmt.Sprint(column.GetScale())
 		}
+	case "date", "time", "timestamp":
+		return column.GetType()
 	}
 	return "none"
 }
