@@ -26,18 +26,8 @@ func (pm *PageLimitsMiddleware) Process(next http.Handler) http.Handler {
 		operation := utils.GetOperation(r)
 		if operation == "list" {
 			params := utils.GetRequestParams(r)
-			maxPageInt := 100
-			maxPage := pm.getProperty("pages", maxPageInt)
-			switch v := maxPage.(type) {
-			case string:
-				if a, err := strconv.Atoi(v); err != nil {
-					maxPageInt = a
-				}
-			case int:
-				maxPageInt = v
-			}
-
-			if v, ok := params["page"]; ok && len(v) > 0 && maxPageInt > 0 {
+			maxPage := pm.getIntProperty("pages", 100)
+			if v, ok := params["page"]; ok && len(v) > 0 && maxPage > 0 {
 				var page int
 				var err error
 				if strings.Index(v[0], ",") == -1 {
@@ -45,27 +35,17 @@ func (pm *PageLimitsMiddleware) Process(next http.Handler) http.Handler {
 				} else {
 					page, err = strconv.Atoi(strings.SplitN(v[0], ",", 2)[0])
 				}
-				if err == nil && page > maxPageInt {
+				if err == nil && page > maxPage {
 					pm.Responder.Error(record.PAGINATION_FORBIDDEN, "", w, nil)
 					return
 				}
 			}
 
-			maxSizeInt := 1000
-			maxSize := pm.getProperty("records", maxSizeInt)
-			switch v := maxSize.(type) {
-			case string:
-				if a, err := strconv.Atoi(v); err != nil {
-					maxSizeInt = a
-				}
-			case int:
-				maxSizeInt = v
-			}
-
-			if v, ok := params["size"]; (!ok || len(v) == 0) && maxSizeInt > 0 {
-				params.Set("size", fmt.Sprint(maxSizeInt))
-			} else if s, err := strconv.Atoi(params["size"][0]); err != nil || maxSizeInt < s {
-				params.Set("size", fmt.Sprint(maxSizeInt))
+			maxSize := pm.getIntProperty("records", 1000)
+			if v, ok := params["size"]; (!ok || len(v) == 0) && maxSize > 0 {
+				params.Set("size", fmt.Sprint(maxSize))
+			} else if s, err := strconv.Atoi(params["size"][0]); err != nil || maxSize < s {
+				params.Set("size", fmt.Sprint(maxSize))
 			}
 			r.URL.RawQuery = params.Encode()
 		}

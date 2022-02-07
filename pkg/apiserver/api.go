@@ -66,6 +66,9 @@ func NewApi(config *ApiConfig) *Api {
 		case "pageLimits":
 			pageLimitsMiddle := middleware.NewPageLimitsMiddleware(responder, properties, reflection)
 			router.Use(pageLimitsMiddle.Process)
+		case "joinLimits":
+			joinLimitsMiddle := middleware.NewJoinLimitsMiddleware(responder, properties, reflection)
+			router.Use(joinLimitsMiddle.Process)
 		}
 	}
 

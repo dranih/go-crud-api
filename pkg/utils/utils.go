@@ -33,3 +33,10 @@ func GzUncompress(input string) (string, error) {
 	}
 	return string(output), nil
 }
+
+func MinInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}

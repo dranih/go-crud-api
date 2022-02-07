@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/dranih/go-crud-api/pkg/controller"
@@ -31,6 +32,20 @@ func (gm *GenericMiddleware) getArrayProperty(key, defaut string) map[string]boo
 func (gm *GenericMiddleware) getProperty(key string, defaut interface{}) interface{} {
 	if val, exists := gm.Properties[key]; exists {
 		return val
+	}
+	return defaut
+}
+
+func (gm *GenericMiddleware) getIntProperty(key string, defaut int) int {
+	if val, exists := gm.Properties[key]; exists {
+		switch v := val.(type) {
+		case string:
+			if a, err := strconv.Atoi(v); err != nil {
+				return a
+			}
+		case int:
+			return v
+		}
 	}
 	return defaut
 }
