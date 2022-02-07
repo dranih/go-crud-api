@@ -25,3 +25,6 @@ api:
     - table: "forgiving"
   - validation:
     - handler: "{{ if and (eq .Column.GetName \"post_id\") (and (not (kindIs \"float64\" .Value)) (not (kindIs \"int\" .Value))) }}must be numeric{{ else }}true{{ end }}"
+  - pageLimits:
+    - pages: 5
+    - records: 10

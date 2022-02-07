@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gorilla/sessions"
@@ -13,11 +14,7 @@ import (
 
 var store = sessions.NewCookieStore([]byte("4d70ad3e4165e3a1dc158fdc0fc07dc9ae8c8c4ecbd7f8619debebcba5a3710d"))
 
-func GetRequestParams(request *http.Request) map[string][]string {
-	//params := map[string]string{}
-	/*query := request.URL.RawQuery
-	query = strings.Replace(strings.Replace(query, `=`, `%5B%5D=`, -1), `%5D%5B%5D=`, `%5D=`, -1)
-	params, _ := url.ParseQuery(query)*/
+func GetRequestParams(request *http.Request) url.Values {
 	return request.URL.Query()
 }
 

@@ -1082,7 +1082,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"records":[{"category_id":1,"content":"blog started","id":1,"user_id":1},{"category_id":2,"content":"🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте","id":2,"user_id":1},{"category_id":1,"content":"#1","id":5,"user_id":1},{"category_id":1,"content":"#2","id":6,"user_id":1},{"category_id":1,"content":"#3","id":7,"user_id":1},{"category_id":1,"content":"#4","id":8,"user_id":1},{"category_id":1,"content":"#5","id":9,"user_id":1},{"category_id":1,"content":"#6","id":10,"user_id":1},{"category_id":1,"content":"#7","id":11,"user_id":1},{"category_id":1,"content":"#8","id":12,"user_id":1}]}`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs pageLimits middleware
 		{
 			Name:       "077_list_posts_with_page_limits_B",
 			Method:     http.MethodGet,
@@ -1091,7 +1090,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"records":[{"category_id":1,"content":"blog started","id":1,"user_id":1},{"category_id":2,"content":"🦀€ Grüßgott, Вiтаю, dobrý deň, hyvää päivää, გამარჯობა, Γεια σας, góðan dag, здравствуйте","id":2,"user_id":1},{"category_id":1,"content":"#1","id":5,"user_id":1},{"category_id":1,"content":"#2","id":6,"user_id":1},{"category_id":1,"content":"#3","id":7,"user_id":1},{"category_id":1,"content":"#4","id":8,"user_id":1},{"category_id":1,"content":"#5","id":9,"user_id":1},{"category_id":1,"content":"#6","id":10,"user_id":1},{"category_id":1,"content":"#7","id":11,"user_id":1},{"category_id":1,"content":"#8","id":12,"user_id":1}]}`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 		{
 			Name:       "077_list_posts_with_page_limits_C",
 			Method:     http.MethodGet,
@@ -1100,16 +1098,14 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"records":[{"category_id":1,"content":"#3","id":7,"user_id":1}],"results":12}`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs pageLimits middleware
 		{
 			Name:       "077_list_posts_with_page_limits_D",
 			Method:     http.MethodGet,
 			Uri:        "/records/posts?page=6,1",
 			Body:       ``,
 			Want:       `{"code":1019,"message":"Pagination forbidden"}`,
-			StatusCode: http.StatusOK,
+			StatusCode: http.StatusForbidden,
 		},
-		*/
 		{
 			Name:       "078_edit_event_with_nullable_bigint_A",
 			Method:     http.MethodGet,

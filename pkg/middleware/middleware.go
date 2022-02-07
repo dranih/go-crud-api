@@ -28,9 +28,9 @@ func (gm *GenericMiddleware) getArrayProperty(key, defaut string) map[string]boo
 	return propMap
 }
 
-func (gm *GenericMiddleware) getProperty(key, defaut string) interface{} {
+func (gm *GenericMiddleware) getProperty(key string, defaut interface{}) interface{} {
 	if val, exists := gm.Properties[key]; exists {
-		return fmt.Sprint(val)
+		return val
 	}
 	return defaut
 }

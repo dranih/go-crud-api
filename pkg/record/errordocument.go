@@ -33,7 +33,7 @@ func (ed *ErrorDocument) GetMessage() string {
 }
 
 func (ed *ErrorDocument) Serialize() map[string]interface{} {
-	if ed.details == "" {
+	if ed.details == nil || ed.details == "" {
 		return map[string]interface{}{"code": ed.GetCode(),
 			"message": ed.GetMessage(),
 		}

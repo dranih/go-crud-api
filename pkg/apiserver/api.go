@@ -63,6 +63,9 @@ func NewApi(config *ApiConfig) *Api {
 		case "authorization":
 			authMiddle := middleware.NewAuthorizationMiddleware(responder, properties, reflection)
 			router.Use(authMiddle.Process)
+		case "pageLimits":
+			pageLimitsMiddle := middleware.NewPageLimitsMiddleware(responder, properties, reflection)
+			router.Use(pageLimitsMiddle.Process)
 		}
 	}
 
