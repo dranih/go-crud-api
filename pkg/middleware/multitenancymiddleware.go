@@ -12,7 +12,7 @@ import (
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/utils"
 
-	"github.com/Masterminds/sprig"
+	sprig "github.com/Masterminds/sprig/v3"
 
 	"text/template"
 )

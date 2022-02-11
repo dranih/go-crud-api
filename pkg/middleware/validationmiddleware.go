@@ -13,7 +13,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Masterminds/sprig"
+	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/record"
@@ -82,7 +82,7 @@ func (vm *ValidationMiddleware) callHandler(r *http.Request, w http.ResponseWrit
 		log.Printf("Error : could not parse template sanitation handler : %s", err.Error())
 	}
 	if len(details) > 0 {
-		vm.Responder.Error(record.INPUT_VALIDATION_FAILED, tableName, w, details)
+		vm.Responder.Error(record.INPUT_VALIDATION_FAILED, tableName, w, r, details)
 		return false
 	}
 	return true

@@ -12,7 +12,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/Masterminds/sprig"
+	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/utils"
