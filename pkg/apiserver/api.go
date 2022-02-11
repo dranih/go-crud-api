@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net"
@@ -72,6 +73,10 @@ func NewApi(config *ApiConfig) *Api {
 		case "joinLimits":
 			joinLimitsMiddle := middleware.NewJoinLimitsMiddleware(responder, properties, reflection)
 			router.Use(joinLimitsMiddle.Process)
+		case "customization":
+			gob.Register(map[string]interface{}{})
+			customizationMiddle := middleware.NewCustomizationMiddleware(responder, properties, reflection)
+			router.Use(customizationMiddle.Process)
 		}
 	}
 
@@ -98,7 +103,7 @@ func NewApi(config *ApiConfig) *Api {
 	}
 
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		responder.Error(record.ROUTE_NOT_FOUND, r.RequestURI, w, "")
+		responder.Error(record.ROUTE_NOT_FOUND, r.RequestURI, w, r, "")
 	}).Methods("OPTIONS", "GET", "PUT", "POST", "DELETE", "PATCH")
 
 	return &Api{router, config.Debug}

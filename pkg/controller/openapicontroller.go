@@ -19,5 +19,5 @@ func NewOpenApiController(router *mux.Router, responder Responder, service *open
 }
 
 func (oac *OpenApiController) openapi(w http.ResponseWriter, r *http.Request) {
-	oac.responder.Success(oac.openapiService.Get(r), w)
+	oac.responder.Success(oac.openapiService.Get(r), w, r)
 }

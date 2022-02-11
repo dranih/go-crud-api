@@ -35,4 +35,9 @@ api:
   - ipAddress:
     - tables: "barcodes"
     - columns: "ip_address"
+  - customization:
+    - beforeHandler: "{{ $_ := set .Environment \"start\" 0.003 }}"
+    - afterHandler: "{{ if and (eq .TableName \"kunsthåndværk\") (eq .Operation \"increment\") }}
+                      {{ $_ := set .Headers \"X-Time-Taken\" (subf 0.006 (get .Environment \"start\"))}}
+                    {{ end }}"
      

@@ -36,7 +36,7 @@ func (pm *PageLimitsMiddleware) Process(next http.Handler) http.Handler {
 					page, err = strconv.Atoi(strings.SplitN(v[0], ",", 2)[0])
 				}
 				if err == nil && page > maxPage {
-					pm.Responder.Error(record.PAGINATION_FORBIDDEN, "", w, nil)
+					pm.Responder.Error(record.PAGINATION_FORBIDDEN, "", w, r, nil)
 					return
 				}
 			}

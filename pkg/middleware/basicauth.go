@@ -108,11 +108,11 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 			passwordFile := fmt.Sprint(bam.getProperty("passwordFile", ".htpasswd"))
 			validUser := bam.getValidUsername(username, password, passwordFile)
 			if validUser == "" {
-				bam.Responder.Error(record.AUTHENTICATION_FAILED, username, w, "")
+				bam.Responder.Error(record.AUTHENTICATION_FAILED, username, w, r, "")
 			} else {
 				session.Values["username"] = validUser
 				if err := session.Save(r, w); err != nil {
-					bam.Responder.Error(record.INTERNAL_SERVER_ERROR, err.Error(), w, "")
+					bam.Responder.Error(record.INTERNAL_SERVER_ERROR, err.Error(), w, r, "")
 				} else {
 					next.ServeHTTP(w, r)
 				}
@@ -122,7 +122,7 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 				if authenticationMode := bam.getProperty("mode", "required"); authenticationMode == "required" {
 					realm := fmt.Sprint(bam.getProperty("realm", "Username and password required"))
 					w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-					bam.Responder.Error(record.AUTHENTICATION_REQUIRED, "", w, realm)
+					bam.Responder.Error(record.AUTHENTICATION_REQUIRED, "", w, r, realm)
 				} else {
 					next.ServeHTTP(w, r)
 				}
