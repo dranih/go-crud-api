@@ -82,7 +82,7 @@ func (vm *ValidationMiddleware) callHandler(r *http.Request, w http.ResponseWrit
 		log.Printf("Error : could not parse template sanitation handler : %s", err.Error())
 	}
 	if len(details) > 0 {
-		vm.Responder.Error(record.INPUT_VALIDATION_FAILED, tableName, w, r, details)
+		vm.Responder.Error(record.INPUT_VALIDATION_FAILED, tableName, w, details)
 		return false
 	}
 	return true

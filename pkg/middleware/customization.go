@@ -51,14 +51,85 @@ func (cm *CustomizationMiddleware) Process(next http.Handler) http.Handler {
 			}
 		}
 
-		//Passing the after handler to the response factory
-		afterHandler := fmt.Sprint(cm.getProperty("afterHandler", ""))
-		if afterHandler != "" {
-			if err := cm.Responder.SetAfterHandler(afterHandler); err != nil {
-				log.Printf("Error : could not parse template beforeHandler : %s", err.Error())
+		var templateHeader, templateBody *template.Template
+		afterHandlerHeader := fmt.Sprint(cm.getProperty("afterHandlerHeader", ""))
+		if afterHandlerHeader != "" {
+			if afterHandlerHeader != "" {
+				if t, err := template.New("afterHandlerHeader").Funcs(sprig.TxtFuncMap()).Parse(afterHandlerHeader); err == nil {
+					templateHeader = t
+				} else {
+					log.Printf("Error : could not parse template afterHandlerHeader : %s", err.Error())
+				}
 			}
+		}
+		afterHandlerBody := fmt.Sprint(cm.getProperty("afterHandlerBody", ""))
+		if afterHandlerBody != "" {
+			if afterHandlerBody != "" {
+				if t, err := template.New("afterHandlerBody").Funcs(sprig.TxtFuncMap()).Parse(afterHandlerBody); err == nil {
+					templateBody = t
+				} else {
+					log.Printf("Error : could not parse template afterHandlerBody : %s", err.Error())
+				}
+			}
+		}
+		if templateHeader != nil || templateBody != nil {
+			w = NewCustomResponseWriter(w, operation, tableName, env, templateHeader, templateBody)
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+type customResponseWriter struct {
+	http.ResponseWriter
+	operation      string
+	tableName      string
+	environment    map[string]interface{}
+	templateHeader *template.Template
+	templateBody   *template.Template
+}
+
+func NewCustomResponseWriter(w http.ResponseWriter, operation, tableName string, environment map[string]interface{}, templateHeader *template.Template, templateBody *template.Template) *customResponseWriter {
+	return &customResponseWriter{w, operation, tableName, environment, templateHeader, templateBody}
+}
+
+func (crw *customResponseWriter) Write(b []byte) (int, error) {
+	if crw.templateBody != nil {
+		data := struct {
+			Operation   string
+			TableName   string
+			Content     []byte
+			Environment map[string]interface{}
+		}{Operation: crw.operation, TableName: crw.tableName, Content: b, Environment: crw.environment}
+		var res bytes.Buffer
+		if err := crw.templateHeader.Execute(&res, data); err != nil {
+			log.Printf("Error : could not execute template afterHandlerBody : %s", err.Error())
+		}
+	}
+	return crw.ResponseWriter.Write(b)
+}
+
+func (crw *customResponseWriter) WriteHeader(statusCode int) {
+	if crw.templateHeader != nil {
+		headers := map[string]interface{}{}
+		for key := range crw.Header() {
+			headers[key] = crw.Header().Get(key)
+			crw.Header().Del("key")
+		}
+		data := struct {
+			Operation   string
+			TableName   string
+			Headers     map[string]interface{}
+			Environment map[string]interface{}
+		}{Operation: crw.operation, TableName: crw.tableName, Headers: headers, Environment: crw.environment}
+		var res bytes.Buffer
+		if err := crw.templateHeader.Execute(&res, data); err != nil {
+			log.Printf("Error : could not execute template afterHandlerHeader : %s", err.Error())
+		} else {
+			for key, val := range headers {
+				crw.Header().Set(key, fmt.Sprint(val))
+			}
+		}
+	}
+	crw.ResponseWriter.WriteHeader(statusCode)
 }

@@ -3,9 +3,7 @@ package controller
 import (
 	"log"
 	"net/http"
-	"text/template"
 
-	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/dranih/go-crud-api/pkg/record"
 )
 
@@ -18,26 +16,26 @@ func NewJsonResponder(debug bool) *JsonResponder {
 	return &JsonResponder{debug, &ResponseFactory{}}
 }
 
-func (jr *JsonResponder) Error(errorCode int, argument string, w http.ResponseWriter, r *http.Request, details interface{}) http.ResponseWriter {
+func (jr *JsonResponder) Error(errorCode int, argument string, w http.ResponseWriter, details interface{}) http.ResponseWriter {
 	document := record.NewErrorDocument(record.NewErrorCode(errorCode), argument, details)
-	return jr.rf.FromObject(document.GetStatus(), document, w, r)
+	return jr.rf.FromObject(document.GetStatus(), document, w)
 }
 
-func (jr *JsonResponder) Success(result interface{}, w http.ResponseWriter, r *http.Request) http.ResponseWriter {
-	return jr.rf.FromObject(record.OK, result, w, r)
+func (jr *JsonResponder) Success(result interface{}, w http.ResponseWriter) http.ResponseWriter {
+	return jr.rf.FromObject(record.OK, result, w)
 }
 
-func (jr *JsonResponder) Exception(err error, w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+func (jr *JsonResponder) Exception(err error, w http.ResponseWriter) http.ResponseWriter {
 	document := record.NewErrorDocumentFromError(err, jr.debug)
 	if jr.debug {
 		addExceptionHeaders(w, err)
 		log.Printf("Error : %s", err.Error())
 	}
-	response := jr.rf.FromObject(document.GetStatus(), document, w, r)
+	response := jr.rf.FromObject(document.GetStatus(), document, w)
 	return response
 }
 
-func (jr *JsonResponder) Multi(results *[]interface{}, errs []error, w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+func (jr *JsonResponder) Multi(results *[]interface{}, errs []error, w http.ResponseWriter) http.ResponseWriter {
 	success := true
 	documents := []interface{}{}
 	errors := []record.ErrorDocument{}
@@ -56,24 +54,9 @@ func (jr *JsonResponder) Multi(results *[]interface{}, errs []error, w http.Resp
 	}
 	var response http.ResponseWriter
 	if !success {
-		response = jr.rf.FromObject(record.FAILED_DEPENDENCY, errors, w, r)
+		response = jr.rf.FromObject(record.FAILED_DEPENDENCY, errors, w)
 	} else {
-		response = jr.rf.FromObject(record.OK, documents, w, r)
+		response = jr.rf.FromObject(record.OK, documents, w)
 	}
 	return response
-}
-
-func (jr *JsonResponder) SetAfterHandler(handler string) error {
-	if jr.rf.afterHandler == nil {
-		if handler != "" {
-			if t, err := template.New("handler").Funcs(sprig.TxtFuncMap()).Parse(handler); err == nil {
-				jr.rf.afterHandler = t
-				return nil
-			} else {
-				log.Printf("Error : could not parse template beforeHandler : %s", err.Error())
-				return err
-			}
-		}
-	}
-	return nil
 }

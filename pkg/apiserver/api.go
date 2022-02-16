@@ -115,7 +115,7 @@ func NewApi(config *ApiConfig) *Api {
 	}
 
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		responder.Error(record.ROUTE_NOT_FOUND, r.RequestURI, w, r, "")
+		responder.Error(record.ROUTE_NOT_FOUND, r.RequestURI, w, "")
 	}).Methods("OPTIONS", "GET", "PUT", "POST", "DELETE", "PATCH")
 
 	return &Api{router, config.Debug}

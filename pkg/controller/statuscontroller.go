@@ -22,5 +22,5 @@ func NewStatusController(router *mux.Router, responder Responder, cache cache.Ca
 
 func (sc *StatusController) ping(w http.ResponseWriter, r *http.Request) {
 	result := map[string]int{"db": sc.db.Ping(), "cache": sc.cache.Ping()}
-	sc.responder.Success(result, w, r)
+	sc.responder.Success(result, w)
 }

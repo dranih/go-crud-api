@@ -38,7 +38,7 @@ func (cm *CorsMiddleware) Process(next http.Handler) http.Handler {
 		allowedOrigins := fmt.Sprint(cm.getProperty("allowedOrigins", `*`))
 		// if origin header and not allowed => Forbidden
 		if origin != "" && !cm.isOriginAllowed(origin, allowedOrigins) {
-			cm.Responder.Error(record.ORIGIN_FORBIDDEN, origin, w, r, "")
+			cm.Responder.Error(record.ORIGIN_FORBIDDEN, origin, w, "")
 			return
 		} else if strings.ToUpper(method) == "OPTIONS" {
 			allowHeaders := fmt.Sprint(cm.getProperty("allowHeaders", "Content-Type, X-XSRF-TOKEN, X-Authorization"))

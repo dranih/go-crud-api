@@ -20,5 +20,5 @@ func NewCacheController(router *mux.Router, responder Responder, cache cache.Cac
 
 func (cc *CacheController) clear(w http.ResponseWriter, r *http.Request) {
 	result := cc.cache.Clear()
-	cc.responder.Success(result, w, r)
+	cc.responder.Success(result, w)
 }

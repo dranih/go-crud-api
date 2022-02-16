@@ -35,100 +35,100 @@ func (cc *ColumnController) getDatabase(w http.ResponseWriter, r *http.Request) 
 		tables = append(tables, cc.reflection.GetTable(table))
 	}
 	database := map[string][]*database.ReflectedTable{"tables": tables}
-	cc.responder.Success(database, w, r)
+	cc.responder.Success(database, w)
 }
 
 func (cc *ColumnController) getTable(w http.ResponseWriter, r *http.Request) {
 	tableName := mux.Vars(r)["table"]
 	if !cc.reflection.HasTable(tableName) {
-		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, r, "")
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
 	table := cc.reflection.GetTable(tableName)
-	cc.responder.Success(table, w, r)
+	cc.responder.Success(table, w)
 }
 
 func (cc *ColumnController) getColumn(w http.ResponseWriter, r *http.Request) {
 	tableName := mux.Vars(r)["table"]
 	columnName := mux.Vars(r)["column"]
 	if !cc.reflection.HasTable(tableName) {
-		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, r, "")
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
 	table := cc.reflection.GetTable(tableName)
 	if !table.HasColumn(columnName) {
-		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, r, "")
+		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, "")
 		return
 	}
 	column := table.GetColumn(columnName)
-	cc.responder.Success(column, w, r)
+	cc.responder.Success(column, w)
 }
 
 func (cc *ColumnController) updateTable(w http.ResponseWriter, r *http.Request) {
 	tableName := mux.Vars(r)["table"]
 	if !cc.reflection.HasTable(tableName) {
-		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, r, "")
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "")
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
 	success := cc.definition.UpdateTable(tableName, jsonMap)
 	if success {
 		cc.reflection.RefreshTables()
 	}
-	cc.responder.Success(success, w, r)
+	cc.responder.Success(success, w)
 }
 
 func (cc *ColumnController) updateColumn(w http.ResponseWriter, r *http.Request) {
 	tableName := mux.Vars(r)["table"]
 	columnName := mux.Vars(r)["column"]
 	if !cc.reflection.HasTable(tableName) {
-		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, r, "")
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
 	table := cc.reflection.GetTable(tableName)
 	if !table.HasColumn(columnName) {
-		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, r, "")
+		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "")
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
 	success := cc.definition.UpdateColumn(tableName, columnName, jsonMap)
 	if success {
 		cc.reflection.RefreshTable(tableName)
 	}
-	cc.responder.Success(success, w, r)
+	cc.responder.Success(success, w)
 }
 
 func (cc *ColumnController) addTable(w http.ResponseWriter, r *http.Request) {
 	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "")
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
 	if tableNameI, ok := jsonMap["name"]; ok {
 		if tableName, ok := tableNameI.(string); ok {
 			if cc.reflection.HasTable(tableName) {
-				cc.responder.Error(record.TABLE_ALREADY_EXISTS, tableName, w, r, "")
+				cc.responder.Error(record.TABLE_ALREADY_EXISTS, tableName, w, "")
 				return
 			}
 		} else {
-			cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "Name argument not readable")
+			cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "Name argument not readable")
 			return
 		}
 		success := cc.definition.AddTable(jsonMap)
 		if success {
 			cc.reflection.RefreshTables()
 		}
-		cc.responder.Success(success, w, r)
+		cc.responder.Success(success, w)
 	} else {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "No name argument")
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "No name argument")
 		return
 	}
 }
@@ -136,32 +136,32 @@ func (cc *ColumnController) addTable(w http.ResponseWriter, r *http.Request) {
 func (cc *ColumnController) addColumn(w http.ResponseWriter, r *http.Request) {
 	tableName := mux.Vars(r)["table"]
 	if !cc.reflection.HasTable(tableName) {
-		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, r, "")
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyMapData(r)
 	if err != nil {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "")
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
 	table := cc.reflection.GetTable(tableName)
 	if columnNameI, ok := jsonMap["name"]; ok {
 		if columnName, ok := columnNameI.(string); ok {
 			if table.HasColumn(columnName) {
-				cc.responder.Error(record.COLUMN_ALREADY_EXISTS, columnName, w, r, "")
+				cc.responder.Error(record.COLUMN_ALREADY_EXISTS, columnName, w, "")
 				return
 			}
 		} else {
-			cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "Name argument not readable")
+			cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "Name argument not readable")
 			return
 		}
 		success := cc.definition.AddColumn(tableName, jsonMap)
 		if success {
 			cc.reflection.RefreshTable(tableName)
 		}
-		cc.responder.Success(success, w, r)
+		cc.responder.Success(success, w)
 	} else {
-		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "No name argument")
+		cc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "No name argument")
 		return
 	}
 }
@@ -169,31 +169,31 @@ func (cc *ColumnController) addColumn(w http.ResponseWriter, r *http.Request) {
 func (cc *ColumnController) removeTable(w http.ResponseWriter, r *http.Request) {
 	tableName := mux.Vars(r)["table"]
 	if !cc.reflection.HasTable(tableName) {
-		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, r, "")
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
 	success := cc.definition.RemoveTable(tableName)
 	if success {
 		cc.reflection.RefreshTables()
 	}
-	cc.responder.Success(success, w, r)
+	cc.responder.Success(success, w)
 }
 
 func (cc *ColumnController) removeColumn(w http.ResponseWriter, r *http.Request) {
 	tableName := mux.Vars(r)["table"]
 	columnName := mux.Vars(r)["column"]
 	if !cc.reflection.HasTable(tableName) {
-		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, r, "")
+		cc.responder.Error(record.TABLE_NOT_FOUND, tableName, w, "")
 		return
 	}
 	table := cc.reflection.GetTable(tableName)
 	if !table.HasColumn(columnName) {
-		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, r, "")
+		cc.responder.Error(record.COLUMN_NOT_FOUND, columnName, w, "")
 		return
 	}
 	success := cc.definition.RemoveColumn(tableName, columnName)
 	if success {
 		cc.reflection.RefreshTable(tableName)
 	}
-	cc.responder.Success(success, w, r)
+	cc.responder.Success(success, w)
 }

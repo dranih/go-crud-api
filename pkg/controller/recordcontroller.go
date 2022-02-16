@@ -33,11 +33,11 @@ func (rc *RecordController) list(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	params := utils.GetRequestParams(r)
 	if !rc.service.HasTable(table) {
-		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, r, "")
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
 	result := rc.service.List(table, params)
-	rc.responder.Success(result, w, r)
+	rc.responder.Success(result, w)
 	return
 }
 
@@ -51,7 +51,7 @@ type argumentList struct {
 func (rc *RecordController) read(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	if !rc.service.HasTable(table) {
-		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, r, "")
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
 	params := utils.GetRequestParams(r)
@@ -63,15 +63,15 @@ func (rc *RecordController) read(w http.ResponseWriter, r *http.Request) {
 			argumentLists = append(argumentLists, &argumentList{table, []interface{}{ids[i]}, params})
 		}
 		result, errs := rc.multiCall(rc.service.Read, argumentLists)
-		rc.responder.Multi(result, errs, w, r)
+		rc.responder.Multi(result, errs, w)
 		return
 	} else {
 		response, err := rc.service.Read(nil, table, params, id)
 		if response == nil || err != nil {
-			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, r, "")
+			rc.responder.Error(record.RECORD_NOT_FOUND, id, w, "")
 			return
 		}
-		rc.responder.Success(response, w, r)
+		rc.responder.Success(response, w)
 	}
 }
 
@@ -101,16 +101,16 @@ func (rc *RecordController) multiCall(callback func(*sql.Tx, string, map[string]
 func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	if !rc.service.HasTable(table) {
-		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, r, "")
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "create", w, r, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "create", w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyData(r)
 	if err != nil {
-		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "")
+		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
 	params := utils.GetRequestParams(r)
@@ -122,31 +122,31 @@ func (rc *RecordController) create(w http.ResponseWriter, r *http.Request) {
 			argumentLists = append(argumentLists, &argumentList{table, []interface{}{record}, params})
 		}
 		result, errs := rc.multiCall(rc.service.Create, argumentLists)
-		rc.responder.Multi(result, errs, w, r)
+		rc.responder.Multi(result, errs, w)
 		return
 	} else {
 		response, err := rc.service.Create(nil, table, params, jsonMap)
 		if response == nil || err != nil {
-			rc.responder.Exception(err, w, r)
+			rc.responder.Exception(err, w)
 			return
 		}
-		rc.responder.Success(response, w, r)
+		rc.responder.Success(response, w)
 	}
 }
 
 func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	if !rc.service.HasTable(table) {
-		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, r, "")
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "update", w, r, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "update", w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyData(r)
 	if err != nil {
-		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "")
+		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
 	params := utils.GetRequestParams(r)
@@ -155,7 +155,7 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 
 	if records, isArray := jsonMap.([]interface{}); isArray {
 		if len(ids) != len(records) {
-			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, r, "")
+			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
 		var argumentLists []*argumentList
@@ -163,30 +163,30 @@ func (rc *RecordController) update(w http.ResponseWriter, r *http.Request) {
 			argumentLists = append(argumentLists, &argumentList{table, []interface{}{ids[i], records[i]}, params})
 		}
 		result, errs := rc.multiCall(rc.service.Update, argumentLists)
-		rc.responder.Multi(result, errs, w, r)
+		rc.responder.Multi(result, errs, w)
 		return
 	} else {
 		if len(ids) != 1 {
-			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, r, "")
+			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
 		response, err := rc.service.Update(nil, table, params, id, jsonMap)
 		if response == nil || err != nil {
-			rc.responder.Exception(err, w, r)
+			rc.responder.Exception(err, w)
 			return
 		}
-		rc.responder.Success(response, w, r)
+		rc.responder.Success(response, w)
 	}
 }
 
 func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	if !rc.service.HasTable(table) {
-		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, r, "")
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "delete", w, r, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "delete", w, "")
 		return
 	}
 	params := utils.GetRequestParams(r)
@@ -198,31 +198,31 @@ func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 			argumentLists = append(argumentLists, &argumentList{table, []interface{}{ids[i]}, params})
 		}
 		result, errs := rc.multiCall(rc.service.Delete, argumentLists)
-		rc.responder.Multi(result, errs, w, r)
+		rc.responder.Multi(result, errs, w)
 		return
 	} else {
 		response, err := rc.service.Delete(nil, table, params, id)
 		if response == nil || err != nil {
-			rc.responder.Exception(err, w, r)
+			rc.responder.Exception(err, w)
 			return
 		}
-		rc.responder.Success(response, w, r)
+		rc.responder.Success(response, w)
 	}
 }
 
 func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 	table := mux.Vars(r)["table"]
 	if !rc.service.HasTable(table) {
-		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, r, "")
+		rc.responder.Error(record.TABLE_NOT_FOUND, table, w, "")
 		return
 	}
 	if rc.service.GetType(table) != "table" {
-		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "update", w, r, "")
+		rc.responder.Error(record.OPERATION_NOT_SUPPORTED, "update", w, "")
 		return
 	}
 	jsonMap, err := utils.GetBodyData(r)
 	if err != nil {
-		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, r, "")
+		rc.responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 		return
 	}
 	params := utils.GetRequestParams(r)
@@ -231,7 +231,7 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 
 	if records, isArray := jsonMap.([]interface{}); isArray {
 		if len(ids) != len(records) {
-			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, r, "")
+			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
 		var argumentLists []*argumentList
@@ -239,18 +239,18 @@ func (rc *RecordController) increment(w http.ResponseWriter, r *http.Request) {
 			argumentLists = append(argumentLists, &argumentList{table, []interface{}{ids[i], records[i]}, params})
 		}
 		result, errs := rc.multiCall(rc.service.Increment, argumentLists)
-		rc.responder.Multi(result, errs, w, r)
+		rc.responder.Multi(result, errs, w)
 		return
 	} else {
 		if len(ids) != 1 {
-			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, r, "")
+			rc.responder.Error(record.ARGUMENT_COUNT_MISMATCH, id, w, "")
 			return
 		}
 		response, err := rc.service.Increment(nil, table, params, id, jsonMap)
 		if response == nil || err != nil {
-			rc.responder.Exception(err, w, r)
+			rc.responder.Exception(err, w)
 			return
 		}
-		rc.responder.Success(response, w, r)
+		rc.responder.Success(response, w)
 	}
 }
