@@ -43,41 +43,53 @@ func NewApi(config *ApiConfig) *Api {
 	reflection := database.NewReflectionService(db, cache, config.CacheTime)
 	responder := controller.NewJsonResponder(config.Debug)
 	router := mux.NewRouter()
-	for middle, properties := range config.Middlewares {
-		switch middle {
-		case "cors":
-			router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}).Methods("OPTIONS")
-			corsMiddleware := middleware.NewCorsMiddleware(responder, properties, config.Debug)
-			router.Use(corsMiddleware.Process)
-		case "basicAuth":
-			bamMiddle := middleware.NewBasicAuth(responder, properties)
-			router.Use(bamMiddle.Process)
-		case "validation":
-			validationMiddle := middleware.NewValidationMiddleware(responder, properties, reflection)
-			router.Use(validationMiddle.Process)
-		case "ipAddress":
-			ipAddressMiddle := middleware.NewIpAddressMiddleware(responder, properties, reflection)
-			router.Use(ipAddressMiddle.Process)
-		case "sanitation":
-			sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
-			router.Use(sanitationMiddle.Process)
-		case "multiTenancy":
-			multiTenancyMiddle := middleware.NewMultiTenancyMiddleware(responder, properties, reflection)
-			router.Use(multiTenancyMiddle.Process)
-		case "authorization":
-			authMiddle := middleware.NewAuthorizationMiddleware(responder, properties, reflection)
-			router.Use(authMiddle.Process)
-		case "pageLimits":
-			pageLimitsMiddle := middleware.NewPageLimitsMiddleware(responder, properties, reflection)
-			router.Use(pageLimitsMiddle.Process)
-		case "joinLimits":
-			joinLimitsMiddle := middleware.NewJoinLimitsMiddleware(responder, properties, reflection)
-			router.Use(joinLimitsMiddle.Process)
-		case "customization":
-			gob.Register(map[string]interface{}{})
-			customizationMiddle := middleware.NewCustomizationMiddleware(responder, properties, reflection)
-			router.Use(customizationMiddle.Process)
-		}
+
+	//Consistent middle order
+	if properties, exists := config.Middlewares["cors"]; exists {
+		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}).Methods("OPTIONS")
+		corsMiddleware := middleware.NewCorsMiddleware(responder, properties, config.Debug)
+		router.Use(corsMiddleware.Process)
+	}
+	if properties, exists := config.Middlewares["basicAuth"]; exists {
+		bamMiddle := middleware.NewBasicAuth(responder, properties)
+		router.Use(bamMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["validation"]; exists {
+		validationMiddle := middleware.NewValidationMiddleware(responder, properties, reflection)
+		router.Use(validationMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["ipAddress"]; exists {
+		ipAddressMiddle := middleware.NewIpAddressMiddleware(responder, properties, reflection)
+		router.Use(ipAddressMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["sanitation"]; exists {
+		sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
+		router.Use(sanitationMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["multiTenancy"]; exists {
+		multiTenancyMiddle := middleware.NewMultiTenancyMiddleware(responder, properties, reflection)
+		router.Use(multiTenancyMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["authorization"]; exists {
+		authMiddle := middleware.NewAuthorizationMiddleware(responder, properties, reflection)
+		router.Use(authMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["pageLimits"]; exists {
+		pageLimitsMiddle := middleware.NewPageLimitsMiddleware(responder, properties, reflection)
+		router.Use(pageLimitsMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["joinLimits"]; exists {
+		joinLimitsMiddle := middleware.NewJoinLimitsMiddleware(responder, properties, reflection)
+		router.Use(joinLimitsMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["customization"]; exists {
+		gob.Register(map[string]interface{}{})
+		customizationMiddle := middleware.NewCustomizationMiddleware(responder, properties, reflection)
+		router.Use(customizationMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["json"]; exists {
+		jsonMiddle := middleware.NewJsonMiddleware(responder, properties)
+		router.Use(jsonMiddle.Process)
 	}
 
 	for ctrl := range config.GetControllers() {

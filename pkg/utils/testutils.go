@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -96,7 +95,7 @@ func RunTests(t *testing.T, serverUrl string, tests []Test) {
 					}
 				}
 
-				if b, err := io.ReadAll(resp.Body); err != nil {
+				if b, err := ioutil.ReadAll(resp.Body); err != nil {
 					t.Errorf("Error reading response '%s'", err)
 				} else {
 					if tc.WantRegex != "" {

@@ -13,6 +13,9 @@ api:
       - realm: "GoCrudApi : Username and password required"
       - passwordFile: "../../test/test.pwd"
   - json:
+    - controllers: "records"
+    - tables: "products"
+    - columns: "properties"
   - cors:
   - authorization:
     - columnHandler: "{{ if eq .ColumnName \"invisible\"}} false {{ else }} true {{ end }}"

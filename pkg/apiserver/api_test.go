@@ -1462,7 +1462,7 @@ func TestRecordsApi(t *testing.T) {
 			Driver:     config.Api.Driver,
 			SkipFor:    map[string]bool{"sqlite": true, "pgsql": true, "sqlsrv": true},
 		},
-		/*{
+		{
 			Name:   "086_add_and_update_posts_in_large_batch_A",
 			Method: http.MethodPost,
 			Uri:    "/records/posts",
@@ -1489,7 +1489,7 @@ func TestRecordsApi(t *testing.T) {
 			{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"},{"user_id":2,"category_id":1,"content":"test"}]`,
 			Want:       `[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]`,
 			StatusCode: http.StatusOK,
-		},*/
+		},
 		{
 			Name:       "087_read_and_write_posts_as_xml_A",
 			Method:     http.MethodGet,
@@ -1703,13 +1703,12 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `{"records":[{"id":7},{"id":8}]}`,
 			StatusCode: http.StatusOK,
 		},
-		/* Needs json middleware
 		{
 			Name:       "092_read_product_json",
 			Method:     http.MethodGet,
 			Uri:        "/records/products/1",
 			Body:       ``,
-			Want:       `{"created_at":"1970-01-0101:01:01","deleted_at":null,"id":1,"name":"Calculator","price":"23.01","properties":{"depth":false,"model":"TRX-120","width":100,"height":null}}`,
+			Want:       `{"created_at":"1970-01-01 01:01:01","deleted_at":null,"id":1,"name":"Calculator","price":"23.01","properties":{"depth":false,"height":null,"model":"TRX-120","width":100}}`,
 			StatusCode: http.StatusOK,
 		},
 		{
@@ -1725,7 +1724,7 @@ func TestRecordsApi(t *testing.T) {
 			Method:     http.MethodGet,
 			Uri:        "/records/products/1",
 			Body:       ``,
-			Want:       `{"created_at":"1970-01-0101:01:01","deleted_at":null,"id":1,"name":"Calculator","price":"23.01","properties":{"depth":true,"height":null,"model":"TRX-120","width":100}}`,
+			Want:       `{"created_at":"1970-01-01 01:01:01","deleted_at":null,"id":1,"name":"Calculator","price":"23.01","properties":{"depth":true,"height":null,"model":"TRX-120","width":100}}`,
 			StatusCode: http.StatusOK,
 		},
 		{
@@ -1741,7 +1740,7 @@ func TestRecordsApi(t *testing.T) {
 			Method:     http.MethodGet,
 			Uri:        "/records/products/1",
 			Body:       ``,
-			Want:       `{"created_at":"1970-01-0101:01:01","deleted_at":null,"id":1,"name":"Calculator","price":"23.01","properties":{"depth":false,"height":null,"model":"TRX-120","width":100}}`,
+			Want:       `{"created_at":"1970-01-01 01:01:01","deleted_at":null,"id":1,"name":"Calculator","price":"23.01","properties":{"depth":false,"height":null,"model":"TRX-120","width":100}}`,
 			StatusCode: http.StatusOK,
 		},
 		{
@@ -1765,7 +1764,7 @@ func TestRecordsApi(t *testing.T) {
 			Method:     http.MethodGet,
 			Uri:        "/records/products/2,3",
 			Body:       ``,
-			Want:       `[{"created_at":"1970-01-0101:01:01","deleted_at":null,"id":2,"name":"Calcv2","price":"24.01","properties":{"new":true}},{"created_at":"1970-01-0101:01:01","deleted_at":null,"id":3,"name":"Calcv3","price":"25.01","properties":{"new":true,"version":"v3"}}]`,
+			Want:       `[{"created_at":"1970-01-01 01:01:01","deleted_at":null,"id":2,"name":"Calc v2","price":"24.01","properties":{"new":true}},{"created_at":"1970-01-01 01:01:01","deleted_at":null,"id":3,"name":"Calc v3","price":"25.01","properties":{"new":true,"version":"v3"}}]`,
 			StatusCode: http.StatusOK,
 		},
 		{
@@ -1776,7 +1775,6 @@ func TestRecordsApi(t *testing.T) {
 			Want:       `[1,1]`,
 			StatusCode: http.StatusOK,
 		},
-		*/
 	}
 	utils.RunTests(t, serverUrl, tt)
 }

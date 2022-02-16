@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/dranih/go-crud-api/pkg/utils"
 )
 
 type DataConverter struct {
@@ -40,13 +42,32 @@ func (dc *DataConverter) convertRecordValue(conversion string, value interface{}
 		case int, int64:
 			return v
 		}
-	case "float", "decimal":
+	case "float":
 		switch v := value.(type) {
 		case string:
 			res, _ := strconv.ParseFloat(v, 32)
 			return res
 		case float32, float64:
 			return v
+		}
+	case "decimal":
+		var flt *float64
+		switch v := value.(type) {
+		case string:
+			val, _ := strconv.ParseFloat(v, 32)
+			flt = &val
+		case float64:
+			flt = &v
+		case float32:
+			val := float64(v)
+			flt = &val
+		}
+		if flt != nil {
+			decimals := 0
+			if len(args) == 2 {
+				decimals, _ = strconv.Atoi(args[1])
+			}
+			return utils.NumberFormat(*flt, decimals, ".", "")
 		}
 	case "date":
 		if t, ok := value.(time.Time); ok {

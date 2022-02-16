@@ -92,16 +92,16 @@ func getDataSize(length, precision, scale int) string {
 func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResult map[string]interface{}) *ReflectedColumn {
 	name := columnResult["COLUMN_NAME"].(string)
 	dataType := columnResult["DATA_TYPE"].(string)
-	length, exists := columnResult["CHARACTER_MAXIMUM_LENGTH"].(int)
-	if !exists {
+	length, err := strconv.Atoi(fmt.Sprint(columnResult["CHARACTER_MAXIMUM_LENGTH"]))
+	if err != nil {
 		length = -1
 	}
-	precision, exists := columnResult["NUMERIC_PRECISION"].(int)
-	if !exists {
+	precision, err := strconv.Atoi(fmt.Sprint(columnResult["NUMERIC_PRECISION"]))
+	if err != nil {
 		precision = -1
 	}
-	scale, exists := columnResult["NUMERIC_SCALE"].(int)
-	if !exists {
+	scale, err := strconv.Atoi(fmt.Sprint(columnResult["NUMERIC_SCALE"]))
+	if err != nil {
 		scale = -1
 	}
 	columnType := columnResult["COLUMN_TYPE"].(string)

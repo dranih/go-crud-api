@@ -38,7 +38,6 @@ func (rf *ResponseFactory) From(status int, contentType string, content []byte, 
 		rf.afterHandle(content, w, r)
 	}
 	w.Header().Set("Content-Type", contentType+"; charset=utf-8")
-	w.Header().Set("Content-Length", fmt.Sprint(len(content)))
 	w.WriteHeader(status)
 	w.Write(content)
 	return w

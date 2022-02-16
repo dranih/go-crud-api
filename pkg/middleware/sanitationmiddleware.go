@@ -49,7 +49,9 @@ func (sm *SanitationMiddleware) callHandler(r *http.Request, handler, operation 
 	if t, err := template.New("handler").Funcs(sprig.TxtFuncMap()).Parse(handler); err == nil {
 		for i := range records {
 			for columnName, value := range records[i] {
-				if value != nil && table.HasColumn(columnName) {
+				//Skip if value is map[string]interface{}
+				_, skip := value.(map[string]interface{})
+				if value != nil && !skip && table.HasColumn(columnName) {
 					column := table.GetColumn(columnName)
 					var res bytes.Buffer
 					data := struct {

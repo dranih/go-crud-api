@@ -200,8 +200,12 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 				if _, ok := value.(time.Time); !ok {
 					return "invalid date", false
 				}
+			case "clob":
+				if _, ok := value.(map[string]interface{}); !ok {
+					return "invalid clob", false
+				}
 			default:
-				return fmt.Sprintf("invalid %s", column.GetType()), false
+				return fmt.Sprintf("invalid %s with %T", column.GetType(), value), false
 			}
 		}
 	}
