@@ -5,6 +5,7 @@ go 1.17
 require github.com/gorilla/mux v1.8.0
 
 require (
+	github.com/clbanning/mxj/v2 v2.5.5
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/spf13/viper v1.9.0
 )

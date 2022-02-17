@@ -54,6 +54,14 @@ func NewApi(config *ApiConfig) *Api {
 		bamMiddle := middleware.NewBasicAuth(responder, properties)
 		router.Use(bamMiddle.Process)
 	}
+	if properties, exists := config.Middlewares["json"]; exists {
+		jsonMiddle := middleware.NewJsonMiddleware(responder, properties)
+		router.Use(jsonMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["xml"]; exists {
+		xmlMiddle := middleware.NewXmlMiddleware(responder, properties)
+		router.Use(xmlMiddle.Process)
+	}
 	if properties, exists := config.Middlewares["validation"]; exists {
 		validationMiddle := middleware.NewValidationMiddleware(responder, properties, reflection)
 		router.Use(validationMiddle.Process)
@@ -86,10 +94,6 @@ func NewApi(config *ApiConfig) *Api {
 		gob.Register(map[string]interface{}{})
 		customizationMiddle := middleware.NewCustomizationMiddleware(responder, properties, reflection)
 		router.Use(customizationMiddle.Process)
-	}
-	if properties, exists := config.Middlewares["json"]; exists {
-		jsonMiddle := middleware.NewJsonMiddleware(responder, properties)
-		router.Use(jsonMiddle.Process)
 	}
 
 	for ctrl := range config.GetControllers() {

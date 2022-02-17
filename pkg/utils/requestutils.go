@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 
+	mxj "github.com/clbanning/mxj/v2"
 	"github.com/gorilla/sessions"
 )
 
@@ -31,8 +32,8 @@ func GetSession(w http.ResponseWriter, request *http.Request) *sessions.Session 
 
 //GetBodyData tries to get data from body request, as a urlencoded content type or as json by default
 func GetBodyData(r *http.Request) (interface{}, error) {
-	headerContentTtype := r.Header.Get("Content-Type")
-	if headerContentTtype == "application/x-www-form-urlencoded" {
+	headerContentType := r.Header.Get("Content-Type")
+	if headerContentType == "application/x-www-form-urlencoded" {
 		if err := r.ParseForm(); err != nil {
 			return nil, err
 		}
@@ -53,10 +54,35 @@ func GetBodyData(r *http.Request) (interface{}, error) {
 		r.Body.Close() //  must close
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 		var jsonMap interface{}
-		err = json.Unmarshal(b, &jsonMap)
-		if err != nil {
-			return nil, err
+
+		if headerContentType == "application/xml" {
+			var mv mxj.Map
+			mv, err = mxj.NewMapXml(b, true)
+			if err != nil {
+				return nil, err
+			}
+			root, err := mv.Root()
+			if err != nil {
+				return nil, err
+			}
+			jsonMap, err = mv.ValueForKey(root)
+			if err != nil {
+				return nil, err
+			}
+			if val, ok := jsonMap.(map[string]interface{}); ok {
+				if val1, exists := val["object"]; exists {
+					if array, exists := val["-type"]; exists && array == "array" {
+						jsonMap = val1
+					}
+				}
+			}
+		} else {
+			err = json.Unmarshal(b, &jsonMap)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		return jsonMap, nil
 	}
 }

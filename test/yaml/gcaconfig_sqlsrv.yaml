@@ -17,6 +17,7 @@ api:
     - tables: "products"
     - columns: "properties"
   - cors:
+  - xml:
   - authorization:
     - columnHandler: "{{ if eq .ColumnName \"invisible\"}} false {{ else }} true {{ end }}"
     - tableHandler: "{{ if eq .TableName \"invisibles\"}} false {{ else }} true {{ end }}"

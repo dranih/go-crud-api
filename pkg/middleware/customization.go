@@ -38,12 +38,7 @@ func (cm *CustomizationMiddleware) Process(next http.Handler) http.Handler {
 					Environment map[string]interface{}
 				}{Operation: operation, TableName: tableName, Request: r, Environment: env}
 				var res bytes.Buffer
-				if err := t.Execute(&res, data); err == nil {
-					env["tablename"] = tableName
-					env["operation"] = operation
-					session := utils.GetSession(w, r)
-					session.Values["environment"] = env
-				} else {
+				if err := t.Execute(&res, data); err != nil {
 					log.Printf("Error : could not execute template beforeHandler : %s", err.Error())
 				}
 			} else {
