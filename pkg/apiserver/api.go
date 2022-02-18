@@ -43,24 +43,36 @@ func NewApi(config *ApiConfig) *Api {
 	reflection := database.NewReflectionService(db, cache, config.CacheTime)
 	responder := controller.NewJsonResponder(config.Debug)
 	router := mux.NewRouter()
-
-	//Consistent middle order
+	//Consistent middle order :
+	//sslRedirect,cors,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
 	if properties, exists := config.Middlewares["cors"]; exists {
 		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}).Methods("OPTIONS")
 		corsMiddleware := middleware.NewCorsMiddleware(responder, properties, config.Debug)
 		router.Use(corsMiddleware.Process)
 	}
-	if properties, exists := config.Middlewares["basicAuth"]; exists {
-		bamMiddle := middleware.NewBasicAuth(responder, properties)
-		router.Use(bamMiddle.Process)
+	if properties, exists := config.Middlewares["xml"]; exists {
+		xmlMiddle := middleware.NewXmlMiddleware(responder, properties)
+		router.Use(xmlMiddle.Process)
 	}
 	if properties, exists := config.Middlewares["json"]; exists {
 		jsonMiddle := middleware.NewJsonMiddleware(responder, properties)
 		router.Use(jsonMiddle.Process)
 	}
-	if properties, exists := config.Middlewares["xml"]; exists {
-		xmlMiddle := middleware.NewXmlMiddleware(responder, properties)
-		router.Use(xmlMiddle.Process)
+	if properties, exists := config.Middlewares["reconnect"]; exists {
+		reconnectMiddle := middleware.NewReconnectMiddleware(responder, properties, reflection, db)
+		router.Use(reconnectMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["basicAuth"]; exists {
+		bamMiddle := middleware.NewBasicAuth(responder, properties)
+		router.Use(bamMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["authorization"]; exists {
+		authMiddle := middleware.NewAuthorizationMiddleware(responder, properties, reflection)
+		router.Use(authMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["sanitation"]; exists {
+		sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
+		router.Use(sanitationMiddle.Process)
 	}
 	if properties, exists := config.Middlewares["validation"]; exists {
 		validationMiddle := middleware.NewValidationMiddleware(responder, properties, reflection)
@@ -70,17 +82,9 @@ func NewApi(config *ApiConfig) *Api {
 		ipAddressMiddle := middleware.NewIpAddressMiddleware(responder, properties, reflection)
 		router.Use(ipAddressMiddle.Process)
 	}
-	if properties, exists := config.Middlewares["sanitation"]; exists {
-		sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
-		router.Use(sanitationMiddle.Process)
-	}
 	if properties, exists := config.Middlewares["multiTenancy"]; exists {
 		multiTenancyMiddle := middleware.NewMultiTenancyMiddleware(responder, properties, reflection)
 		router.Use(multiTenancyMiddle.Process)
-	}
-	if properties, exists := config.Middlewares["authorization"]; exists {
-		authMiddle := middleware.NewAuthorizationMiddleware(responder, properties, reflection)
-		router.Use(authMiddle.Process)
 	}
 	if properties, exists := config.Middlewares["pageLimits"]; exists {
 		pageLimitsMiddle := middleware.NewPageLimitsMiddleware(responder, properties, reflection)

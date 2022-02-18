@@ -119,33 +119,31 @@ func NewGenericDB(driver string, address string, port int, database string, tabl
 	return g
 }
 
-/*
-public function reconstruct(string $driver, string $address, int $port, string $database, array $tables, string $username, string $password): bool
-        {
-            if ($driver) {
-                $this->driver = $driver;
-            }
-            if ($address) {
-                $this->address = $address;
-            }
-            if ($port) {
-                $this->port = $port;
-            }
-            if ($database) {
-                $this->database = $database;
-            }
-            if ($tables) {
-                $this->tables = $tables;
-            }
-            if ($username) {
-                $this->username = $username;
-            }
-            if ($password) {
-                $this->password = $password;
-            }
-            return $this->initPdo();
-        }
-*/
+func (g *GenericDB) Reconstruct(driver, address string, port int, database string, tables map[string]bool, username string, password string) bool {
+	if driver != "" {
+		g.driver = driver
+	}
+	if address != "" {
+		g.address = address
+	}
+	if port > 0 {
+		g.port = port
+	}
+	if database != "" {
+		g.database = database
+	}
+	if tables != nil {
+		g.tables = tables
+	}
+	if username != "" {
+		g.username = username
+	}
+	if password != "" {
+		g.password = password
+	}
+	return g.initPdo()
+}
+
 func (g *GenericDB) PDO() *LazyPdo {
 	return g.pdo
 }
