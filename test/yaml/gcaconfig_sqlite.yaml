@@ -1,3 +1,6 @@
+server:
+  https: true
+
 api:
   driver: "sqlite"
   controllers: "records,columns,geojson,openapi,status"

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -47,9 +48,10 @@ type Test struct {
 	WantHeader    map[string]string
 	SkipFor       map[string]bool
 	Driver        string
+	Server        string
 }
 
-func RunTests(t *testing.T, serverUrl string, tests []Test) {
+func RunTests(t *testing.T, serverUrlHttps string, tests []Test) {
 	for _, tc := range tests {
 		t.Run(tc.Name, func(t *testing.T) {
 			log.Printf("*************** Running test : %s ***************", tc.Name)
@@ -57,7 +59,14 @@ func RunTests(t *testing.T, serverUrl string, tests []Test) {
 			if tc.SkipFor != nil && tc.Driver != "" && tc.SkipFor[tc.Driver] {
 				log.Printf("Skipping test %s for driver %s", tc.Name, tc.Driver)
 			} else {
-				request, err := http.NewRequest(tc.Method, serverUrl+tc.Uri, strings.NewReader(tc.Body))
+				var url string
+				if tc.Server == "" {
+					url = serverUrlHttps + tc.Uri
+				} else {
+					url = tc.Server + tc.Uri
+				}
+
+				request, err := http.NewRequest(tc.Method, url, strings.NewReader(tc.Body))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -69,14 +78,17 @@ func RunTests(t *testing.T, serverUrl string, tests []Test) {
 				if tc.AuthMethod == "basicauth" && tc.Username != "" {
 					request.SetBasicAuth(tc.Username, tc.Password)
 				}
-				var client *http.Client
-				if tc.Jar != nil {
-					client = &http.Client{
-						Jar: tc.Jar,
-					}
-				} else {
-					client = http.DefaultClient
+				client := &http.Client{
+					Transport: &http.Transport{
+						TLSClientConfig: &tls.Config{
+							InsecureSkipVerify: true,
+						},
+					},
 				}
+				if tc.Jar != nil {
+					client.Jar = tc.Jar
+				}
+
 				resp, err := client.Do(request)
 				if err != nil {
 					t.Fatal(err)

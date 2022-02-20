@@ -35,7 +35,12 @@ type ApiConfig struct {
 
 type ServerConfig struct {
 	Address         string
-	Port            int
+	Http            bool
+	HttpPort        int
+	Https           bool
+	HttpsPort       int
+	HttpsCertFile   string
+	HttpsKeyFile    string
 	GracefulTimeout int
 	WriteTimeout    int
 	ReadTimeout     int
@@ -78,8 +83,10 @@ func ReadConfig(configPaths ...string) *Config {
 	viper.SetDefault("api.cachetype", "TempFile")
 	viper.SetDefault("api.cachetime", 10)
 	viper.SetDefault("api.openapibase", map[string]map[string]string{"info": {"title": "GO-CRUD-API", "version": "0.0.1"}})
-	viper.SetDefault("server.address", "0.0.0.0")
-	viper.SetDefault("server.port", 8080)
+	viper.SetDefault("server.http", true)
+	viper.SetDefault("server.httpport", 8080)
+	viper.SetDefault("server.https", false)
+	viper.SetDefault("server.httpsport", 8443)
 	viper.SetDefault("server.gracefultimeout", 15)
 	viper.SetDefault("server.writetimeout", 15)
 	viper.SetDefault("server.readtimeout", 15)

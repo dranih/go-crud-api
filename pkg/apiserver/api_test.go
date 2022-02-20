@@ -11,7 +11,8 @@ import (
 )
 
 func TestNewApi(t *testing.T) {
-	config := ReadConfig("../../test/")
+	utils.SelectConfig()
+	config := ReadConfig()
 	config.Init()
 	serverStarted := new(sync.WaitGroup)
 	serverStarted.Add(1)
@@ -33,11 +34,21 @@ func TestRecordsApi(t *testing.T) {
 	go api.Handle(config.Server, serverStarted)
 	//Waiting http server to start
 	serverStarted.Wait()
-	serverUrl := fmt.Sprintf("http://%s:%d", config.Server.Address, config.Server.Port)
+	serverUrlHttps := fmt.Sprintf("https://%s:%d", config.Server.Address, config.Server.HttpsPort)
+	serverUrlHttp := fmt.Sprintf("http://%s:%d", config.Server.Address, config.Server.HttpPort)
 
 	//https://ieftimov.com/post/testing-in-go-testing-http-servers/
 	//https://stackoverflow.com/questions/42474259/golang-how-to-live-test-an-http-server
 	tt := []utils.Test{
+		{
+			Name:       "000_test_http",
+			Method:     http.MethodGet,
+			Uri:        "/records/posts/2",
+			Server:     serverUrlHttp,
+			Body:       ``,
+			Want:       `{"category_id":2,"content":"It works!","id":2,"user_id":1}`,
+			StatusCode: http.StatusOK,
+		},
 		{
 			Name:       "001_list_posts",
 			Method:     http.MethodGet,
@@ -1797,5 +1808,5 @@ func TestRecordsApi(t *testing.T) {
 			StatusCode: http.StatusOK,
 		},
 	}
-	utils.RunTests(t, serverUrl, tt)
+	utils.RunTests(t, serverUrlHttps, tt)
 }

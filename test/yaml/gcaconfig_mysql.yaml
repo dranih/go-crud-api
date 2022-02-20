@@ -1,3 +1,6 @@
+server:
+  https: true
+
 api:
   driver: "mysql"
   controllers: "records,columns,geojson,openapi,status"

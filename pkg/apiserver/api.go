@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/gob"
 	"fmt"
 	"log"
@@ -21,6 +22,7 @@ import (
 	"github.com/dranih/go-crud-api/pkg/middleware"
 	"github.com/dranih/go-crud-api/pkg/openapi"
 	"github.com/dranih/go-crud-api/pkg/record"
+	"github.com/dranih/go-crud-api/pkg/utils"
 )
 
 type Api struct {
@@ -131,38 +133,89 @@ func NewApi(config *ApiConfig) *Api {
 
 func (a *Api) Handle(config *ServerConfig, wg *sync.WaitGroup) {
 	//From https://golangexample.com/a-powerful-http-router-and-url-matcher-for-building-go-web-servers/
-	srv := &http.Server{
-		Addr: fmt.Sprintf("%s:%d", config.Address, config.Port),
-		// Good practice to set timeouts to avoid Slowloris attacks.
-		WriteTimeout: time.Second * time.Duration(config.WriteTimeout),
-		ReadTimeout:  time.Second * time.Duration(config.ReadTimeout),
-		IdleTimeout:  time.Second * time.Duration(config.IdleTimeout),
-		Handler:      a.router, // Pass our instance of gorilla/mux in.
+	var srvHttp, srvHttps *http.Server
+	if config.Http {
+		srvHttp = &http.Server{
+			Addr: fmt.Sprintf("%s:%d", config.Address, config.HttpPort),
+			// Good practice to set timeouts to avoid Slowloris attacks.
+			WriteTimeout: time.Second * time.Duration(config.WriteTimeout),
+			ReadTimeout:  time.Second * time.Duration(config.ReadTimeout),
+			IdleTimeout:  time.Second * time.Duration(config.IdleTimeout),
+			Handler:      a.router, // Pass our instance of gorilla/mux in.
+		}
+
+		wg.Add(1)
+		// Run our server in a goroutine so that it doesn't block.
+		go func() {
+			addr := srvHttp.Addr
+			if addr == "" {
+				addr = ":http"
+			}
+			ln, err := net.Listen("tcp", addr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("Started http server at %s", addr)
+			if wg != nil {
+				wg.Done()
+			}
+			if err := srvHttp.Serve(ln); err != nil {
+				log.Fatal(err)
+			}
+		}()
 	}
 
-	// Run our server in a goroutine so that it doesn't block.
-	go func() {
-		/*defer wg.Done()
-		if err := srv.ListenAndServe(); err != nil {
-			log.Println(err)
-		}*/
-		addr := srv.Addr
-		if addr == "" {
-			addr = ":http"
-		}
-		ln, err := net.Listen("tcp", addr)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Started http server at %s", addr)
-		if wg != nil {
-			wg.Done()
-		}
-		if err := srv.Serve(ln); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	if config.Https {
+		var serverTLSConf *tls.Config
+		if config.HttpsCertFile == "" || config.HttpsKeyFile == "" {
+			var err error
+			serverTLSConf, _, err = utils.CertSetup(config.Address)
 
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			serverCert, err := tls.LoadX509KeyPair(config.HttpsCertFile, config.HttpsKeyFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			serverTLSConf = &tls.Config{
+				Certificates: []tls.Certificate{serverCert},
+			}
+		}
+
+		srvHttps = &http.Server{
+			Addr: fmt.Sprintf("%s:%d", config.Address, config.HttpsPort),
+			// Good practice to set timeouts to avoid Slowloris attacks.
+			WriteTimeout: time.Second * time.Duration(config.WriteTimeout),
+			ReadTimeout:  time.Second * time.Duration(config.ReadTimeout),
+			IdleTimeout:  time.Second * time.Duration(config.IdleTimeout),
+			TLSConfig:    serverTLSConf,
+			Handler:      a.router, // Pass our instance of gorilla/mux in.
+		}
+
+		wg.Add(1)
+		// Run our server in a goroutine so that it doesn't block.
+		go func() {
+			addr := srvHttps.Addr
+			if addr == "" {
+				addr = ":https"
+			}
+			ln, err := net.Listen("tcp", addr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("Started https server at %s", addr)
+			if wg != nil {
+				wg.Done()
+			}
+			if err := srvHttps.ServeTLS(ln, "", ""); err != nil {
+				log.Fatal(err)
+			}
+		}()
+	}
+
+	wg.Done()
 	c := make(chan os.Signal, 1)
 	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
 	// SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.
@@ -176,7 +229,12 @@ func (a *Api) Handle(config *ServerConfig, wg *sync.WaitGroup) {
 	defer cancel()
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	srv.Shutdown(ctx)
+	if srvHttp != nil {
+		srvHttp.Shutdown(ctx)
+	}
+	if srvHttps != nil {
+		srvHttps.Shutdown(ctx)
+	}
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
 	// <-ctx.Done() if your application should wait for other services
 	// to finalize based on context cancellation.
