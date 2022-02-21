@@ -47,4 +47,5 @@ api:
     - afterHandlerHeader: "{{ if and (eq .TableName \"kunsthåndværk\") (eq .Operation \"increment\") }}
                       {{ $_ := set .Headers \"X-Time-Taken\" (subf 0.006 (get .Environment \"start\"))}}
                     {{ end }}"
-     
+  - sslRedirect:
+  

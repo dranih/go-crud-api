@@ -7,6 +7,6 @@ import (
 func main() {
 	config := apiserver.ReadConfig()
 	config.Init()
-	api := apiserver.NewApi(config.Api)
-	api.Handle(config.Server, nil)
+	api := apiserver.NewApi(config)
+	api.Handle(nil)
 }

@@ -27,11 +27,12 @@ import (
 
 type Api struct {
 	router *mux.Router
-	debug  bool
+	config *Config
 }
 
 //todo : cache
-func NewApi(config *ApiConfig) *Api {
+func NewApi(globalConfig *Config) *Api {
+	config := globalConfig.Api
 	db := database.NewGenericDB(
 		config.Driver,
 		config.Address,
@@ -47,6 +48,10 @@ func NewApi(config *ApiConfig) *Api {
 	router := mux.NewRouter()
 	//Consistent middle order :
 	//sslRedirect,cors,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
+	if properties, exists := config.Middlewares["sslRedirect"]; exists {
+		sslMiddle := middleware.NewSslRedirectMiddleware(responder, properties, globalConfig.Server.HttpsPort)
+		router.Use(sslMiddle.Process)
+	}
 	if properties, exists := config.Middlewares["cors"]; exists {
 		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}).Methods("OPTIONS")
 		corsMiddleware := middleware.NewCorsMiddleware(responder, properties, config.Debug)
@@ -128,10 +133,11 @@ func NewApi(config *ApiConfig) *Api {
 		responder.Error(record.ROUTE_NOT_FOUND, r.RequestURI, w, "")
 	}).Methods("OPTIONS", "GET", "PUT", "POST", "DELETE", "PATCH")
 
-	return &Api{router, config.Debug}
+	return &Api{router, globalConfig}
 }
 
-func (a *Api) Handle(config *ServerConfig, wg *sync.WaitGroup) {
+func (a *Api) Handle(wg *sync.WaitGroup) {
+	config := a.config.Server
 	//From https://golangexample.com/a-powerful-http-router-and-url-matcher-for-building-go-web-servers/
 	var srvHttp, srvHttps *http.Server
 	if config.Http {
@@ -143,8 +149,9 @@ func (a *Api) Handle(config *ServerConfig, wg *sync.WaitGroup) {
 			IdleTimeout:  time.Second * time.Duration(config.IdleTimeout),
 			Handler:      a.router, // Pass our instance of gorilla/mux in.
 		}
-
-		wg.Add(1)
+		if wg != nil {
+			wg.Add(1)
+		}
 		// Run our server in a goroutine so that it doesn't block.
 		go func() {
 			addr := srvHttp.Addr
@@ -193,8 +200,9 @@ func (a *Api) Handle(config *ServerConfig, wg *sync.WaitGroup) {
 			TLSConfig:    serverTLSConf,
 			Handler:      a.router, // Pass our instance of gorilla/mux in.
 		}
-
-		wg.Add(1)
+		if wg != nil {
+			wg.Add(1)
+		}
 		// Run our server in a goroutine so that it doesn't block.
 		go func() {
 			addr := srvHttps.Addr
@@ -215,7 +223,9 @@ func (a *Api) Handle(config *ServerConfig, wg *sync.WaitGroup) {
 		}()
 	}
 
-	wg.Done()
+	if wg != nil {
+		wg.Done()
+	}
 	c := make(chan os.Signal, 1)
 	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
 	// SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.

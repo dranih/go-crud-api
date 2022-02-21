@@ -88,6 +88,12 @@ func RunTests(t *testing.T, serverUrlHttps string, tests []Test) {
 				if tc.Jar != nil {
 					client.Jar = tc.Jar
 				}
+				//If we expect a http.StatusMovedPermanently, do not redirect
+				if tc.StatusCode == http.StatusMovedPermanently {
+					client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+						return http.ErrUseLastResponse
+					}
+				}
 
 				resp, err := client.Do(request)
 				if err != nil {

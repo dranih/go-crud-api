@@ -16,8 +16,8 @@ func TestNewApi(t *testing.T) {
 	config.Init()
 	serverStarted := new(sync.WaitGroup)
 	serverStarted.Add(1)
-	api := NewApi(config.Api)
-	go api.Handle(config.Server, serverStarted)
+	api := NewApi(config)
+	go api.Handle(serverStarted)
 	//Waiting http server to start
 	serverStarted.Wait()
 }
@@ -30,8 +30,8 @@ func TestRecordsApi(t *testing.T) {
 	config.Init()
 	serverStarted := new(sync.WaitGroup)
 	serverStarted.Add(1)
-	api := NewApi(config.Api)
-	go api.Handle(config.Server, serverStarted)
+	api := NewApi(config)
+	go api.Handle(serverStarted)
 	//Waiting http server to start
 	serverStarted.Wait()
 	serverUrlHttps := fmt.Sprintf("https://%s:%d", config.Server.Address, config.Server.HttpsPort)
@@ -1660,17 +1660,16 @@ func TestRecordsApi(t *testing.T) {
 			Want:          `<root><object>1</object><object>1</object></root>`,
 			StatusCode:    http.StatusOK,
 		},
-		/* Needs sslRedirect middlware
 		{
 			Name:       "089_redirect_to_ssl",
 			Method:     http.MethodGet,
-			Uri:        "http://localhost/records/posts",
-			WantHeader: map[string]string{"Location": "https://localhost/records/posts"},
+			Uri:        "/records/posts",
+			Server:     serverUrlHttp,
+			WantHeader: map[string]string{"Location": serverUrlHttps + "/records/posts"},
 			Body:       ``,
-			Want:       ``,
+			Want:       `<a href="` + serverUrlHttps + `/records/posts">Moved Permanently</a>.`,
 			StatusCode: http.StatusMovedPermanently,
 		},
-		*/
 		{
 			Name:       "090_add_multiple_comments_A",
 			Method:     http.MethodPost,
