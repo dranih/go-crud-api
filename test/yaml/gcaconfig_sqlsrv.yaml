@@ -23,7 +23,7 @@ api:
   - xml:
   - authorization:
     - columnHandler: "{{ if eq .ColumnName \"invisible\"}} false {{ else }} true {{ end }}"
-    - tableHandler: "{{ if eq .TableName \"invisibles\"}} false {{ else }} true {{ end }}"
+    - tableHandler: "{{ if and (eq .TableName \"invisibles\") (not .Session.claims.name) (not .Session.username) (not .Session.user) (not .Session.apiKey) (not .Session.apiUser) }} false {{ else }} true {{ end }}"
     - recordHandler: "{{ if eq .TableName \"comments\"}} filter=message,neq,invisible {{ else }}{{ end }}"
   - multiTenancy:
     - handler: "{{ if eq .TableName \"kunsthåndværk\"}}{\"user_id\":1}{{ else }}{}{{ end }}"

@@ -30,12 +30,6 @@ func GetRequestParams(request *http.Request) url.Values {
 
 func GetSession(w http.ResponseWriter, request *http.Request) *sessions.Session {
 	session, _ := store.Get(request, "session")
-	// Save it before we write to the response/return from the handler.
-	err := session.Save(request, w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return nil
-	}
 	return session
 }
 

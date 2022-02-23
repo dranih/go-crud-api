@@ -13,6 +13,7 @@ import (
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/utils"
+	"github.com/gorilla/sessions"
 
 	"text/template"
 )
@@ -26,7 +27,7 @@ func NewAuthorizationMiddleware(responder controller.Responder, properties map[s
 	return &AuthorizationMiddleware{GenericMiddleware: GenericMiddleware{Responder: responder, Properties: properties}, reflection: reflection}
 }
 
-func (am *AuthorizationMiddleware) handleColumns(operation, tableName string) {
+func (am *AuthorizationMiddleware) handleColumns(operation, tableName string, session *sessions.Session) {
 	columnHandler := fmt.Sprint(am.getProperty("columnHandler", ""))
 	if columnHandler != "" {
 		table := am.reflection.GetTable(tableName)
@@ -36,7 +37,8 @@ func (am *AuthorizationMiddleware) handleColumns(operation, tableName string) {
 				data := struct {
 					Operation  string
 					ColumnName string
-				}{Operation: operation, ColumnName: columnName}
+					Session    map[interface{}]interface{}
+				}{Operation: operation, ColumnName: columnName, Session: session.Values}
 				if err := t.Execute(&res, data); err == nil {
 					if allowed, _ := strconv.ParseBool(strings.TrimSpace(res.String())); !allowed {
 						table.RemoveColumn(columnName)
@@ -51,7 +53,7 @@ func (am *AuthorizationMiddleware) handleColumns(operation, tableName string) {
 	}
 }
 
-func (am *AuthorizationMiddleware) handleTable(operation, tableName string) {
+func (am *AuthorizationMiddleware) handleTable(operation, tableName string, session *sessions.Session) {
 	if !am.reflection.HasTable(tableName) {
 		return
 	}
@@ -63,7 +65,8 @@ func (am *AuthorizationMiddleware) handleTable(operation, tableName string) {
 			data := struct {
 				Operation string
 				TableName string
-			}{Operation: operation, TableName: tableName}
+				Session   map[interface{}]interface{}
+			}{Operation: operation, TableName: tableName, Session: session.Values}
 			if err := t.Execute(&res, data); err == nil {
 				allowed, _ = strconv.ParseBool(strings.TrimSpace(res.String()))
 			} else {
@@ -76,11 +79,11 @@ func (am *AuthorizationMiddleware) handleTable(operation, tableName string) {
 	if !allowed {
 		am.reflection.RemoveTable(tableName)
 	} else {
-		am.handleColumns(operation, tableName)
+		am.handleColumns(operation, tableName, session)
 	}
 }
 
-func (am *AuthorizationMiddleware) handleRecords(operation, tableName string) {
+func (am *AuthorizationMiddleware) handleRecords(operation, tableName string, session *sessions.Session) {
 	if !am.reflection.HasTable(tableName) {
 		return
 	}
@@ -91,7 +94,8 @@ func (am *AuthorizationMiddleware) handleRecords(operation, tableName string) {
 			data := struct {
 				Operation string
 				TableName string
-			}{Operation: operation, TableName: tableName}
+				Session   map[interface{}]interface{}
+			}{Operation: operation, TableName: tableName, Session: session.Values}
 			if err := t.Execute(&res, data); err == nil {
 				query := strings.TrimSpace(res.String())
 				filters := &database.FilterInfo{}
@@ -117,10 +121,12 @@ func (am *AuthorizationMiddleware) Process(next http.Handler) http.Handler {
 		path := utils.GetPathSegment(r, 1)
 		operation := utils.GetOperation(r)
 		tableNames := utils.GetTableNames(r, am.reflection.GetTableNames())
+		session := utils.GetSession(w, r)
+
 		for _, tableName := range tableNames {
-			am.handleTable(operation, tableName)
+			am.handleTable(operation, tableName, session)
 			if path == "records" {
-				am.handleRecords(operation, tableName)
+				am.handleRecords(operation, tableName, session)
 			}
 		}
 		if path == "openapi" {
