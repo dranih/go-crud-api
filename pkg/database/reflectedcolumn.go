@@ -118,7 +118,7 @@ func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResul
 	}
 	pk := false
 	fk := ""
-	return &ReflectedColumn{name, jdbcType, length, precision, scale, nullable, pk, fk}
+	return NewReflectedColumn(name, jdbcType, length, precision, scale, nullable, pk, fk)
 }
 
 func NewReflectedColumnFromJson(json map[string]interface{}) *ReflectedColumn {
@@ -278,7 +278,32 @@ func (rc *ReflectedColumn) GetFk() string {
 }
 
 func (rc *ReflectedColumn) Serialize() map[string]interface{} {
-	return map[string]interface{}{
+	res := map[string]interface{}{
+		"name": rc.name,
+		"type": rc.columnType,
+	}
+	if rc.length > 0 {
+		res["length"] = rc.length
+	}
+	if rc.precision > 0 {
+		res["precision"] = rc.precision
+	}
+	if rc.scale > 0 {
+		res["scale"] = rc.scale
+	}
+	if rc.nullable {
+		res["nullable"] = rc.nullable
+	}
+	if rc.pk {
+		res["pk"] = rc.pk
+	}
+	if rc.fk != "" {
+		res["fk"] = rc.fk
+	}
+
+	return res
+
+	/*return map[string]interface{}{
 		"name":      rc.name,
 		"type":      rc.columnType,
 		"length":    rc.length,
@@ -287,7 +312,7 @@ func (rc *ReflectedColumn) Serialize() map[string]interface{} {
 		"nullable":  rc.nullable,
 		"pk":        rc.pk,
 		"fk":        rc.fk,
-	}
+	}*/
 }
 
 func (rc *ReflectedColumn) JsonSerialize() map[string]interface{} {

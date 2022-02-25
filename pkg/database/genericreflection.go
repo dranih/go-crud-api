@@ -22,6 +22,8 @@ func (r *GenericReflection) GetIgnoredTables() []string {
 	switch r.driver {
 	case "pgsql":
 		return []string{"spatial_ref_sys", "raster_columns", "raster_overviews", "geography_columns", "geometry_columns"}
+	case "sqlite":
+		return []string{"sqlite_sequence"}
 	default:
 		return []string{}
 	}

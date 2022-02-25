@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -49,6 +50,7 @@ type Test struct {
 	SkipFor       map[string]bool
 	Driver        string
 	Server        string
+	WantJson      string
 }
 
 func RunTests(t *testing.T, serverUrlHttps string, tests []Test) {
@@ -121,6 +123,17 @@ func RunTests(t *testing.T, serverUrlHttps string, tests []Test) {
 						if !re.Match(b) {
 							t.Errorf("Regex '%s' not matching, got '%s'", tc.WantRegex, b)
 						}
+					} else if tc.WantJson != "" {
+						var j, j2 interface{}
+						if err := json.Unmarshal([]byte(tc.WantJson), &j); err != nil {
+							t.Errorf("Unmarshal error : %s", err.Error())
+						}
+						if err := json.Unmarshal(b, &j2); err != nil {
+							t.Errorf("Unmarshal error : %s", err.Error())
+						}
+						if ok := JsonEqual(j, j2); !ok {
+							t.Errorf("Want Json '%s'\nGot '%s'\nError : %s", tc.WantJson, strings.TrimSpace(string(b)), err)
+						}
 					} else if strings.TrimSpace(string(b)) != tc.Want {
 						t.Errorf("Want '%s', got '%s'", tc.Want, strings.TrimSpace(string(b)))
 					}
@@ -170,4 +183,59 @@ func loadSqlFile(sqlFile string, db *sql.DB) error {
 		return err
 	}
 	return nil
+}
+
+// Equal checks equality between 2 Body-encoded data.
+// https://github.com/emacampolo/gomparator/blob/master/json_util.go
+func JsonEqual(vx, vy interface{}) bool {
+
+	if reflect.TypeOf(vx) != reflect.TypeOf(vy) {
+		return false
+	}
+
+	switch x := vx.(type) {
+	case map[string]interface{}:
+		y := vy.(map[string]interface{})
+
+		if len(x) != len(y) {
+			return false
+		}
+
+		for k, v := range x {
+			val2 := y[k]
+
+			if (v == nil) != (val2 == nil) {
+				return false
+			}
+
+			if !JsonEqual(v, val2) {
+				return false
+			}
+		}
+
+		return true
+	case []interface{}:
+		y := vy.([]interface{})
+
+		if len(x) != len(y) {
+			return false
+		}
+
+		var matches int
+		flagged := make([]bool, len(y))
+		for _, v := range x {
+			for i, v2 := range y {
+				if JsonEqual(v, v2) && !flagged[i] {
+					matches++
+					flagged[i] = true
+
+					break
+				}
+			}
+		}
+
+		return matches == len(x)
+	default:
+		return vx == vy
+	}
 }

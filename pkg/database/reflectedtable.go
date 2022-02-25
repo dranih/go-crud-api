@@ -90,12 +90,9 @@ func NewReflectedTableFromJson(json map[string]interface{}) *ReflectedTable {
 		}
 		columns := map[string]*ReflectedColumn{}
 		if jsonColumns, exists := json["columns"]; exists {
-			if c, ok := jsonColumns.([]interface{}); ok {
+			if c, ok := jsonColumns.([]*ReflectedColumn); ok {
 				for _, column := range c {
-					if tcolumn, ok := column.(map[string]interface{}); ok {
-						rcolumn := NewReflectedColumnFromJson(tcolumn)
-						columns[rcolumn.GetName()] = rcolumn
-					}
+					columns[column.GetName()] = column
 				}
 			}
 		}
@@ -156,15 +153,14 @@ func (rt *ReflectedTable) RemoveColumn(columnName string) bool {
 }
 
 func (rt *ReflectedTable) Serialize() map[string]interface{} {
-	i, keys := 0, make([]interface{}, len(rt.columns))
-	for key := range rt.columns {
-		keys[i] = key
-		i++
+	var columns []*ReflectedColumn
+	for _, c := range rt.columns {
+		columns = append(columns, c)
 	}
 	return map[string]interface{}{
 		"name":    rt.name,
 		"type":    rt.tableType,
-		"columns": keys,
+		"columns": columns,
 	}
 }
 
