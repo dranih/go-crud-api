@@ -8,9 +8,10 @@ To-do :
 - [X] Cache mecanism
 - [X] Finishing controllers
 - [ ] Finishing middlewares
+- [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)
 - [ ] Review whole package structure
 - [ ] Logger options
-- [ ] https
+- [X] https
 - [ ] Write a README
 - [ ] Comment code
 - [ ] :tada:

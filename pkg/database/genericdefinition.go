@@ -19,7 +19,12 @@ func NewGenericDefinition(pdo *LazyPdo, driver, database string, tables map[stri
 }
 
 func (gd *GenericDefinition) quote(identifier string) string {
-	return `"` + strings.Replace(identifier, `"`, ``, -1) + `"`
+	switch gd.driver {
+	case "mysql":
+		return "`" + strings.Replace(identifier, `"`, ``, -1) + "`"
+	default:
+		return `"` + strings.Replace(identifier, `"`, ``, -1) + `"`
+	}
 }
 
 func (gd *GenericDefinition) GetColumnType(column *ReflectedColumn, update bool) string {
@@ -216,8 +221,8 @@ func (gd *GenericDefinition) getSetColumnPkSequenceStartSQL(tableName, columnNam
 	case "mysql":
 		return "select 1"
 	case "pgsql":
-		p3 := gd.quote(tableName + "_" + columnName + "_seq")
-		return fmt.Sprintf("SELECT setval(%s, (SELECT max(%s)+1 FROM %s", p3, p2, p1)
+		p3 := "'" + tableName + "_" + columnName + "_seq" + "'"
+		return fmt.Sprintf("SELECT setval(%s, (SELECT max(%s)+1 FROM %s))", p3, p2, p1)
 	case "sqlsrv":
 		p3 := gd.quote(tableName + "_" + columnName + "_seq")
 		p4Map, err := gd.pdo.Query(nil, fmt.Sprintf("SELECT max(%s)+1 FROM %s", p2, p1))
@@ -244,7 +249,7 @@ func (gd *GenericDefinition) getSetColumnPkDefaultSQL(tableName, columnName stri
 	case "pgsql":
 		var p4 string
 		if newColumn.GetPk() {
-			p3 := gd.quote(tableName + "_" + columnName + "_seq")
+			p3 := "'" + tableName + "_" + columnName + "_seq" + "'"
 			p4 = fmt.Sprintf("SET DEFAULT nextval(%s)", p3)
 		} else {
 			p4 = "DROP DEFAULT"
