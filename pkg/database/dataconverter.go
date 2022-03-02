@@ -33,6 +33,10 @@ func (dc *DataConverter) convertRecordValue(conversion string, value interface{}
 			return res
 		case bool:
 			return v
+		case int, int8, int16, int32, int64:
+			if a, err := strconv.ParseBool(fmt.Sprint(v)); err == nil {
+				return a
+			}
 		}
 	case "integer":
 		switch v := value.(type) {

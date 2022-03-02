@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -170,7 +171,11 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 				}
 				break
 			case "blob", "varbinary":
-				if val, err := base64.RawURLEncoding.DecodeString(v); err != nil {
+				padVal := strings.ReplaceAll(v, `-`, `+`)
+				padVal = strings.ReplaceAll(padVal, `_`, `/`)
+				padLen := int(math.Ceil(float64(len(padVal))/4) * 4)
+				padVal = padVal + strings.Repeat(`=`, padLen-len(padVal))
+				if val, err := base64.StdEncoding.DecodeString(padVal); err != nil {
 					return "invalid base64", false
 				} else if column.HasLength() && len(val) > column.GetLength() {
 					return "string too long", false

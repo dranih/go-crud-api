@@ -116,7 +116,7 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 func (ds *DefinitionService) AddTable(definition map[string]interface{}) bool {
 	newTable := NewReflectedTableFromJson(definition)
 	if err := ds.db.definition.AddTable(newTable); err != nil {
-		log.Printf("Error : %v", err)
+		log.Printf("Error adding table %s : %v", newTable.GetName(), err)
 		return false
 	}
 	if ds.db.tables != nil {
@@ -129,18 +129,18 @@ func (ds *DefinitionService) AddTable(definition map[string]interface{}) bool {
 func (ds *DefinitionService) AddColumn(tableName string, definition map[string]interface{}) bool {
 	newColumn := NewReflectedColumnFromJson(definition)
 	if err := ds.db.definition.AddColumn(tableName, newColumn); err != nil {
-		log.Printf("Error : %v", err)
+		log.Printf("Error adding column %s : %v", newColumn.GetName(), err)
 		return false
 	}
 	if newColumn.GetFk() != "" {
 		if err := ds.db.definition.AddColumnForeignKey(tableName, newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error : %v", err)
+			log.Printf("Error adding foreign key for column %s : %v", newColumn.GetName(), err)
 			return false
 		}
 	}
 	if newColumn.GetPk() {
 		if err := ds.db.definition.AddColumnPrimaryKey(tableName, newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error : %v", err)
+			log.Printf("Error adding primary key for column %s : %v", newColumn.GetName(), err)
 			return false
 		}
 	}
@@ -149,7 +149,7 @@ func (ds *DefinitionService) AddColumn(tableName string, definition map[string]i
 
 func (ds *DefinitionService) RemoveTable(tableName string) bool {
 	if err := ds.db.definition.RemoveTable(tableName); err != nil {
-		log.Printf("Error : %v", err)
+		log.Printf("Error removing table %s : %v", tableName, err)
 		return false
 	}
 	if ds.db.tables != nil {
@@ -165,19 +165,19 @@ func (ds *DefinitionService) RemoveColumn(tableName, columnName string) bool {
 	if newColumn.GetPk() {
 		newColumn.SetPk(false)
 		if err := ds.db.definition.RemoveColumnPrimaryKey(table.GetName(), newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error : %v", err)
+			log.Printf("Error removing primary key for column %s : %v", newColumn.GetName(), err)
 			return false
 		}
 	}
 	if newColumn.GetFk() != "" {
 		newColumn.SetFk("")
 		if err := ds.db.definition.RemoveColumnForeignKey(tableName, newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error : %v", err)
+			log.Printf("Error removing foreign key for column %s : %v", newColumn.GetName(), err)
 			return false
 		}
 	}
 	if err := ds.db.definition.RemoveColumn(tableName, columnName); err != nil {
-		log.Printf("Error : %v", err)
+		log.Printf("Error removing column %s : %v", newColumn.GetName(), err)
 		return false
 	}
 	return true

@@ -3,6 +3,7 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 )
 
 type ReflectedTable struct {
@@ -90,9 +91,17 @@ func NewReflectedTableFromJson(json map[string]interface{}) *ReflectedTable {
 		}
 		columns := map[string]*ReflectedColumn{}
 		if jsonColumns, exists := json["columns"]; exists {
-			if c, ok := jsonColumns.([]*ReflectedColumn); ok {
+			switch c := jsonColumns.(type) {
+			case []*ReflectedColumn:
 				for _, column := range c {
 					columns[column.GetName()] = column
+				}
+			case []interface{}:
+				for _, column := range c {
+					if tcolumn, ok := column.(map[string]interface{}); ok {
+						rcolumn := NewReflectedColumnFromJson(tcolumn)
+						columns[rcolumn.GetName()] = rcolumn
+					}
 				}
 			}
 		}
@@ -154,9 +163,17 @@ func (rt *ReflectedTable) RemoveColumn(columnName string) bool {
 
 func (rt *ReflectedTable) Serialize() map[string]interface{} {
 	var columns []*ReflectedColumn
-	for _, c := range rt.columns {
-		columns = append(columns, c)
+
+	keys := make([]string, 0, len(rt.columns))
+	for k := range rt.columns {
+		keys = append(keys, k)
 	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		columns = append(columns, rt.columns[k])
+	}
+
 	return map[string]interface{}{
 		"name":    rt.name,
 		"type":    rt.tableType,

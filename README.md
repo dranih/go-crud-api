@@ -8,6 +8,7 @@ To-do :
 - [X] Cache mecanism
 - [X] Finishing controllers
 - [ ] Finishing middlewares
+- [ ] Add a github workflow
 - [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)
 - [ ] Review whole package structure
 - [ ] Logger options
