@@ -47,7 +47,7 @@ func NewApi(globalConfig *Config) *Api {
 	responder := controller.NewJsonResponder(config.Debug)
 	router := mux.NewRouter()
 	//Consistent middle order :
-	//sslRedirect,cors,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
+	//sslRedirect,cors,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,validation,sanitation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
 	if properties, exists := config.Middlewares["sslRedirect"]; exists {
 		sslMiddle := middleware.NewSslRedirectMiddleware(responder, properties, globalConfig.Server.HttpsPort)
 		router.Use(sslMiddle.Process)
@@ -77,13 +77,13 @@ func NewApi(globalConfig *Config) *Api {
 		authMiddle := middleware.NewAuthorizationMiddleware(responder, properties, reflection)
 		router.Use(authMiddle.Process)
 	}
-	if properties, exists := config.Middlewares["sanitation"]; exists {
-		sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
-		router.Use(sanitationMiddle.Process)
-	}
 	if properties, exists := config.Middlewares["validation"]; exists {
 		validationMiddle := middleware.NewValidationMiddleware(responder, properties, reflection)
 		router.Use(validationMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["sanitation"]; exists {
+		sanitationMiddle := middleware.NewSanitationMiddleware(responder, properties, reflection)
+		router.Use(sanitationMiddle.Process)
 	}
 	if properties, exists := config.Middlewares["ipAddress"]; exists {
 		ipAddressMiddle := middleware.NewIpAddressMiddleware(responder, properties, reflection)
