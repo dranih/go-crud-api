@@ -105,7 +105,7 @@ func (sm *SanitationMiddleware) sanitizeType(table *database.ReflectedTable, col
 			}
 		case "decimal":
 			if v, err := strconv.ParseFloat(value, 64); err == nil {
-				newValue = strconv.FormatFloat(v, 'g', column.GetScale(), 64)
+				newValue = utils.NumberFormat(v, column.GetScale(), ".", "")
 			}
 		case "float":
 			if v, err := strconv.ParseFloat(value, 32); err == nil {

@@ -52,7 +52,7 @@ func (vm *ValidationMiddleware) callHandler(r *http.Request, w http.ResponseWrit
 	if t, err := template.New("handler").Funcs(sprig.TxtFuncMap()).Parse(handler); err == nil {
 		for i := range records {
 			for columnName, value := range records[i] {
-				if value != nil && table.HasColumn(columnName) {
+				if table.HasColumn(columnName) {
 					column := table.GetColumn(columnName)
 					var res bytes.Buffer
 					data := struct {
@@ -112,7 +112,11 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 			}
 			// try to parse
 			switch column.GetType() {
-			case "integer", "bigint":
+			case "integer":
+				if a, err := strconv.Atoi(v); err != nil || a != int(int32(a)) {
+					return "invalid integer", false
+				}
+			case "bigint":
 				if _, err := strconv.Atoi(v); err != nil {
 					return "invalid integer", false
 				}
@@ -187,12 +191,30 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 			}
 		} else { // check non-string types
 			switch column.GetType() {
-			case "integer", "bigint":
-				if _, ok := value.(int); !ok {
-					if _, ok := value.(float64); !ok {
+			case "integer":
+				switch t := value.(type) {
+				case int, int8, int16, int32:
+					break
+				case float64:
+					if t != float64(int32(t)) {
 						return "invalid integer", false
 					}
+				default:
+					return "invalid integer", false
 				}
+			case "bigint":
+				switch t := value.(type) {
+				case int, int8, int16, int32, int64:
+					break
+				case float64:
+					if t != float64(int(t)) {
+						return "invalid integer", false
+					}
+				default:
+					return "invalid integer", false
+				}
+			case "decimal":
+				return "invalid decimal", false
 			case "float", "double":
 				if _, ok := value.(float64); !ok {
 					return "invalid float", false
