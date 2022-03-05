@@ -61,7 +61,12 @@ func (sm *SanitationMiddleware) callHandler(r *http.Request, handler, operation 
 						Value     interface{}
 					}{Operation: operation, TableName: tableName, Column: columnName, Value: value}
 					if err := t.Execute(&res, data); err == nil {
-						val := sm.sanitizeType(table, column, res.String())
+						var output interface{}
+						output = res.String()
+						if fmt.Sprint(value) == output {
+							output = value
+						}
+						val := sm.sanitizeType(table, column, output)
 						records[i][columnName] = val
 					} else {
 						log.Printf("Error : could not execute template sanitation handler : %s", err.Error())
@@ -89,62 +94,91 @@ func (sm *SanitationMiddleware) callHandler(r *http.Request, handler, operation 
 	return r
 }
 
-func (sm *SanitationMiddleware) sanitizeType(table *database.ReflectedTable, column *database.ReflectedColumn, value string) interface{} {
+func (sm *SanitationMiddleware) sanitizeType(table *database.ReflectedTable, column *database.ReflectedColumn, value interface{}) interface{} {
 	var newValue interface{}
 	tables := sm.getArrayProperty("tables", "all")
 	types := sm.getArrayProperty("types", "all")
 	if (tables["all"] || tables[table.GetName()]) && (types["all"] || types[column.GetType()]) {
-		if value == "" {
+		if value == nil || value == "" {
 			return value
 		}
 		newValue = value
+
 		switch column.GetType() {
 		case "integer", "bigint":
-			if v, err := strconv.ParseFloat(value, 0); err == nil {
-				newValue = v
+			switch t := value.(type) {
+			case float64:
+				newValue = int(t)
+			case string:
+				if v, err := strconv.ParseFloat(t, 0); err == nil {
+					newValue = v
+				}
 			}
 		case "decimal":
-			if v, err := strconv.ParseFloat(value, 64); err == nil {
-				newValue = utils.NumberFormat(v, column.GetScale(), ".", "")
+			if t, ok := value.(string); ok {
+				if v, err := strconv.ParseFloat(t, 64); err == nil {
+					newValue = utils.NumberFormat(v, column.GetScale(), ".", "")
+				}
 			}
 		case "float":
-			if v, err := strconv.ParseFloat(value, 32); err == nil {
-				newValue = v
+			if t, ok := value.(string); ok {
+				if v, err := strconv.ParseFloat(t, 32); err == nil {
+					newValue = v
+				}
 			}
 		case "double":
-			if v, err := strconv.ParseFloat(value, 64); err == nil {
-				newValue = v
+			if t, ok := value.(string); ok {
+				if v, err := strconv.ParseFloat(t, 64); err == nil {
+					newValue = v
+				}
 			}
 		case "boolean":
-			if v, err := strconv.ParseBool(value); err == nil {
-				newValue = v
+			switch t := value.(type) {
+			case int, int8, int16, int32, int64, float32, float64:
+				newValue = (t == 1)
+			case string:
+				if v, err := strconv.ParseBool(t); err == nil {
+					newValue = v
+				}
 			}
 		case "date":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
-				t := time.Unix(v, 0)
-				newValue = fmt.Sprintf("%d-%02d-%02d", t.Year(), int(t.Month()), t.Day())
+			if m, ok := value.(string); ok {
+				if v, err := strtotime.Parse(m, time.Now().Unix()); err != nil {
+					t := time.Unix(v, 0)
+					newValue = fmt.Sprintf("%d-%02d-%02d", t.Year(), int(t.Month()), t.Day())
+				}
 			}
 		case "time":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
-				t := time.Unix(v, 0)
-				newValue = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), int(t.Minute()), t.Second())
+			if m, ok := value.(string); ok {
+				if v, err := strtotime.Parse(m, time.Now().Unix()); err != nil {
+					t := time.Unix(v, 0)
+					newValue = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), int(t.Minute()), t.Second())
+				}
 			}
 		case "timestamp":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
-				t := time.Unix(v, 0)
-				newValue = fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), int(t.Month()), t.Day(), t.Hour(), int(t.Minute()), t.Second())
+			if m, ok := value.(string); ok {
+				if v, err := strtotime.Parse(m, time.Now().Unix()); err != nil {
+					t := time.Unix(v, 0)
+					newValue = fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), int(t.Month()), t.Day(), t.Hour(), int(t.Minute()), t.Second())
+				}
 			}
 		case "blob", "varbinary":
-			// allow base64url format
-			v := strings.ReplaceAll(strings.TrimSpace(value), `-`, `+`)
-			newValue = strings.ReplaceAll(v, `_`, `/`)
+			if m, ok := value.(string); ok {
+				// allow base64url format
+				v := strings.ReplaceAll(strings.TrimSpace(m), `-`, `+`)
+				newValue = strings.ReplaceAll(v, `_`, `/`)
+			}
 		case "clob", "varchar":
 			newValue = value
 		case "geometry":
-			newValue = strings.TrimSpace(value)
+			if m, ok := value.(string); ok {
+				newValue = strings.TrimSpace(m)
+			}
 		}
+		return newValue
+	} else {
+		return value
 	}
-	return newValue
 }
 
 func (sm *SanitationMiddleware) Process(next http.Handler) http.Handler {

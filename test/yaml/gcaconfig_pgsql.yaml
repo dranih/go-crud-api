@@ -29,7 +29,7 @@ api:
     - handler: "{{ if eq .TableName \"kunsthåndværk\"}}{\"user_id\":1}{{ else }}{}{{ end }}"
   - sanitation:
     - handler: "{{ if kindIs \"string\" .Value }}{{regexReplaceAllLiteral \"<(.|\\n)*?>\" .Value \"\"}}{{ else }}{{ .Value| print }}{{ end }}"
-    - table: "forgiving"
+    - tables: "forgiving"
   - validation:
     - handler: "{{ if and (eq .Column.GetName \"post_id\") (and (not (kindIs \"float64\" .Value)) (not (kindIs \"int\" .Value))) }}must be numeric{{ else }}true{{ end }}"
   - pageLimits:
