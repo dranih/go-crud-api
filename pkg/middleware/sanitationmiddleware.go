@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -108,57 +109,66 @@ func (sm *SanitationMiddleware) sanitizeType(table *database.ReflectedTable, col
 		case "integer", "bigint":
 			switch t := value.(type) {
 			case float64:
-				newValue = int(t)
+				newValue = int(math.Round(t))
 			case string:
-				if v, err := strconv.ParseFloat(t, 0); err == nil {
-					newValue = v
+				if v, err := strconv.ParseFloat(strings.TrimSpace(t), 64); err == nil {
+					newValue = int(math.Round(v))
 				}
 			}
 		case "decimal":
-			if t, ok := value.(string); ok {
-				if v, err := strconv.ParseFloat(t, 64); err == nil {
+			switch t := value.(type) {
+			case float64:
+				newValue = utils.NumberFormat(t, column.GetScale(), ".", "")
+			case string:
+				if v, err := strconv.ParseFloat(strings.TrimSpace(t), 64); err == nil {
 					newValue = utils.NumberFormat(v, column.GetScale(), ".", "")
 				}
 			}
 		case "float":
 			if t, ok := value.(string); ok {
-				if v, err := strconv.ParseFloat(t, 32); err == nil {
+				if v, err := strconv.ParseFloat(strings.TrimSpace(t), 32); err == nil {
 					newValue = v
 				}
 			}
 		case "double":
 			if t, ok := value.(string); ok {
-				if v, err := strconv.ParseFloat(t, 64); err == nil {
+				if v, err := strconv.ParseFloat(strings.TrimSpace(t), 64); err == nil {
 					newValue = v
 				}
 			}
 		case "boolean":
 			switch t := value.(type) {
-			case int, int8, int16, int32, int64, float32, float64:
+			case int, int8, int16, int32, int64:
 				newValue = (t == 1)
+			case float32, float64:
+				newValue = (t == 1.0)
 			case string:
-				if v, err := strconv.ParseBool(t); err == nil {
+				if v, err := strconv.ParseBool(strings.TrimSpace(t)); err == nil {
 					newValue = v
+				} else if t == "yes" || t == "on" { //Compat with php FILTER_VALIDATE_BOOLEAN filter
+					newValue = true
+				} else if t == "no" || t == "off" {
+					newValue = false
 				}
 			}
 		case "date":
 			if m, ok := value.(string); ok {
-				if v, err := strtotime.Parse(m, time.Now().Unix()); err != nil {
-					t := time.Unix(v, 0)
+				if v, err := strtotime.Parse(m, time.Now().Unix()); err == nil {
+					t := time.Unix(v, 0).Local().UTC()
 					newValue = fmt.Sprintf("%d-%02d-%02d", t.Year(), int(t.Month()), t.Day())
 				}
 			}
 		case "time":
 			if m, ok := value.(string); ok {
-				if v, err := strtotime.Parse(m, time.Now().Unix()); err != nil {
-					t := time.Unix(v, 0)
+				if v, err := strtotime.Parse(m, time.Now().Unix()); err == nil {
+					t := time.Unix(v, 0).Local().UTC()
 					newValue = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), int(t.Minute()), t.Second())
 				}
 			}
 		case "timestamp":
 			if m, ok := value.(string); ok {
-				if v, err := strtotime.Parse(m, time.Now().Unix()); err != nil {
-					t := time.Unix(v, 0)
+				if v, err := strtotime.Parse(m, time.Now().Unix()); err == nil {
+					t := time.Unix(v, 0).Local().UTC()
 					newValue = fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), int(t.Month()), t.Day(), t.Hour(), int(t.Minute()), t.Second())
 				}
 			}

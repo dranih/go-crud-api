@@ -270,18 +270,18 @@ func (vm *ValidationMiddleware) sanitizeType(table *database.ReflectedTable, col
 				newValue = v
 			}
 		case "date":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
-				t := time.Unix(v, 0)
+			if v, err := strtotime.Parse(value, time.Now().Unix()); err == nil {
+				t := time.Unix(v, 0).Local().UTC()
 				newValue = fmt.Sprintf("%d-%02d-%02d", t.Year(), int(t.Month()), t.Day())
 			}
 		case "time":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
-				t := time.Unix(v, 0)
+			if v, err := strtotime.Parse(value, time.Now().Unix()); err == nil {
+				t := time.Unix(v, 0).Local().UTC()
 				newValue = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), int(t.Minute()), t.Second())
 			}
 		case "timestamp":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err != nil {
-				t := time.Unix(v, 0)
+			if v, err := strtotime.Parse(value, time.Now().Unix()); err == nil {
+				t := time.Unix(v, 0).Local().UTC()
 				newValue = fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), int(t.Month()), t.Day(), t.Hour(), int(t.Minute()), t.Second())
 			}
 		case "blob", "varbinary":
