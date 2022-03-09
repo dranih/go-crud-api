@@ -69,6 +69,10 @@ func NewApi(globalConfig *Config) *Api {
 		reconnectMiddle := middleware.NewReconnectMiddleware(responder, properties, reflection, db)
 		router.Use(reconnectMiddle.Process)
 	}
+	if properties, exists := config.Middlewares["apiKeyAuth"]; exists {
+		akamMiddle := middleware.NewApiKeyAuth(responder, properties)
+		router.Use(akamMiddle.Process)
+	}
 	if properties, exists := config.Middlewares["basicAuth"]; exists {
 		bamMiddle := middleware.NewBasicAuth(responder, properties)
 		router.Use(bamMiddle.Process)
@@ -106,6 +110,11 @@ func NewApi(globalConfig *Config) *Api {
 		customizationMiddle := middleware.NewCustomizationMiddleware(responder, properties, reflection)
 		router.Use(customizationMiddle.Process)
 	}
+
+	//Save session after all middlewares
+	//Session should not be altered by the controllers
+	saveSessionMiddle := middleware.NewSaveSession(responder, nil)
+	router.Use(saveSessionMiddle.Process)
 
 	for ctrl := range config.GetControllers() {
 		switch ctrl {

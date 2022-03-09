@@ -27,8 +27,10 @@ func TestBasicAuth(t *testing.T) {
 	router := mux.NewRouter()
 	responder := controller.NewJsonResponder(false)
 	bamMiddle := NewBasicAuth(responder, properties)
+	saveSessionMiddle := NewSaveSession(responder, nil)
 	router.HandleFunc("/", allowedTest).Methods("GET")
 	router.Use(bamMiddle.Process)
+	router.Use(saveSessionMiddle.Process)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 

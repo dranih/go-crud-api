@@ -10,10 +10,13 @@ api:
   password: "go-crud-api"
 
   middlewares:
+  - apiKeyAuth:
+    - mode: "optional"
+    - keys: "123456789abc"
   - basicAuth:
-      - mode: "optional"
-      - realm: "GoCrudApi : Username and password required"
-      - passwordFile: "../../test/test.pwd"
+    - mode: "optional"
+    - realm: "GoCrudApi : Username and password required"
+    - passwordFile: "../../test/test.pwd"
   - json:
     - controllers: "records"
     - tables: "products"

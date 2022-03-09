@@ -120,6 +120,7 @@ func (am *AuthorizationMiddleware) Process(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := utils.GetPathSegment(r, 1)
 		operation := utils.GetOperation(r)
+		am.reflection.RefreshTables()
 		tableNames := utils.GetTableNames(r, am.reflection.GetTableNames())
 		session := utils.GetSession(w, r)
 

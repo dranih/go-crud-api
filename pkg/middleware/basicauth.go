@@ -111,11 +111,7 @@ func (bam *BasicAuthMiddleware) Process(next http.Handler) http.Handler {
 				bam.Responder.Error(record.AUTHENTICATION_FAILED, username, w, "")
 			} else {
 				session.Values["username"] = validUser
-				if err := session.Save(r, w); err != nil {
-					bam.Responder.Error(record.INTERNAL_SERVER_ERROR, err.Error(), w, "")
-				} else {
-					next.ServeHTTP(w, r)
-				}
+				next.ServeHTTP(w, r)
 			}
 		} else {
 			if val, exists := session.Values["username"]; !exists || val == nil {
