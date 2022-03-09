@@ -3,7 +3,7 @@ server:
 
 api:
   driver: "pgsql"
-  controllers: "records,columns,geojson,openapi,status"
+  controllers: "records,columns,cache,openapi,geojson,status"
   address: "localhost"
   port: 5432
   database: "go-crud-api"

@@ -7,6 +7,7 @@ To-do :
 - [X] Other drivers (only sqlite now)
 - [X] Cache mecanism
 - [X] Finishing controllers
+- [ ] Custom controller (compile extra go code at launch like https://github.com/benhoyt/prig ?)
 - [ ] Finishing middlewares
 - [ ] Add a github workflow
 - [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)

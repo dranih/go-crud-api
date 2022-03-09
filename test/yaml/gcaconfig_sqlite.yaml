@@ -3,7 +3,7 @@ server:
 
 api:
   driver: "sqlite"
-  controllers: "records,columns,geojson,openapi,status"
+  controllers: "records,columns,cache,openapi,geojson,status"
   address: "/tmp/gocrudtests.db"
   database: "go-crud-api"
   username: "go-crud-api"

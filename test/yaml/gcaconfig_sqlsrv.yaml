@@ -3,7 +3,7 @@ server:
 
 api:
   driver: "sqlsrv"
-  controllers: "records,columns,geojson,openapi,status"
+  controllers: "records,columns,cache,openapi,geojson,status"
   address: "localhost"
   port: 1433
   database: "go-crud-api"

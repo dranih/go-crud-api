@@ -3,7 +3,7 @@ server:
 
 api:
   driver: "mysql"
-  controllers: "records,columns,geojson,openapi,status"
+  controllers: "records,columns,cache,openapi,geojson,status"
   address: "localhost"
   port: 3306
   database: "go-crud-api"
