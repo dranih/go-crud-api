@@ -73,6 +73,10 @@ func NewApi(globalConfig *Config) *Api {
 		akamMiddle := middleware.NewApiKeyAuth(responder, properties)
 		router.Use(akamMiddle.Process)
 	}
+	if properties, exists := config.Middlewares["apiKeyDbAuth"]; exists {
+		akdamMiddle := middleware.NewApiKeyDbAuth(responder, properties, reflection, db)
+		router.Use(akdamMiddle.Process)
+	}
 	if properties, exists := config.Middlewares["basicAuth"]; exists {
 		bamMiddle := middleware.NewBasicAuth(responder, properties)
 		router.Use(bamMiddle.Process)

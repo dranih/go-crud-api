@@ -87,6 +87,21 @@ func TestAuthApi(t *testing.T) {
 			Want:          `{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}`,
 			StatusCode:    http.StatusOK,
 		},
+		{
+			Name:       "005_api_key_db_auth_A",
+			Method:     http.MethodGet,
+			Uri:        "/records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d",
+			Want:       `{"code":1001,"message":"Table 'invisibles' not found"}`,
+			StatusCode: http.StatusNotFound,
+		},
+		{
+			Name:          "005_api_key_db_auth_B",
+			Method:        http.MethodGet,
+			Uri:           "/records/invisibles/e42c77c6-06a4-4502-816c-d112c7142e6d",
+			RequestHeader: map[string]string{"X-API-Key-DB": "123456789abc"},
+			Want:          `{"id":"e42c77c6-06a4-4502-816c-d112c7142e6d"}`,
+			StatusCode:    http.StatusOK,
+		},
 	}
 	utils.RunTests(t, serverUrlHttps, tt)
 

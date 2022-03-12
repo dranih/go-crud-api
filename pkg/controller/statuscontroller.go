@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/dranih/go-crud-api/pkg/cache"
 	"github.com/dranih/go-crud-api/pkg/database"
@@ -14,8 +16,12 @@ type StatusController struct {
 	responder Responder
 }
 
-func NewStatusController(router *mux.Router, responder Responder, cache cache.Cache, db *database.GenericDB) *StatusController {
-	sc := &StatusController{db, cache, responder}
+func NewStatusController(router *mux.Router, responder Responder, lcache cache.Cache, db *database.GenericDB) *StatusController {
+	if lcache == nil {
+		prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
+		lcache = cache.Create("TempFile", prefix, "")
+	}
+	sc := &StatusController{db, lcache, responder}
 	router.HandleFunc("/status/ping", sc.ping).Methods("GET")
 	return sc
 }

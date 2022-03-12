@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/dranih/go-crud-api/pkg/cache"
 	"github.com/dranih/go-crud-api/pkg/utils"
@@ -17,8 +18,12 @@ type ReflectionService struct {
 	tables   map[string]*ReflectedTable
 }
 
-func NewReflectionService(db *GenericDB, cache cache.Cache, ttl int32) *ReflectionService {
-	return &ReflectionService{db, cache, ttl, nil, map[string]*ReflectedTable{}}
+func NewReflectionService(db *GenericDB, lcache cache.Cache, ttl int32) *ReflectionService {
+	if lcache == nil {
+		prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
+		lcache = cache.Create("TempFile", prefix, "")
+	}
+	return &ReflectionService{db, lcache, ttl, nil, map[string]*ReflectedTable{}}
 }
 
 // done
