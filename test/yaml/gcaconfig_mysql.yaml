@@ -17,6 +17,11 @@ api:
   - apiKeyDbAuth:
     - mode: "optional"
     - header: "X-API-Key-DB"
+  - dbAuth:
+    - mode: "optional"
+    - returnedColumns: "id,username,password"
+    - registerUser: "1"
+    - passwordLength: "4"
   - basicAuth:
     - mode: "optional"
     - realm: "GoCrudApi : Username and password required"

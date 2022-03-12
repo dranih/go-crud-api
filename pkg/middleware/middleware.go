@@ -40,7 +40,7 @@ func (gm *GenericMiddleware) getIntProperty(key string, defaut int) int {
 	if val, exists := gm.Properties[key]; exists {
 		switch v := val.(type) {
 		case string:
-			if a, err := strconv.Atoi(v); err != nil {
+			if a, err := strconv.Atoi(v); err == nil {
 				return a
 			}
 		case int:

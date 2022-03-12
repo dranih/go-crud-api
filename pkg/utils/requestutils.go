@@ -33,6 +33,10 @@ func GetSession(w http.ResponseWriter, request *http.Request) *sessions.Session 
 	return session
 }
 
+func GetNewSession() *sessions.Session {
+	return sessions.NewSession(store, "session")
+}
+
 //GetBodyData tries to get data from body request, as a urlencoded content type or as json by default
 func GetBodyData(r *http.Request) (interface{}, error) {
 	headerContentType := r.Header.Get("Content-Type")

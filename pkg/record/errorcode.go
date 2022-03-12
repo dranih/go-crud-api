@@ -71,7 +71,7 @@ func NewErrorCode(code int) *ErrorCode {
 		1018: {"Only AJAX requests allowed for '%s'", FORBIDDEN},
 		1019: {"Pagination forbidden", FORBIDDEN},
 		1020: {"User '%s' already exists", CONFLICT},
-		1021: {"Password too short (<%d characters)", UNPROCESSABLE_ENTITY},
+		1021: {"Password too short (<%s characters)", UNPROCESSABLE_ENTITY},
 		9999: {"%s", INTERNAL_SERVER_ERROR},
 	}
 	if _, b := values[code]; !b {

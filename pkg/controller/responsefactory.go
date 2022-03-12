@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 )
@@ -22,6 +23,9 @@ func (rf *ResponseFactory) FromHtml(status int, html string, w http.ResponseWrit
 // Should check marshalling error
 func (rf *ResponseFactory) FromObject(status int, body interface{}, w http.ResponseWriter) http.ResponseWriter {
 	content, _ := json.Marshal(body)
+	content = bytes.Replace(content, []byte("\\u003c"), []byte("<"), -1)
+	content = bytes.Replace(content, []byte("\\u003e"), []byte(">"), -1)
+	content = bytes.Replace(content, []byte("\\u0026"), []byte("&"), -1)
 	return rf.From(status, "application/json", content, w)
 }
 
