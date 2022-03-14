@@ -47,7 +47,7 @@ func NewApi(globalConfig *Config) *Api {
 	responder := controller.NewJsonResponder(config.Debug)
 	router := mux.NewRouter()
 	//Consistent middle order :
-	//sslRedirect,cors,firewall,xsrf,*ajaxOnly*,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
+	//sslRedirect,cors,firewall,xsrf,ajaxOnly,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
 	if properties, exists := config.Middlewares["sslRedirect"]; exists {
 		sslMiddle := middleware.NewSslRedirectMiddleware(responder, properties, globalConfig.Server.HttpsPort)
 		router.Use(sslMiddle.Process)
@@ -64,6 +64,10 @@ func NewApi(globalConfig *Config) *Api {
 	if properties, exists := config.Middlewares["xsrf"]; exists {
 		xMiddleware := middleware.NewXsrfMiddleware(responder, properties)
 		router.Use(xMiddleware.Process)
+	}
+	if properties, exists := config.Middlewares["ajaxOnly"]; exists {
+		aoMiddleware := middleware.NewAjaxOnlyMiddleware(responder, properties)
+		router.Use(aoMiddleware.Process)
 	}
 	if properties, exists := config.Middlewares["xml"]; exists {
 		xmlMiddle := middleware.NewXmlMiddleware(responder, properties)
