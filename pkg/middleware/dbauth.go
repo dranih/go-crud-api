@@ -3,7 +3,6 @@ package middleware
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -108,7 +107,7 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 				users := dam.db.SelectAll(table, columnNames, condition, columnOrdering, 0, 1)
 				for _, user := range users {
 					if err := bcrypt.CompareHashAndPassword([]byte(fmt.Sprint(user[passwordColumnName])), []byte(password)); err == nil {
-						session := utils.GetNewSession()
+						session := utils.GetSession(w, r)
 						delete(user, passwordColumnName)
 						session.Values["user"] = user
 						if err := session.Save(r, w); err == nil {
@@ -163,7 +162,6 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 						if !found {
 							delete(user, pkName)
 						}
-						session := utils.GetNewSession()
 						session.Values["user"] = user
 						session.Save(r, w)
 						dam.Responder.Success(user, w)
@@ -183,7 +181,6 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 				dam.Responder.Success(user, w)
 				return
 			}
-			log.Printf("Session values : %s", session.Values)
 			dam.Responder.Error(record.AUTHENTICATION_REQUIRED, "", w, "")
 			return
 		}

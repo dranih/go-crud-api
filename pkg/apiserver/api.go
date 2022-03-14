@@ -47,7 +47,7 @@ func NewApi(globalConfig *Config) *Api {
 	responder := controller.NewJsonResponder(config.Debug)
 	router := mux.NewRouter()
 	//Consistent middle order :
-	//sslRedirect,cors,*firewall*,*xsrf*,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,*jwtAuth*,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
+	//sslRedirect,cors,*firewall*,*xsrf*,xml,json,reconnect,apiKeyAuth,apiKeyDbAuth,dbAuth,jwtAuth,basicAuth,authorization,sanitation,validation,ipAddress,multiTenancy,pageLimits,joinLimits,customization
 	if properties, exists := config.Middlewares["sslRedirect"]; exists {
 		sslMiddle := middleware.NewSslRedirectMiddleware(responder, properties, globalConfig.Server.HttpsPort)
 		router.Use(sslMiddle.Process)
@@ -80,6 +80,11 @@ func NewApi(globalConfig *Config) *Api {
 	if properties, exists := config.Middlewares["dbAuth"]; exists {
 		damMiddle := middleware.NewDbAuth(responder, properties, reflection, db)
 		router.Use(damMiddle.Process)
+	}
+	if properties, exists := config.Middlewares["jwtAuth"]; exists {
+		gob.Register(map[string]interface{}{})
+		jaMiddle := middleware.NewJwtAuth(responder, properties)
+		router.Use(jaMiddle.Process)
 	}
 	if properties, exists := config.Middlewares["basicAuth"]; exists {
 		bamMiddle := middleware.NewBasicAuth(responder, properties)

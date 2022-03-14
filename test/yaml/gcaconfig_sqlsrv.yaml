@@ -22,6 +22,10 @@ api:
     - returnedColumns: "id,username,password"
     - registerUser: "1"
     - passwordLength: "4"
+  - jwtAuth:
+    - mode: "optional"
+    - time: "1538207605"
+    - secrets: "axpIrCGNGqxzx2R9dtXLIPUSqPo778uhb8CA0F4Hx"
   - basicAuth:
     - mode: "optional"
     - realm: "GoCrudApi : Username and password required"

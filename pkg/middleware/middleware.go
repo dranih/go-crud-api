@@ -23,7 +23,11 @@ type GenericMiddleware struct {
 
 func (gm *GenericMiddleware) getArrayProperty(key, defaut string) map[string]bool {
 	propMap := map[string]bool{}
-	for _, prop := range strings.Split(fmt.Sprint(gm.getProperty(key, defaut)), ",") {
+	properties := fmt.Sprint(gm.getProperty(key, defaut))
+	if properties == "" {
+		return nil
+	}
+	for _, prop := range strings.Split(properties, ",") {
 		propMap[prop] = true
 	}
 	return propMap
@@ -45,6 +49,34 @@ func (gm *GenericMiddleware) getIntProperty(key string, defaut int) int {
 			}
 		case int:
 			return v
+		}
+	}
+	return defaut
+}
+
+func (gm *GenericMiddleware) getInt64Property(key string, defaut int64) int64 {
+	if val, exists := gm.Properties[key]; exists {
+		switch v := val.(type) {
+		case string:
+			if a, err := strconv.ParseInt(v, 10, 64); err == nil {
+				return a
+			}
+		case int:
+			return int64(v)
+		case int64:
+			return v
+		}
+	}
+	return defaut
+}
+
+func (gm *GenericMiddleware) getStringProperty(key string, defaut string) string {
+	if val, exists := gm.Properties[key]; exists {
+		switch v := val.(type) {
+		case string:
+			return v
+		default:
+			return fmt.Sprint(v)
 		}
 	}
 	return defaut
