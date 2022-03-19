@@ -88,7 +88,10 @@ func (l *LazyPdo) connect() *sql.DB {
 		default:
 		}
 		for _, command := range l.commands {
-			l.Query(nil, command, "")
+			_, err := l.Query(nil, command, "")
+			if err != nil {
+				log.Fatalf("Init commands failed on database %s with error : %s", dsn, err)
+			}
 		}
 	}
 	return l.pdo
@@ -255,9 +258,10 @@ func (l *LazyPdo) Rows2Map(rows *sql.Rows) ([]map[string]interface{}, error) {
 	return result, err
 }
 
-func (l *LazyPdo) CloseConn() error {
+func (l *LazyPdo) CloseConn() {
 	if l.pdo != nil {
-		return l.pdo.Close()
+		if err := l.pdo.Close(); err != nil {
+			log.Printf("ERRROR : unable to close database connection : %s", err.Error())
+		}
 	}
-	return nil
 }

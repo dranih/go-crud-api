@@ -60,12 +60,12 @@ func (rs *RecordService) BeginTransaction() (*sql.Tx, error) {
 	return rs.db.BeginTransaction()
 }
 
-func (rs *RecordService) CommitTransaction(tx *sql.Tx) {
-	rs.db.CommitTransaction(tx)
+func (rs *RecordService) CommitTransaction(tx *sql.Tx) error {
+	return rs.db.CommitTransaction(tx)
 }
 
-func (rs *RecordService) RollBackTransaction(tx *sql.Tx) {
-	rs.db.RollBackTransaction(tx)
+func (rs *RecordService) RollBackTransaction(tx *sql.Tx) error {
+	return rs.db.RollBackTransaction(tx)
 }
 
 func (rs *RecordService) Create(tx *sql.Tx, tableName string, params map[string][]string, record ...interface{}) (interface{}, error) {

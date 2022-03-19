@@ -2,6 +2,7 @@ package controller
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"strings"
 
@@ -91,9 +92,13 @@ func (rc *RecordController) multiCall(callback func(*sql.Tx, string, map[string]
 		}
 	}
 	if success {
-		rc.service.CommitTransaction(tx)
+		if err := rc.service.CommitTransaction(tx); err != nil {
+			log.Printf("ERROR : unable to commit transaction : %s", err.Error())
+		}
 	} else {
-		rc.service.RollBackTransaction(tx)
+		if err := rc.service.RollBackTransaction(tx); err != nil {
+			log.Printf("ERROR : unable to rollback transaction : %s", err.Error())
+		}
 	}
 	return &result, errs
 }

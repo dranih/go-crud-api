@@ -274,10 +274,14 @@ func (a *Api) Handle(wg *sync.WaitGroup) {
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
 	if srvHttp != nil {
-		srvHttp.Shutdown(ctx)
+		if err := srvHttp.Shutdown(ctx); err != nil {
+			panic(err)
+		}
 	}
 	if srvHttps != nil {
-		srvHttps.Shutdown(ctx)
+		if err := srvHttps.Shutdown(ctx); err != nil {
+			panic(err)
+		}
 	}
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
 	// <-ctx.Done() if your application should wait for other services

@@ -84,7 +84,12 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 					return
 				}
 				data := map[string]interface{}{}
-				json.Unmarshal([]byte(registerUser), &data)
+				if registerUser != "1" {
+					if err := json.Unmarshal([]byte(registerUser), &data); err != nil {
+						dam.Responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
+						return
+					}
+				}
 				data[usernameColumnName] = username
 				hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 				if err == nil {
@@ -93,7 +98,10 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 					dam.Responder.Error(record.HTTP_MESSAGE_NOT_READABLE, "", w, "")
 					return
 				}
-				dam.db.CreateSingle(nil, table, data)
+				if _, err := dam.db.CreateSingle(nil, table, data); err != nil {
+					dam.Responder.Error(record.INTERNAL_SERVER_ERROR, "", w, "")
+					return
+				}
 				users = dam.db.SelectAll(table, columnNames, condition, columnOrdering, 0, 1)
 				for _, user := range users {
 					delete(user, passwordColumnName)
@@ -143,7 +151,7 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 				if !found {
 					userColumns = append(userColumns, pkName)
 				}
-				users := dam.db.SelectAll(table, columnNames, condition, columnOrdering, 0, 1)
+				users := dam.db.SelectAll(table, userColumns, condition, columnOrdering, 0, 1)
 				for _, user := range users {
 					if err := bcrypt.CompareHashAndPassword([]byte(fmt.Sprint(user[passwordColumnName])), []byte(password)); err == nil {
 						data := map[string]interface{}{}
@@ -163,9 +171,10 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 							delete(user, pkName)
 						}
 						session.Values["user"] = user
-						session.Save(r, w)
-						dam.Responder.Success(user, w)
-						return
+						if err := session.Save(r, w); err == nil {
+							dam.Responder.Success(user, w)
+							return
+						}
 					}
 				}
 				dam.Responder.Error(record.AUTHENTICATION_FAILED, username, w, "")
@@ -177,9 +186,10 @@ func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
 			if user, exists := session.Values["user"]; exists {
 				delete(session.Values, "user")
 				session.Options.MaxAge = -1
-				session.Save(r, w)
-				dam.Responder.Success(user, w)
-				return
+				if err := session.Save(r, w); err == nil {
+					dam.Responder.Success(user, w)
+					return
+				}
 			}
 			dam.Responder.Error(record.AUTHENTICATION_REQUIRED, "", w, "")
 			return

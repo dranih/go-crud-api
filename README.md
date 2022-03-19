@@ -12,6 +12,10 @@ To-do :
 - [ ] Custom controller (compile extra go code at launch like https://github.com/benhoyt/prig ?)
 - [X] Finishing middlewares
 - [ ] Add a github workflow <- next
+  - [X] Init
+  - [ ] Add pgql, mysql and sqlserver testing
+  - [ ] Find why somes linters are not working
+  - [ ] Release pipeline
 - [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)
 - [ ] Review whole package structure
 - [ ] Logger options

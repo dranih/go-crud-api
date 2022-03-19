@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -32,7 +33,9 @@ func (rf *ResponseFactory) FromObject(status int, body interface{}, w http.Respo
 func (rf *ResponseFactory) From(status int, contentType string, content []byte, w http.ResponseWriter) http.ResponseWriter {
 	w.Header().Set("Content-Type", contentType+"; charset=utf-8")
 	w.WriteHeader(status)
-	w.Write(content)
+	if _, err := w.Write(content); err != nil {
+		log.Printf("ERROR : unable to write response : %s", err.Error())
+	}
 	return w
 }
 

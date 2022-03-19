@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"hash"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -253,7 +254,9 @@ func (ja *JwtAuthMiddleware) Process(next http.Handler) http.Handler {
 			claims := ja.getClaims(token)
 			if claims == nil || len(claims) < 1 {
 				delete(session.Values, "claims")
-				session.Save(r, w)
+				if err := session.Save(r, w); err != nil {
+					log.Printf("ERROR : unable to save session : %s", err.Error())
+				}
 				ja.Responder.Error(record.AUTHENTICATION_FAILED, "JWT", w, "")
 				return
 			}

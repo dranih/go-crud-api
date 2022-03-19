@@ -160,12 +160,12 @@ func (g *GenericDB) BeginTransaction() (*sql.Tx, error) {
 	return g.pdo.BeginTransaction()
 }
 
-func (g *GenericDB) CommitTransaction(tx *sql.Tx) {
-	g.pdo.Commit(tx)
+func (g *GenericDB) CommitTransaction(tx *sql.Tx) error {
+	return g.pdo.Commit(tx)
 }
 
-func (g *GenericDB) RollBackTransaction(tx *sql.Tx) {
-	g.pdo.RollBack(tx)
+func (g *GenericDB) RollBackTransaction(tx *sql.Tx) error {
+	return g.pdo.RollBack(tx)
 }
 
 // Should type check
@@ -249,7 +249,6 @@ func (g *GenericDB) CreateSingle(tx *sql.Tx, table *ReflectedTable, columnValues
 
 // Should check error
 func (g *GenericDB) SelectSingle(tx *sql.Tx, table *ReflectedTable, columnNames []string, id string) []map[string]interface{} {
-	records := []map[string]interface{}{}
 	selectColumns := g.columns.GetSelect(table, columnNames)
 	tableName := table.GetName()
 	var condition interface{ Condition }
@@ -259,7 +258,7 @@ func (g *GenericDB) SelectSingle(tx *sql.Tx, table *ReflectedTable, columnNames 
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
 	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableName, quote, whereClause)
-	records, _ = g.query(tx, sql, parameters...)
+	records, _ := g.query(tx, sql, parameters...)
 	if len(records) <= 0 {
 		return nil
 	}
