@@ -9,8 +9,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -144,30 +146,57 @@ func RunTests(t *testing.T, serverUrlHttps string, tests []Test) {
 }
 
 //For tests, if there is no GCA_CONFIG_FILE env var provided, we create a sqlite db and we use a default config file
-func SelectConfig() {
+func SelectConfig() string {
 	if configFile := os.Getenv("GCA_CONFIG_FILE"); configFile != "" {
-		return
+		return ""
 	}
 	//We create a sqlite db for the tests
-	filePath := "/tmp/gocrudtests.db"
-	if _, err := os.Stat(filePath); err == nil {
-		if err = os.Remove(filePath); err != nil {
-			panic(err)
-		}
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "gocrudtests-")
+	if err != nil {
+		log.Fatal("Cannot create temporary file", err)
 	}
+	filePath := tmpFile.Name()
 
-	dsn := fmt.Sprintf("%s?_fk=1&_auth&_auth_user=go-crud-api&_auth_pass=go-crud-api", filePath)
+	_, filename, _, _ := runtime.Caller(1)
+	filepathSql := path.Join(path.Dir(filename), "../../test/sql/blog_sqlite.sql")
+
+	dsn := fmt.Sprintf("%s?_fk=1&defer_fk=1&_auth&_auth_user=go-crud-api&_auth_pass=go-crud-api", filePath)
 	if conn, err := sql.Open("sqlite3", dsn); err != nil {
 		panic(fmt.Sprintf("Connection failed to database %s with error : %s", dsn, err))
 	} else {
-		sqlFile := "../../test/sql/blog_sqlite.sql"
-		if err := loadSqlFile(sqlFile, conn); err != nil {
+		if err := loadSqlFile(filepathSql, conn); err != nil {
 			conn.Close()
 			panic(err)
 		}
 		conn.Close()
 	}
-	os.Setenv("GCA_CONFIG_FILE", "../../test/yaml/gcaconfig_sqlite.yaml")
+	filepathConfig := path.Join(path.Dir(filename), "../../test/yaml/gcaconfig_sqlite.yaml")
+	os.Setenv("GCA_CONFIG_FILE", filepathConfig)
+	return filePath
+}
+
+func IsServerStarted(url string) bool {
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return false
+	}
+	resp, err := client.Do(request)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
+		return true
+	}
+	return false
 }
 
 func loadSqlFile(sqlFile string, db *sql.DB) error {

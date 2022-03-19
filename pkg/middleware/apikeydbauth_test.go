@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/dranih/go-crud-api/pkg/controller"
@@ -12,20 +13,22 @@ import (
 )
 
 func TestApiKeyDbAuth(t *testing.T) {
+	os.Unsetenv("GCA_CONFIG_FILE")
 	properties := map[string]interface{}{
 		"mode":  "required",
 		"realm": "GoCrudApi : Api key required",
 	}
 
-	utils.SelectConfig()
+	db_path := utils.SelectConfig()
 	db := database.NewGenericDB(
 		"sqlite",
-		"/tmp/gocrudtests.db",
+		db_path,
 		0,
 		"go-crud-api",
 		nil,
 		"go-crud-api",
 		"go-crud-api")
+	defer db.PDO().CloseConn()
 	reflection := database.NewReflectionService(db, nil, 0)
 	router := mux.NewRouter()
 	responder := controller.NewJsonResponder(false)
@@ -61,4 +64,7 @@ func TestApiKeyDbAuth(t *testing.T) {
 		},
 	}
 	utils.RunTests(t, ts.URL, tt)
+	if err := os.Remove(db_path); err != nil {
+		panic(err)
+	}
 }

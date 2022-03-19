@@ -16,15 +16,18 @@ import (
 // TestRecordController should unit test the controller, not the whole api
 // To rewrite
 func TestRecordController(t *testing.T) {
+	os.Unsetenv("GCA_CONFIG_FILE")
+	db_path := utils.SelectConfig()
 	db := database.NewGenericDB(
 		"sqlite",
-		"../../test/test.db",
+		db_path,
 		0,
-		"test",
+		"go-crud-api",
 		nil,
-		"",
-		"",
+		"go-crud-api",
+		"go-crud-api",
 	)
+	defer db.PDO().CloseConn()
 	prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
 	cache := cache.Create("TempFile", prefix, "")
 	reflection := database.NewReflectionService(db, cache, 10)
@@ -50,91 +53,94 @@ func TestRecordController(t *testing.T) {
 		{
 			Name:       "get table ",
 			Method:     http.MethodGet,
-			Uri:        "/records/sharks",
+			Uri:        "/records/posts",
 			Body:       ``,
-			WantRegex:  `"sharktype":"Megaladon"`,
+			WantJson:   `{"records":[{"category_id":1,"content":"blog started","id":1,"user_id":1},{"category_id":2,"content":"It works!","id":2,"user_id":1}]}`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "get unique id ",
 			Method:     http.MethodGet,
-			Uri:        "/records/sharks/3",
+			Uri:        "/records/posts/2",
 			Body:       ``,
-			Want:       `{"id":3,"length":1800,"name":"Himari","sharktype":"Megaladon"}`,
+			WantJson:   `{"category_id":2,"content":"It works!","id":2,"user_id":1}`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "get multiple ids ",
 			Method:     http.MethodGet,
-			Uri:        "/records/sharks/1,3",
+			Uri:        "/records/posts/1,2",
 			Body:       ``,
-			Want:       `[{"id":1,"length":427,"name":"Sammy","sharktype":"Greenland Shark"},{"id":3,"length":1800,"name":"Himari","sharktype":"Megaladon"}]`,
+			WantJson:   `[{"category_id":1,"content":"blog started","id":1,"user_id":1},{"category_id":2,"content":"It works!","id":2,"user_id":1}]`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "post unique ",
 			Method:     http.MethodPost,
-			Uri:        "/records/sharks",
-			Body:       `{"id":99,"name":"Tomy","length": "100","sharktype": "Great White Shark"}`,
-			WantRegex:  `{"id":[0-9]+}`,
+			Uri:        "/records/posts",
+			Body:       `{"user_id":1,"category_id":1,"content":"test"}`,
+			Want:       `3`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "put unique ",
 			Method:     http.MethodPut,
-			Uri:        "/records/sharks/99",
-			Body:       `{"length": 2000}`,
-			Want:       `{"RowsAffected":1}`,
+			Uri:        "/records/posts/3",
+			Body:       `{"user_id":1,"category_id":1,"content":"test (edited)"}`,
+			Want:       `1`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "patch unique ",
 			Method:     http.MethodPatch,
-			Uri:        "/records/sharks/99",
-			Body:       `{"length": 10}`,
-			Want:       `{"RowsAffected":1}`,
+			Uri:        "/records/posts/3",
+			Body:       `{"category_id":1}`,
+			Want:       `1`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "delete unique ",
 			Method:     http.MethodDelete,
-			Uri:        "/records/sharks/99",
+			Uri:        "/records/posts/3",
 			Body:       ``,
-			Want:       `{"RowsAffected":1}`,
+			Want:       `1`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "post multiple ",
 			Method:     http.MethodPost,
-			Uri:        "/records/sharks",
-			Body:       `[{"id":99,"name":"Tomy","length": "100","sharktype": "Great White Shark"},{"id":999,"name":"Barbara","length": "150","sharktype": "Hammer head"}]`,
-			WantRegex:  `[{"id":[0-9]+},{"id":[0-9]+}]`,
+			Uri:        "/records/posts",
+			Body:       `[{"user_id":1,"category_id":1,"content":"test"},{"user_id":1,"category_id":1,"content":"test"}]`,
+			Want:       `[4,5]`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "put multiples ",
 			Method:     http.MethodPut,
-			Uri:        "/records/sharks/99,999",
-			Body:       `[{"length": 2000},{"name": "Barbara3","length": 1000}]`,
-			Want:       `[{"RowsAffected":1},{"RowsAffected":1}]`,
+			Uri:        "/records/posts/4,5",
+			Body:       `[{"category_id":2},{"category_id":2}]`,
+			Want:       `[1,1]`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "patch multiple ",
 			Method:     http.MethodPatch,
-			Uri:        "/records/sharks/99,999",
-			Body:       `[{"length": 10},{"length": 50}]`,
-			Want:       `[{"RowsAffected":1},{"RowsAffected":1}]`,
+			Uri:        "/records/posts/4,5",
+			Body:       `[{"category_id":1},{"category_id":1}]`,
+			Want:       `[1,1]`,
 			StatusCode: http.StatusOK,
 		},
 		{
 			Name:       "delete multiple ",
 			Method:     http.MethodDelete,
-			Uri:        "/records/sharks/99,999",
+			Uri:        "/records/posts/4,5",
 			Body:       ``,
-			Want:       `[{"RowsAffected":1},{"RowsAffected":1}]`,
+			Want:       `[1,1]`,
 			StatusCode: http.StatusOK,
 		},
 	}
 	utils.RunTests(t, ts.URL, tt)
+	if err := os.Remove(db_path); err != nil {
+		panic(err)
+	}
 }

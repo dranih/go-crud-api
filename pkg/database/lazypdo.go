@@ -254,3 +254,10 @@ func (l *LazyPdo) Rows2Map(rows *sql.Rows) ([]map[string]interface{}, error) {
 	}
 	return result, err
 }
+
+func (l *LazyPdo) CloseConn() error {
+	if l.pdo != nil {
+		return l.pdo.Close()
+	}
+	return nil
+}

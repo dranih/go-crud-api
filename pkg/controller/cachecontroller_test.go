@@ -14,15 +14,18 @@ import (
 )
 
 func TestCacheController(t *testing.T) {
+	os.Unsetenv("GCA_CONFIG_FILE")
+	db_path := utils.SelectConfig()
 	db := database.NewGenericDB(
 		"sqlite",
-		"../../test/test.db",
+		db_path,
 		0,
-		"test",
-		map[string]bool{"cows": true, "sharks": true},
-		"",
-		"",
+		"go-crud-api",
+		nil,
+		"go-crud-api",
+		"go-crud-api",
 	)
+	defer db.PDO().CloseConn()
 	prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
 	cache := cache.Create("Gocache", prefix, "")
 	reflection := database.NewReflectionService(db, cache, 10)
@@ -40,9 +43,9 @@ func TestCacheController(t *testing.T) {
 		{
 			Name:       "get tables and columns ",
 			Method:     http.MethodGet,
-			Uri:        "/columns",
+			Uri:        "/columns/barcodes",
 			Body:       ``,
-			WantRegex:  `\{"tables":\[\{"columns":.*\}\]\}`,
+			WantJson:   `{"name":"barcodes","type":"table","columns":[{"name":"id","type":"integer","pk":true},{"name":"product_id","type":"integer","fk":"products"},{"name":"hex","type":"varchar","length":255},{"name":"bin","type":"blob"},{"name":"ip_address","type":"varchar","length":15,"nullable":true}]}`,
 			StatusCode: http.StatusOK,
 		},
 		{
@@ -55,4 +58,7 @@ func TestCacheController(t *testing.T) {
 		},
 	}
 	utils.RunTests(t, ts.URL, tt)
+	if err := os.Remove(db_path); err != nil {
+		panic(err)
+	}
 }
