@@ -1,0 +1,58 @@
+
+name: Build and test
+
+on:
+  push:
+    branches: 
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17.x
+
+    - name: Run linters
+      uses: golangci/golangci-lint-action@v2
+      with:
+          args: -D unused -D staticcheck -D gosimple
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17.x
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Run vet
+      run: go vet ./...
+  
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+
+      - name: Run tests
+        run: go test -v ./...
