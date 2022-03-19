@@ -20,7 +20,9 @@ jobs:
       uses: actions/setup-go@v2
 
     - name: Run linters
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v
+      with:
+          version: v1.29
 
   build:
     runs-on: ubuntu-latest
