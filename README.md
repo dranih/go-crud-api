@@ -4,7 +4,8 @@
 :warning: Work in progress :warning: 
 
 Adding a REST API to a MySQL/MariaDB, PostgreSQL, SQL Server or SQLite database.
-This is an attempt to port [php-crud-api](https://github.com/mevdschee/php-crud-api) to golang.
+
+This is an attempt to port [php-crud-api](https://github.com/mevdschee/php-crud-api) to golang.  
 Therefore, parts of this documentation refers to or copies the orginal projet readme.
 
 ## Installation
@@ -24,7 +25,7 @@ go install
 
 ## Configuration
 
-**gocrudapi** looks for a **gcaconfig.yml** config file in current dir then $HOME if not found.
+**gocrudapi** looks for a **gcaconfig.yml** config file in current dir then $HOME if not found.  
 The **GCA_CONFIG_FILE** environnement variable can also be set to the path of yaml configuration file.
 
 Config file example :
