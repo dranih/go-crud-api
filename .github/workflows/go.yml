@@ -86,14 +86,17 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         
       - name: Install postgresql-client
-        run: sudo apt-get install -y postgresql-client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
         
       - name: Create database
         run: | 
           which psql
           echo $POSTGRES_HOST
-          PGPASSWORD=postgres psql -q -h $POSTGRES_HOST -U postgres -f $GITHUB_WORKSPACE/test/sql/blog_pgsql.sql/create_pgsql.sql
-          PGPASSWORD=go-crud-api psql -q -h $POSTGRES_HOST -U go-crud-api -f $GITHUB_WORKSPACE/test/sql/blog_pgsql.sql/blog_pgsql.sql
+          ls -lrt $GITHUB_WORKSPACE/test/sql/
+          PGPASSWORD=postgres psql -q -h $POSTGRES_HOST -U postgres -f $GITHUB_WORKSPACE/test/sql/create_pgsql.sql
+          PGPASSWORD=go-crud-api psql -q -h $POSTGRES_HOST -U go-crud-api -f $GITHUB_WORKSPACE/test/sql/blog_pgsql.sql
         env:
           POSTGRES_HOST: localhost
           PGPORT: 5432
