@@ -1,4 +1,3 @@
-
 name: Build and test
 
 on:
@@ -9,17 +8,20 @@ on:
     branches:
     - main
 
+env:
+  GO_VERSION: 1.17.x
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.x
+        go-version: $GO_VERSION
 
     - name: Run linters
       uses: golangci/golangci-lint-action@v2
@@ -30,12 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.x
+        go-version: $GO_VERSION
 
     - name: Build
       run: go build -v ./...
@@ -43,16 +45,58 @@ jobs:
     - name: Run vet
       run: go vet ./...
   
-  test:
+  test-sqlite:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17.x
+          go-version: $GO_VERSION
 
       - name: Run tests
         run: go test -v ./...
+  
+  #Trying https://docs.github.com/en/actions/using-containerized-services/creating-postgresql-service-containers
+  test-postgresql:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgis/postgis
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        - 5432:5432
+    
+    steps:      
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: $GO_VERSION
+        
+      - name: Install postgresql-client
+        run: sudo apt-get install -y postgresql-client
+        
+      - name: Create database
+        run: | 
+          PGPASSWORD=postgres psql -q -h $POSTGRES_HOST -U postgres -f $GITHUB_WORKSPACE/gocrud/create_pgsql.sql
+          PGPASSWORD=go-crud-api psql -q -h $POSTGRES_HOST -U go-crud-api -f /gocrud/blog_pgsql.sql
+        env:
+          POSTGRES_HOST: localhost
+          PGPORT: 5432
+
+      - name: Run tests
+        run: go test -v ./...
+        env:
+          GCA_CONFIG_FILE: $GITHUB_WORKSPACE/gocrud/test/yaml/gcaconfig_pgsql.yaml
