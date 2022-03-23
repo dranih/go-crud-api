@@ -90,8 +90,8 @@ jobs:
         
       - name: Create database
         run: | 
-          PGPASSWORD=postgres psql -q -h $POSTGRES_HOST -U postgres -f $GITHUB_WORKSPACE/gocrud/create_pgsql.sql
-          PGPASSWORD=go-crud-api psql -q -h $POSTGRES_HOST -U go-crud-api -f /gocrud/blog_pgsql.sql
+          PGPASSWORD=postgres psql -q -h $POSTGRES_HOST -U postgres -f $GITHUB_WORKSPACE/test/sql/blog_pgsql.sql/create_pgsql.sql
+          PGPASSWORD=go-crud-api psql -q -h $POSTGRES_HOST -U go-crud-api -f $GITHUB_WORKSPACE/test/sql/blog_pgsql.sql/blog_pgsql.sql
         env:
           POSTGRES_HOST: localhost
           PGPORT: 5432
