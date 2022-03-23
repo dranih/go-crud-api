@@ -92,9 +92,6 @@ jobs:
         
       - name: Create database
         run: | 
-          which psql
-          echo $POSTGRES_HOST
-          ls -lrt $GITHUB_WORKSPACE/test/sql/
           PGPASSWORD=postgres psql -q -h $POSTGRES_HOST -U postgres -f $GITHUB_WORKSPACE/test/sql/create_pgsql.sql
           PGPASSWORD=go-crud-api psql -q -h $POSTGRES_HOST -U go-crud-api -f $GITHUB_WORKSPACE/test/sql/blog_pgsql.sql
         env:
@@ -104,4 +101,4 @@ jobs:
       - name: Run tests
         run: go test -v ./...
         env:
-          GCA_CONFIG_FILE: $GITHUB_WORKSPACE/gocrud/test/yaml/gcaconfig_pgsql.yaml
+          GCA_CONFIG_FILE: $GITHUB_WORKSPACE/test/yaml/gcaconfig_pgsql.yaml
