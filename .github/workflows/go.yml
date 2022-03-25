@@ -101,4 +101,4 @@ jobs:
       - name: Run tests
         run: go test -v ./...
         env:
-          GCA_CONFIG_FILE: $GITHUB_WORKSPACE/test/yaml/gcaconfig_pgsql.yaml
+          GCA_CONFIG_FILE: ${{ github.workspace }}/test/yaml/gcaconfig_pgsql.yaml
