@@ -13,13 +13,12 @@ import (
 )
 
 func TestApiKeyDbAuth(t *testing.T) {
-	os.Unsetenv("GCA_CONFIG_FILE")
 	properties := map[string]interface{}{
 		"mode":  "required",
 		"realm": "GoCrudApi : Api key required",
 	}
 
-	db_path := utils.SelectConfig()
+	db_path := utils.SelectConfig(true)
 	db := database.NewGenericDB(
 		"sqlite",
 		db_path,

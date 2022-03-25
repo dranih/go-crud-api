@@ -146,8 +146,8 @@ func RunTests(t *testing.T, serverUrlHttps string, tests []Test) {
 }
 
 //For tests, if there is no GCA_CONFIG_FILE env var provided, we create a sqlite db and we use a default config file
-func SelectConfig() string {
-	if configFile := os.Getenv("GCA_CONFIG_FILE"); configFile != "" {
+func SelectConfig(ignoreEnvVar bool) string {
+	if configFile := os.Getenv("GCA_CONFIG_FILE"); !ignoreEnvVar && configFile != "" {
 		return ""
 	}
 	//We create a sqlite db for the tests

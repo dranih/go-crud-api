@@ -13,7 +13,7 @@ import (
 // Global API tests for records
 // To check compatibility with php-crud-api
 func TestCacheApi(t *testing.T) {
-	db_path := utils.SelectConfig()
+	db_path := utils.SelectConfig(false)
 	config := ReadConfig()
 	config.Init()
 

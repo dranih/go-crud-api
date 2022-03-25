@@ -162,7 +162,26 @@ The [test folder](./test/) contains the procedure and the configuration files us
 
 The build and test github action only starts tests with sqlite database at the moment.
 
+## Dependencies
+Those go packages are used :
+|Package|Usage|
+| --- | --- |
+| [github.com/gorilla/mux](https://github.com/gorilla/mux) | Routing requests |
+| [github.com/clbanning/mxj/v2](https://github.com/clbanning/mxj) | XML decode/encode |
+| [github.com/gorilla/sessions](https://github.com/gorilla/sessions) | Handling sessions |
+| [github.com/spf13/viper](https://github.com/spf13/viper) | Reading configuration |
+| [github.com/mattn/go-sqlite3](https://github.com/mattn/go-sqlite3) | Sqlite database driver |
+| [github.com/denisenkom/go-mssqldb](https://github.com/denisenkom/go-mssqldb) | Mssql database driver |
+| [github.com/lib/pq](https://github.com/lib/pq) | Postgresql database driver |
+| [github.com/go-sql-driver/mysql](https://github.com/go-sql-driver/mysql) | Mysql database driver |
+| [github.com/Masterminds/sprig/v3](https://github.com/Masterminds/sprig) | Adds functions to go template |
+| [github.com/carmo-evan/strtotime](https://github.com/carmo-evan/strtotime) | Parsing text to date |
+| [github.com/bradfitz/gomemcache](https://github.com/bradfitz/gomemcache) | Memcache client library |
+| [github.com/go-redis/redis/v8](https://github.com/go-redis/redis) | Redis client library |
+| [github.com/patrickmn/go-cache](github.com/patrickmn/go-cache) | In-memory cache (not maintained ?) |
+
 ## To-do
+- [ ] Fix bug with seq in renaming tables in sqlserver (records test 080_add_barcode_with_ip_address_A fail after columns tests)
 - [ ] Tests : 
   - [ ] more unit tests
   - [X] implement php-crud-api tests

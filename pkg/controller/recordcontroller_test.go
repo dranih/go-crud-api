@@ -16,8 +16,7 @@ import (
 // TestRecordController should unit test the controller, not the whole api
 // To rewrite
 func TestRecordController(t *testing.T) {
-	os.Unsetenv("GCA_CONFIG_FILE")
-	db_path := utils.SelectConfig()
+	db_path := utils.SelectConfig(true)
 	db := database.NewGenericDB(
 		"sqlite",
 		db_path,

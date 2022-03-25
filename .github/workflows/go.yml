@@ -99,10 +99,6 @@ jobs:
           PGPORT: 5432
 
       - name: Run tests
-        run: |
-          echo $GCA_CONFIG_FILE
-          export GCA_CONFIG_FILE=$GITHUB_WORKSPACE/test/yaml/gcaconfig_pgsql.yaml
-          ls -lrt $GCA_CONFIG_FILE
-          go test -v ./...
+        run: go test -v ./...
         env:
           GCA_CONFIG_FILE: $GITHUB_WORKSPACE/test/yaml/gcaconfig_pgsql.yaml

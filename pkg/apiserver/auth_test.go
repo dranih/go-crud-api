@@ -14,7 +14,7 @@ import (
 // Global API tests for records
 // To check compatibility with php-crud-api
 func TestAuthApi(t *testing.T) {
-	db_path := utils.SelectConfig()
+	db_path := utils.SelectConfig(false)
 	config := ReadConfig()
 	config.Init()
 	serverUrlHttps := fmt.Sprintf("https://%s:%d", config.Server.Address, config.Server.HttpsPort)

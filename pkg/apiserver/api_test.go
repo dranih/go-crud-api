@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewApi(t *testing.T) {
-	db_path := utils.SelectConfig()
+	db_path := utils.SelectConfig(false)
 	config := ReadConfig()
 	config.Init()
 	if db_path != "" && config.Api.Driver == "sqlite" {
