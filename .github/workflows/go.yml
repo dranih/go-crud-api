@@ -107,8 +107,10 @@ jobs:
     runs-on: ubuntu-latest
     
     services:
-      mysql:
+      mysqldb:
         image: mysql:latest
+        ports:
+        - 3306
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: true
         options: >-
@@ -116,8 +118,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-        - 3306:3306
     
     steps:      
       - name: Checkout code
@@ -131,7 +131,14 @@ jobs:
       - name: Install mysql-client
         run: |
           sudo apt-get update
-          sudo apt-get install --yes mysql-client-core-8.0
+          sudo apt-get install --yes mysql-client
+
+      - name: Testtdb
+        run: |
+          mysqladmin ping -h"$MYSQL_HOST" -P"$MYSQL_PORT"
+        env:
+          MYSQL_HOST: localhost
+          MYSQL_PORT: ${{ job.services.mysqldb.ports['3306'] }}
         
       - name: Create database
         run: |
@@ -139,7 +146,7 @@ jobs:
           mysql go-crud-api -h $MYSQL_HOST -P $MYSQL_PORT -ugo-crud-api -pgo-crud-api < $GITHUB_WORKSPACE/test/sql/blog_mysql.sql
         env:
           MYSQL_HOST: localhost
-          MYSQL_PORT: 3306
+          MYSQL_PORT: ${{ job.services.mysqldb.ports['3306'] }}
 
       - name: Run tests
         run: go test -v ./...
