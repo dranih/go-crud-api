@@ -131,7 +131,7 @@ jobs:
       - name: Install mysql-client
         run: |
           sudo apt-get update
-          sudo apt-get install --yes mysql-client
+          sudo apt-get install --yes mysql-client-core-8.0
 
       - name: Testtdb
         run: |
