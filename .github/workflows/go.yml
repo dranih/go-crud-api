@@ -135,11 +135,11 @@ jobs:
         
       - name: Create database
         run: |
-          mysql -uroot < $GITHUB_WORKSPACE/test/sql/create_mysql.sql
-          mysql go-crud-api -ugo-crud-api -pgo-crud-api < $GITHUB_WORKSPACE/test/sql/blog_mysql.sql
+          mysql -h $MYSQL_HOST -P $MYSQL_PORT -uroot < $GITHUB_WORKSPACE/test/sql/create_mysql.sql
+          mysql go-crud-api -h $MYSQL_HOST -P $MYSQL_PORT -ugo-crud-api -pgo-crud-api < $GITHUB_WORKSPACE/test/sql/blog_mysql.sql
         env:
-          POSTGRES_HOST: localhost
-          PGPORT: 3306
+          MYSQL_HOST: localhost
+          MYSQL_PORT: 3306
 
       - name: Run tests
         run: go test -v ./...
