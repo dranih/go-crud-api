@@ -137,7 +137,7 @@ jobs:
         run: |
           mysqladmin ping -h"$MYSQL_HOST" -P"$MYSQL_PORT"
         env:
-          MYSQL_HOST: localhost
+          MYSQL_HOST: 127.0.0.1
           MYSQL_PORT: ${{ job.services.mysqldb.ports['3306'] }}
         
       - name: Create database
@@ -145,7 +145,7 @@ jobs:
           mysql -h $MYSQL_HOST -P $MYSQL_PORT -uroot < $GITHUB_WORKSPACE/test/sql/create_mysql.sql
           mysql go-crud-api -h $MYSQL_HOST -P $MYSQL_PORT -ugo-crud-api -pgo-crud-api < $GITHUB_WORKSPACE/test/sql/blog_mysql.sql
         env:
-          MYSQL_HOST: localhost
+          MYSQL_HOST: 127.0.0.1
           MYSQL_PORT: ${{ job.services.mysqldb.ports['3306'] }}
 
       - name: Run tests
