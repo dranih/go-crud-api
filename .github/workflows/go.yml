@@ -132,14 +132,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes mysql-client-core-8.0
-
-      - name: Testtdb
-        run: |
-          mysqladmin ping -h"$MYSQL_HOST" -P"$MYSQL_PORT"
-        env:
-          MYSQL_HOST: 127.0.0.1
-          MYSQL_PORT: ${{ job.services.mysqldb.ports['3306'] }}
-        
+       
       - name: Create database
         run: |
           mysql -h $MYSQL_HOST -P $MYSQL_PORT -uroot < $GITHUB_WORKSPACE/test/sql/create_mysql.sql
@@ -152,3 +145,4 @@ jobs:
         run: go test -v ./...
         env:
           GCA_CONFIG_FILE: ${{ github.workspace }}/test/yaml/gcaconfig_mysql.yaml
+          GCA_API_PORT: ${{ job.services.mysqldb.ports['3306'] }}
