@@ -154,7 +154,7 @@ jobs:
       sqlserverdb:
         image: mcr.microsoft.com/mssql/server:2019-latest
         ports:
-        - 1433:1433
+        - 1433
         env:
           ACCEPT_EULA: "Y"
           SA_PASSWORD: "mystrongPasw0rd!"
@@ -181,12 +181,14 @@ jobs:
        
       - name: Create database
         run: |
-          /opt/mssql-tools/bin/sqlcmd -S $MSSQL_HOST -U sa -P mystrongPasw0rd! -i $GITHUB_WORKSPACE/test/sql/create_sqlsrv.sql"
-          /opt/mssql-tools/bin/sqlcmd -S $MSSQL_HOST -U go-crud-api -P go-crud-api -i $GITHUB_WORKSPACE/test/sql/blog_sqlsrv.sql"
+          /opt/mssql-tools/bin/sqlcmd -S $MSSQL_HOST,$MSSQL_PORT -U sa -P mystrongPasw0rd! -i $GITHUB_WORKSPACE/test/sql/create_sqlsrv.sql
+          /opt/mssql-tools/bin/sqlcmd -S $MSSQL_HOST,$MSSQL_PORT -U go-crud-api -P go-crud-api -i $GITHUB_WORKSPACE/test/sql/blog_sqlsrv.sql
         env:
           MSSQL_HOST: 127.0.0.1
+          MSSQL_PORT: ${{ job.services.sqlserverdb.ports['1433'] }}
 
       - name: Run tests
         run: go test -v ./...
         env:
           GCA_CONFIG_FILE: ${{ github.workspace }}/test/yaml/gcaconfig_sqlsrv.yaml
+          GCA_API_PORT: ${{ job.services.sqlserverdb.ports['1433'] }}
