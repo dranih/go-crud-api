@@ -146,3 +146,49 @@ jobs:
         env:
           GCA_CONFIG_FILE: ${{ github.workspace }}/test/yaml/gcaconfig_mysql.yaml
           GCA_API_PORT: ${{ job.services.mysqldb.ports['3306'] }}
+
+  test-sqlserver:
+    runs-on: ubuntu-latest
+    
+    services:
+      sqlserverdb:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        ports:
+        - 1433
+        env:
+          ACCEPT_EULA: "Y"
+          SA_PASSWORD: "mystrongPasw0rd!"
+        options: >-
+          --health-cmd '/opt/mssql-tools/bin/sqlcmd -U sa -P "${SA_PASSWORD}" -Q "SELECT \"READY\"" | grep -q "READY"'
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:      
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        
+      - name: Install mssql-tools
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install --yes mssql-tools unixodbc-dev
+       
+      - name: Create database
+        run: |
+          /opt/mssql-tools/bin/sqlcmd -S $MSSQL_HOST,$MSSQL_PORT -U sa -P mystrongPasw0rd! -i $GITHUB_WORKSPACE/test/sql/create_sqlsrv.sql"
+          /opt/mssql-tools/bin/sqlcmd -S $MSSQL_HOST,$MSSQL_PORT -U go-crud-api -P go-crud-api -i $GITHUB_WORKSPACE/test/sql/blog_sqlsrv.sql"
+        env:
+          MSSQL_HOST: 127.0.0.1
+          MSSQL_PORT: ${{ job.services.sqlserverdb.ports['1433'] }}
+
+      - name: Run tests
+        run: go test -v ./...
+        env:
+          GCA_CONFIG_FILE: ${{ github.workspace }}/test/yaml/gcaconfig_sqlsrv.yaml
+          GCA_API_PORT: ${{ job.services.sqlserverdb.ports['1433'] }}
