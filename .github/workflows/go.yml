@@ -159,7 +159,7 @@ jobs:
           ACCEPT_EULA: "Y"
           SA_PASSWORD: "mystrongPasw0rd!"
         options: >-
-          --health-cmd '/opt/mssql-tools/bin/sqlcmd -U sa -P "${SA_PASSWORD}" -Q "SELECT \"READY\"" | grep -q "READY"'
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -U sa -P ${SA_PASSWORD} -Q \"SELECT \"READY\"\" | grep -q \"READY\""
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
