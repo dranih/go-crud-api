@@ -225,11 +225,11 @@ func (gd *GenericDefinition) getSetColumnPkSequenceStartSQL(tableName, columnNam
 		return fmt.Sprintf("SELECT setval(%s, (SELECT max(%s) FROM %s))", p3, p2, p1)
 	case "sqlsrv":
 		p3 := gd.quote(tableName + "_" + columnName + "_seq")
-		p4Map, err := gd.pdo.Query(nil, fmt.Sprintf("SELECT max(%s) FROM %s", p2, p1))
-		if err != nil {
+		p4Map, err := gd.pdo.Query(nil, fmt.Sprintf("SELECT max(%s)+1 FROM %s", p2, p1))
+		if err == nil {
 			for _, p4Val := range p4Map[0] {
-				if p4, ok := p4Val.(string); ok {
-					return fmt.Sprintf("ALTER SEQUENCE %s RESTART WITH %s", p3, p4)
+				if p4, ok := p4Val.(int64); ok {
+					return fmt.Sprintf("ALTER SEQUENCE %s RESTART WITH %d", p3, p4)
 				}
 			}
 		}

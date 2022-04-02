@@ -181,7 +181,7 @@ Those go packages are used :
 | [github.com/patrickmn/go-cache](github.com/patrickmn/go-cache) | In-memory cache (not maintained ?) |
 
 ## To-do
-- [ ] Fix bug with seq in renaming tables in sqlserver (records test 080_add_barcode_with_ip_address_A fail after columns tests)
+- [X] Fix bug with seq in renaming tables in sqlserver (records test 080_add_barcode_with_ip_address_A fail after columns tests)
 - [ ] Tests : 
   - [ ] more unit tests
   - [X] implement php-crud-api tests
@@ -192,7 +192,7 @@ Those go packages are used :
 - [X] Finishing middlewares
 - [ ] Add a github workflow <- next
   - [X] Init
-  - [ ] Add pgsql, mysql and sqlserver testing
+  - [X] Add pgsql, mysql and sqlserver testing
   - [ ] Find why somes linters are not working
   - [X] Release pipeline
 - [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)
