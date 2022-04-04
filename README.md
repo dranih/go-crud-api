@@ -190,13 +190,13 @@ Those go packages are used :
 - [X] Finishing controllers
 - [ ] Custom controller (compile extra go code at launch like https://github.com/benhoyt/prig ?)
 - [X] Finishing middlewares
-- [ ] Add a github workflow <- next
+- [ ] Add a github workflow
   - [X] Init
   - [X] Add pgsql, mysql and sqlserver testing
   - [ ] Find why somes linters are not working
   - [X] Release pipeline
 - [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)
-- [ ] Review whole package structure
+- [X] Review packages structure
 - [ ] Logger options
 - [X] https
 - [X] Write a README
