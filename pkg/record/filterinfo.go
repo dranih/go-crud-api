@@ -1,13 +1,15 @@
-package database
+package record
 
 import (
 	"regexp"
+
+	"github.com/dranih/go-crud-api/pkg/database"
 )
 
 type FilterInfo struct {
 }
 
-func (ft *FilterInfo) getConditionsAsPathTree(table *ReflectedTable, params map[string][]string) *PathTree {
+func (ft *FilterInfo) getConditionsAsPathTree(table *database.ReflectedTable, params map[string][]string) *PathTree {
 	conditions := NewPathTree(nil)
 	for key, filters := range params {
 		if len(key) >= 6 && key[0:6] == `filter` {
@@ -20,9 +22,9 @@ func (ft *FilterInfo) getConditionsAsPathTree(table *ReflectedTable, params map[
 				path = append(path, matches[0])
 			}
 			for _, filter := range filters {
-				condition := ConditionFromString(table, filter)
+				condition := database.ConditionFromString(table, filter)
 				switch condition.(type) {
-				case *NoCondition:
+				case *database.NoCondition:
 					continue
 				default:
 					conditions.Put(path, condition)
@@ -33,20 +35,20 @@ func (ft *FilterInfo) getConditionsAsPathTree(table *ReflectedTable, params map[
 	return conditions
 }
 
-func (ft *FilterInfo) combinePathTreeOfConditions(tree *PathTree) interface{ Condition } {
+func (ft *FilterInfo) combinePathTreeOfConditions(tree *PathTree) interface{ database.Condition } {
 	andConditions := tree.tree.GetValues()
-	and := AndConditionFromArray(andConditions)
-	orConditions := []interface{ Condition }{}
+	and := database.AndConditionFromArray(andConditions)
+	orConditions := []interface{ database.Condition }{}
 	for _, p := range tree.tree.GetKeys() {
 		if pt := tree.tree.Get(p); pt.tree != nil {
 			orConditions = append(orConditions, ft.combinePathTreeOfConditions(pt))
 		}
 	}
-	or := OrConditionFromArray(orConditions)
+	or := database.OrConditionFromArray(orConditions)
 	cond := and.And(or)
 	return cond
 }
 
-func (ft *FilterInfo) GetCombinedConditions(table *ReflectedTable, params map[string][]string) interface{ Condition } {
+func (ft *FilterInfo) GetCombinedConditions(table *database.ReflectedTable, params map[string][]string) interface{ database.Condition } {
 	return ft.combinePathTreeOfConditions(ft.getConditionsAsPathTree(table, params))
 }

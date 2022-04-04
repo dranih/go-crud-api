@@ -1,15 +1,17 @@
-package database
+package record
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/dranih/go-crud-api/pkg/database"
 )
 
 type RelationJoiner struct {
-	reflection *ReflectionService
+	reflection *database.ReflectionService
 	ordering   *OrderingInfo
-	columns    *ColumnIncluder
+	columns    *database.ColumnIncluder
 }
 
 type HabtmValues struct {
@@ -17,11 +19,11 @@ type HabtmValues struct {
 	FkValues map[string]map[string]interface{}
 }
 
-func NewRelationJoiner(reflection *ReflectionService, columns *ColumnIncluder) *RelationJoiner {
+func NewRelationJoiner(reflection *database.ReflectionService, columns *database.ColumnIncluder) *RelationJoiner {
 	return &RelationJoiner{reflection, &OrderingInfo{}, columns}
 }
 
-func (rj *RelationJoiner) AddMandatoryColumns(table *ReflectedTable, params *map[string][]string) {
+func (rj *RelationJoiner) AddMandatoryColumns(table *database.ReflectedTable, params *map[string][]string) {
 	_, exists1 := (*params)["join"]
 	_, exists2 := (*params)["include"]
 	if !exists1 || !exists2 {
@@ -75,12 +77,12 @@ func (rj *RelationJoiner) getJoinsAsPathTree(params map[string][]string) *PathTr
 	return joins
 }
 
-func (rj *RelationJoiner) AddJoins(table *ReflectedTable, records *[]map[string]interface{}, params map[string][]string, db *GenericDB) {
+func (rj *RelationJoiner) AddJoins(table *database.ReflectedTable, records *[]map[string]interface{}, params map[string][]string, db *database.GenericDB) {
 	joins := rj.getJoinsAsPathTree(params)
 	rj.addJoinsForTables(table, joins, records, params, db)
 }
 
-func (rj *RelationJoiner) hasAndBelongsToMany(t1, t2 *ReflectedTable) *ReflectedTable {
+func (rj *RelationJoiner) hasAndBelongsToMany(t1, t2 *database.ReflectedTable) *database.ReflectedTable {
 	for _, tableName := range rj.reflection.GetTableNames() {
 		t3 := rj.reflection.GetTable(tableName)
 		if len(t3.GetFksTo(t1.GetName())) > 0 && len(t3.GetFksTo(t2.GetName())) > 0 {
@@ -90,12 +92,12 @@ func (rj *RelationJoiner) hasAndBelongsToMany(t1, t2 *ReflectedTable) *Reflected
 	return nil
 }
 
-func (rj *RelationJoiner) addJoinsForTables(t1 *ReflectedTable, joins *PathTree, records *[]map[string]interface{}, params map[string][]string, db *GenericDB) {
+func (rj *RelationJoiner) addJoinsForTables(t1 *database.ReflectedTable, joins *PathTree, records *[]map[string]interface{}, params map[string][]string, db *database.GenericDB) {
 	for _, t2Name := range joins.tree.GetKeys() {
 		t2 := rj.reflection.GetTable(t2Name)
 		belongsTo := len(t1.GetFksTo(t2.GetName())) > 0
 		hasMany := len(t2.GetFksTo(t1.GetName())) > 0
-		var t3 *ReflectedTable
+		var t3 *database.ReflectedTable
 		if !belongsTo && !hasMany {
 			t3 = rj.hasAndBelongsToMany(t1, t2)
 		} else {
@@ -136,7 +138,7 @@ func (rj *RelationJoiner) addJoinsForTables(t1 *ReflectedTable, joins *PathTree,
 	}
 }
 
-func (rj *RelationJoiner) getFkEmptyValues(t1, t2 *ReflectedTable, records *[]map[string]interface{}) map[string]map[string]interface{} {
+func (rj *RelationJoiner) getFkEmptyValues(t1, t2 *database.ReflectedTable, records *[]map[string]interface{}) map[string]map[string]interface{} {
 	fkValues := map[string]map[string]interface{}{}
 	fks := t1.GetFksTo(t2.GetName())
 	for _, fk := range fks {
@@ -150,7 +152,7 @@ func (rj *RelationJoiner) getFkEmptyValues(t1, t2 *ReflectedTable, records *[]ma
 	return fkValues
 }
 
-func (rj *RelationJoiner) addFkRecords(t2 *ReflectedTable, fkValues map[string]map[string]interface{}, params map[string][]string, db *GenericDB, records *[]map[string]interface{}) {
+func (rj *RelationJoiner) addFkRecords(t2 *database.ReflectedTable, fkValues map[string]map[string]interface{}, params map[string][]string, db *database.GenericDB, records *[]map[string]interface{}) {
 	columnNames := rj.columns.GetNames(t2, false, params)
 	fkIds := []string{}
 	for key := range fkValues {
@@ -161,7 +163,7 @@ func (rj *RelationJoiner) addFkRecords(t2 *ReflectedTable, fkValues map[string]m
 	}
 }
 
-func (rj *RelationJoiner) fillFkValues(t2 *ReflectedTable, fkRecords []map[string]interface{}, fkValues *map[string]map[string]interface{}) {
+func (rj *RelationJoiner) fillFkValues(t2 *database.ReflectedTable, fkRecords []map[string]interface{}, fkValues *map[string]map[string]interface{}) {
 	pkName := t2.GetPk().GetName()
 	for _, fkRecord := range fkRecords {
 		if pkValue, exists := fkRecord[pkName]; exists {
@@ -170,7 +172,7 @@ func (rj *RelationJoiner) fillFkValues(t2 *ReflectedTable, fkRecords []map[strin
 	}
 }
 
-func (rj *RelationJoiner) setFkValues(t1, t2 *ReflectedTable, records *[]map[string]interface{}, fkValues map[string]map[string]interface{}) {
+func (rj *RelationJoiner) setFkValues(t1, t2 *database.ReflectedTable, records *[]map[string]interface{}, fkValues map[string]map[string]interface{}) {
 	fks := t1.GetFksTo(t2.GetName())
 	for _, fk := range fks {
 		fkName := fk.GetName()
@@ -182,7 +184,7 @@ func (rj *RelationJoiner) setFkValues(t1, t2 *ReflectedTable, records *[]map[str
 	}
 }
 
-func (rj *RelationJoiner) getPkEmptyValues(t1 *ReflectedTable, records *[]map[string]interface{}) map[string][]map[string]interface{} {
+func (rj *RelationJoiner) getPkEmptyValues(t1 *database.ReflectedTable, records *[]map[string]interface{}) map[string][]map[string]interface{} {
 	pkValues := map[string][]map[string]interface{}{}
 	pkName := t1.GetPk().GetName()
 	for _, record := range *records {
@@ -193,7 +195,7 @@ func (rj *RelationJoiner) getPkEmptyValues(t1 *ReflectedTable, records *[]map[st
 	return pkValues
 }
 
-func (rj *RelationJoiner) addPkRecords(t1, t2 *ReflectedTable, pkValues map[string][]map[string]interface{}, params map[string][]string, db *GenericDB, records *[]map[string]interface{}) {
+func (rj *RelationJoiner) addPkRecords(t1, t2 *database.ReflectedTable, pkValues map[string][]map[string]interface{}, params map[string][]string, db *database.GenericDB, records *[]map[string]interface{}) {
 	fks := t2.GetFksTo(t1.GetName())
 	columnNames := rj.columns.GetNames(t2, false, params)
 
@@ -202,14 +204,14 @@ func (rj *RelationJoiner) addPkRecords(t1, t2 *ReflectedTable, pkValues map[stri
 		pkIds = append(pkIds, key)
 	}
 	pkValueKeys := strings.Join(pkIds, `,`)
-	conditions := []interface{ Condition }{}
+	conditions := []interface{ database.Condition }{}
 	for _, fk := range fks {
-		conditions = append(conditions, NewColumnCondition(fk, "in", pkValueKeys))
+		conditions = append(conditions, database.NewColumnCondition(fk, "in", pkValueKeys))
 	}
-	condition := OrConditionFromArray(conditions)
+	condition := database.OrConditionFromArray(conditions)
 	columnOrdering := [][2]string{}
 	limitInt := -1
-	if limit := db.variablestore.Get("joinLimits.maxRecords"); limit != nil {
+	if limit := db.VariableStore.Get("joinLimits.maxRecords"); limit != nil {
 		columnOrdering = rj.ordering.GetDefaultColumnOrdering(t2)
 		var err error
 		if limitInt, err = strconv.Atoi(fmt.Sprint(limit)); err != nil {
@@ -221,7 +223,7 @@ func (rj *RelationJoiner) addPkRecords(t1, t2 *ReflectedTable, pkValues map[stri
 	}
 }
 
-func (rj *RelationJoiner) fillPkValues(t1, t2 *ReflectedTable, pkRecords []map[string]interface{}, pkValues *map[string][]map[string]interface{}) {
+func (rj *RelationJoiner) fillPkValues(t1, t2 *database.ReflectedTable, pkRecords []map[string]interface{}, pkValues *map[string][]map[string]interface{}) {
 	fks := t2.GetFksTo(t1.GetName())
 	for _, fk := range fks {
 		fkName := fk.GetName()
@@ -234,7 +236,7 @@ func (rj *RelationJoiner) fillPkValues(t1, t2 *ReflectedTable, pkRecords []map[s
 	}
 }
 
-func (rj *RelationJoiner) setPkValues(t1, t2 *ReflectedTable, records *[]map[string]interface{}, pkValues map[string][]map[string]interface{}) {
+func (rj *RelationJoiner) setPkValues(t1, t2 *database.ReflectedTable, records *[]map[string]interface{}, pkValues map[string][]map[string]interface{}) {
 	pkName := t1.GetPk().GetName()
 	t2Name := t2.GetName()
 
@@ -244,7 +246,7 @@ func (rj *RelationJoiner) setPkValues(t1, t2 *ReflectedTable, records *[]map[str
 	}
 }
 
-func (rj *RelationJoiner) getHabtmEmptyValues(t1, t2, t3 *ReflectedTable, db *GenericDB, records *[]map[string]interface{}) *HabtmValues {
+func (rj *RelationJoiner) getHabtmEmptyValues(t1, t2, t3 *database.ReflectedTable, db *database.GenericDB, records *[]map[string]interface{}) *HabtmValues {
 	pkValues := rj.getPkEmptyValues(t1, records)
 	fkValues := map[string]map[string]interface{}{}
 
@@ -261,10 +263,10 @@ func (rj *RelationJoiner) getHabtmEmptyValues(t1, t2, t3 *ReflectedTable, db *Ge
 		pkKeys = append(pkKeys, key)
 	}
 	pkIds := strings.Join(pkKeys, `,`)
-	condition := NewColumnCondition(t3.GetColumn(fk1Name), "in", pkIds)
+	condition := database.NewColumnCondition(t3.GetColumn(fk1Name), "in", pkIds)
 	columnOrdering := [][2]string{}
 	limitInt := -1
-	if limit := db.variablestore.Get("joinLimits.maxRecords"); limit != nil {
+	if limit := db.VariableStore.Get("joinLimits.maxRecords"); limit != nil {
 		columnOrdering = rj.ordering.GetDefaultColumnOrdering(t3)
 		if tempLimitInt, err := strconv.Atoi(fmt.Sprint(limit)); err == nil {
 			limitInt = tempLimitInt
@@ -279,7 +281,7 @@ func (rj *RelationJoiner) getHabtmEmptyValues(t1, t2, t3 *ReflectedTable, db *Ge
 	return &HabtmValues{pkValues, fkValues}
 }
 
-func (rj *RelationJoiner) setHabtmValues(t1, t2 *ReflectedTable, records *[]map[string]interface{}, habtmValues *HabtmValues) {
+func (rj *RelationJoiner) setHabtmValues(t1, t2 *database.ReflectedTable, records *[]map[string]interface{}, habtmValues *HabtmValues) {
 	pkName := t1.GetPk().GetName()
 	t2Name := t2.GetName()
 	for i, record := range *records {

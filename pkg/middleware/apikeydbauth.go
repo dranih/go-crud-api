@@ -14,11 +14,11 @@ type ApiKeyDbAuthMiddleware struct {
 	GenericMiddleware
 	reflection *database.ReflectionService
 	db         *database.GenericDB
-	ordering   *database.OrderingInfo
+	ordering   *record.OrderingInfo
 }
 
 func NewApiKeyDbAuth(responder controller.Responder, properties map[string]interface{}, reflection *database.ReflectionService, db *database.GenericDB) *ApiKeyDbAuthMiddleware {
-	return &ApiKeyDbAuthMiddleware{GenericMiddleware: GenericMiddleware{Responder: responder, Properties: properties}, reflection: reflection, db: db, ordering: database.NewOrderingInfo()}
+	return &ApiKeyDbAuthMiddleware{GenericMiddleware: GenericMiddleware{Responder: responder, Properties: properties}, reflection: reflection, db: db, ordering: record.NewOrderingInfo()}
 }
 
 func (akdam *ApiKeyDbAuthMiddleware) Process(next http.Handler) http.Handler {

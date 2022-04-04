@@ -9,6 +9,7 @@ import (
 
 	"github.com/dranih/go-crud-api/pkg/cache"
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/dranih/go-crud-api/pkg/utils"
 	"github.com/gorilla/mux"
 )
@@ -30,7 +31,7 @@ func TestRecordController(t *testing.T) {
 	prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
 	cache := cache.Create("TempFile", prefix, "")
 	reflection := database.NewReflectionService(db, cache, 10)
-	records := database.NewRecordService(db, reflection)
+	records := record.NewRecordService(db, reflection)
 	responder := NewJsonResponder(false)
 	router := mux.NewRouter()
 	NewRecordController(router, responder, records)

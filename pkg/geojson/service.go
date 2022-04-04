@@ -7,14 +7,15 @@ import (
 	"strings"
 
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/record"
 )
 
 type Service struct {
 	reflection *database.ReflectionService
-	records    *database.RecordService
+	records    *record.RecordService
 }
 
-func NewGeoJsonService(reflection *database.ReflectionService, records *database.RecordService) *Service {
+func NewGeoJsonService(reflection *database.ReflectionService, records *record.RecordService) *Service {
 	return &Service{reflection, records}
 }
 

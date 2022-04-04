@@ -1,11 +1,13 @@
-package database
+package record
+
+import "github.com/dranih/go-crud-api/pkg/database"
 
 type PathTree struct {
 	tree *tree
 }
 type tree struct {
 	branches map[string]*tree
-	values   []interface{ Condition }
+	values   []interface{ database.Condition }
 }
 
 const WILDCARD = `*`
@@ -22,7 +24,7 @@ func NewPathTree(tree *tree) *PathTree {
 }
 
 func NewTree() *tree {
-	return &tree{map[string]*tree{}, []interface{ Condition }{}}
+	return &tree{map[string]*tree{}, []interface{ database.Condition }{}}
 }
 
 func (t *tree) GetKeys() []string {
@@ -33,7 +35,7 @@ func (t *tree) GetKeys() []string {
 	return keys
 }
 
-func (t *tree) GetValues() []interface{ Condition } {
+func (t *tree) GetValues() []interface{ database.Condition } {
 	return t.values
 }
 
@@ -45,7 +47,7 @@ func (t *tree) Get(key string) *PathTree {
 	}
 }
 
-func (pt *PathTree) Put(path []string, value interface{ Condition }) {
+func (pt *PathTree) Put(path []string, value interface{ database.Condition }) {
 	tree := pt.tree
 	for _, key := range path {
 		if key == `` {

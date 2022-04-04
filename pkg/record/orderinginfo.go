@@ -1,6 +1,10 @@
-package database
+package record
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/dranih/go-crud-api/pkg/database"
+)
 
 type OrderingInfo struct{}
 
@@ -8,7 +12,7 @@ func NewOrderingInfo() *OrderingInfo {
 	return &OrderingInfo{}
 }
 
-func (oi *OrderingInfo) GetColumnOrdering(table *ReflectedTable, params map[string][]string) [][2]string {
+func (oi *OrderingInfo) GetColumnOrdering(table *database.ReflectedTable, params map[string][]string) [][2]string {
 	fields := [][2]string{}
 	if orders, exists := params["order"]; exists {
 		for _, order := range orders {
@@ -32,7 +36,7 @@ func (oi *OrderingInfo) GetColumnOrdering(table *ReflectedTable, params map[stri
 	return fields
 }
 
-func (oi *OrderingInfo) GetDefaultColumnOrdering(table *ReflectedTable) [][2]string {
+func (oi *OrderingInfo) GetDefaultColumnOrdering(table *database.ReflectedTable) [][2]string {
 	fields := [][2]string{}
 	pk := table.GetPk()
 	if pk != nil {

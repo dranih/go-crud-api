@@ -12,6 +12,7 @@ import (
 	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/dranih/go-crud-api/pkg/controller"
 	"github.com/dranih/go-crud-api/pkg/database"
+	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/dranih/go-crud-api/pkg/utils"
 	"github.com/gorilla/sessions"
 
@@ -98,7 +99,7 @@ func (am *AuthorizationMiddleware) handleRecords(operation, tableName string, se
 			}{Operation: operation, TableName: tableName, Session: session.Values}
 			if err := t.Execute(&res, data); err == nil {
 				query := strings.TrimSpace(res.String())
-				filters := &database.FilterInfo{}
+				filters := &record.FilterInfo{}
 				table := am.reflection.GetTable(tableName)
 				query = strings.Replace(strings.Replace(query, "=", "[]=", -1), "][]=", "]=", -1)
 				if params, err := url.ParseQuery(query); err == nil {

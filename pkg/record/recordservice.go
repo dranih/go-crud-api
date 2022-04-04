@@ -1,25 +1,25 @@
-package database
+package record
 
 import (
 	"database/sql"
 	"fmt"
 	"log"
 
-	"github.com/dranih/go-crud-api/pkg/record"
+	"github.com/dranih/go-crud-api/pkg/database"
 )
 
 type RecordService struct {
-	db         *GenericDB
-	reflection *ReflectionService
-	columns    *ColumnIncluder
+	db         *database.GenericDB
+	reflection *database.ReflectionService
+	columns    *database.ColumnIncluder
 	joiner     *RelationJoiner
 	filters    *FilterInfo
 	ordering   *OrderingInfo
 	pagination *PaginationInfo
 }
 
-func NewRecordService(db *GenericDB, reflection *ReflectionService) *RecordService {
-	ci := &ColumnIncluder{}
+func NewRecordService(db *database.GenericDB, reflection *database.ReflectionService) *RecordService {
+	ci := &database.ColumnIncluder{}
 	return &RecordService{db, reflection, ci, NewRelationJoiner(reflection, ci), &FilterInfo{}, &OrderingInfo{}, &PaginationInfo{}}
 }
 
@@ -117,7 +117,7 @@ func (rs *RecordService) Increment(tx *sql.Tx, tableName string, params map[stri
 }
 
 // done
-func (rs *RecordService) List(tableName string, params map[string][]string) *record.ListDocument {
+func (rs *RecordService) List(tableName string, params map[string][]string) *ListDocument {
 	table := rs.reflection.GetTable(tableName)
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
@@ -135,7 +135,7 @@ func (rs *RecordService) List(tableName string, params map[string][]string) *rec
 	}
 	records := rs.db.SelectAll(table, columnNames, condition, columnOrdering, offset, limit)
 	rs.joiner.AddJoins(table, &records, params, rs.db)
-	return record.NewListDocument(records, count)
+	return NewListDocument(records, count)
 }
 
 func (rs *RecordService) Ping() int {

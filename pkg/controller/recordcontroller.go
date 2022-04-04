@@ -6,18 +6,17 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/dranih/go-crud-api/pkg/utils"
 	"github.com/gorilla/mux"
 )
 
 type RecordController struct {
-	service   *database.RecordService
+	service   *record.RecordService
 	responder Responder
 }
 
-func NewRecordController(router *mux.Router, responder Responder, service *database.RecordService) *RecordController {
+func NewRecordController(router *mux.Router, responder Responder, service *record.RecordService) *RecordController {
 	rc := &RecordController{service, responder}
 	router.HandleFunc("/records/{table}", rc.list).Methods("GET")
 	router.HandleFunc("/records/{table}", rc.create).Methods("POST")

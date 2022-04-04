@@ -10,6 +10,7 @@ import (
 	"github.com/dranih/go-crud-api/pkg/cache"
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/geojson"
+	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/dranih/go-crud-api/pkg/utils"
 	"github.com/gorilla/mux"
 )
@@ -32,7 +33,7 @@ func TestGeoJsonController(t *testing.T) {
 	reflection := database.NewReflectionService(db, cache, 10)
 	responder := NewJsonResponder(false)
 	router := mux.NewRouter()
-	records := database.NewRecordService(db, reflection)
+	records := record.NewRecordService(db, reflection)
 	geoJson := geojson.NewGeoJsonService(reflection, records)
 	NewGeoJsonController(router, responder, geoJson)
 	ts := httptest.NewServer(router)

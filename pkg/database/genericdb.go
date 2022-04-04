@@ -27,7 +27,7 @@ type GenericDB struct {
 	conditions    *ConditionsBuilder
 	columns       *ColumnsBuilder
 	converter     *DataConverter
-	variablestore *utils.VariableStore
+	VariableStore *utils.VariableStore
 }
 
 func (g *GenericDB) getDsn() string {
@@ -114,7 +114,7 @@ func NewGenericDB(driver string, address string, port int, database string, tabl
 	g.tables = tables
 	g.username = username
 	g.password = password
-	g.variablestore = utils.VStore
+	g.VariableStore = utils.VStore
 	g.initPdo()
 	return g
 }
@@ -170,11 +170,11 @@ func (g *GenericDB) RollBackTransaction(tx *sql.Tx) error {
 
 // Should type check
 func (g *GenericDB) addMiddlewareConditions(tableName string, condition interface{ Condition }) interface{ Condition } {
-	condition1 := g.variablestore.Get("authorization.conditions." + tableName)
+	condition1 := g.VariableStore.Get("authorization.conditions." + tableName)
 	if condition1 != nil {
 		condition = condition.And(condition1.(interface{ Condition }))
 	}
-	condition2 := g.variablestore.Get("multiTenancy.conditions." + tableName)
+	condition2 := g.VariableStore.Get("multiTenancy.conditions." + tableName)
 	if condition2 != nil {
 		condition = condition.And(condition2.(interface{ Condition }))
 	}

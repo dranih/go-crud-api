@@ -144,7 +144,7 @@ func NewApi(globalConfig *Config) *Api {
 	for ctrl := range config.GetControllers() {
 		switch ctrl {
 		case "records":
-			records := database.NewRecordService(db, reflection)
+			records := record.NewRecordService(db, reflection)
 			controller.NewRecordController(router, responder, records)
 		case "columns":
 			definition := database.NewDefinitionService(db, reflection)
@@ -155,7 +155,7 @@ func NewApi(globalConfig *Config) *Api {
 			openapi := openapi.NewOpenApiService(reflection, config.OpenApiBase, config.GetControllers(), config.GetCustomOpenApiBuilders())
 			controller.NewOpenApiController(router, responder, openapi)
 		case "geojson":
-			records := database.NewRecordService(db, reflection)
+			records := record.NewRecordService(db, reflection)
 			geoJson := geojson.NewGeoJsonService(reflection, records)
 			controller.NewGeoJsonController(router, responder, geoJson)
 		case "status":

@@ -17,11 +17,11 @@ type DbAuthMiddleware struct {
 	GenericMiddleware
 	reflection *database.ReflectionService
 	db         *database.GenericDB
-	ordering   *database.OrderingInfo
+	ordering   *record.OrderingInfo
 }
 
 func NewDbAuth(responder controller.Responder, properties map[string]interface{}, reflection *database.ReflectionService, db *database.GenericDB) *DbAuthMiddleware {
-	return &DbAuthMiddleware{GenericMiddleware: GenericMiddleware{Responder: responder, Properties: properties}, reflection: reflection, db: db, ordering: database.NewOrderingInfo()}
+	return &DbAuthMiddleware{GenericMiddleware: GenericMiddleware{Responder: responder, Properties: properties}, reflection: reflection, db: db, ordering: record.NewOrderingInfo()}
 }
 
 func (dam *DbAuthMiddleware) Process(next http.Handler) http.Handler {
