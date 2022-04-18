@@ -32,7 +32,7 @@ func TestApiKeyDbAuth(t *testing.T) {
 	router := mux.NewRouter()
 	responder := controller.NewJsonResponder(false)
 	akdamMiddle := NewApiKeyDbAuth(responder, properties, reflection, db)
-	router.HandleFunc("/", allowedTest).Methods("GET")
+	router.HandleFunc("/", utils.AllowedTest).Methods("GET")
 	router.Use(akdamMiddle.Process)
 	ts := httptest.NewServer(router)
 	defer ts.Close()

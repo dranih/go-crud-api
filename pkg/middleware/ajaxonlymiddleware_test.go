@@ -16,7 +16,7 @@ func TestAjaxOnlyMiddleware(t *testing.T) {
 	router := mux.NewRouter()
 	responder := controller.NewJsonResponder(false)
 	aoMiddle := NewAjaxOnlyMiddleware(responder, properties)
-	router.HandleFunc("/", allowedTest).Methods("GET", "POST")
+	router.HandleFunc("/", utils.AllowedTest).Methods("GET", "POST")
 	router.Use(aoMiddle.Process)
 	ts := httptest.NewServer(router)
 	defer ts.Close()

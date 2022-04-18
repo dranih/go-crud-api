@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -28,7 +27,7 @@ func TestBasicAuth(t *testing.T) {
 	responder := controller.NewJsonResponder(false)
 	bamMiddle := NewBasicAuth(responder, properties)
 	saveSessionMiddle := NewSaveSession(responder, nil)
-	router.HandleFunc("/", allowedTest).Methods("GET")
+	router.HandleFunc("/", utils.AllowedTest).Methods("GET")
 	router.Use(bamMiddle.Process)
 	router.Use(saveSessionMiddle.Process)
 	ts := httptest.NewServer(router)
@@ -96,8 +95,4 @@ func TestBasicAuth(t *testing.T) {
 		},
 	}
 	utils.RunTests(t, ts.URL, tt)
-}
-
-func allowedTest(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Allowed")
 }

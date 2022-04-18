@@ -18,7 +18,7 @@ func TestXsrfMiddleware(t *testing.T) {
 	router := mux.NewRouter()
 	responder := controller.NewJsonResponder(false)
 	xMiddle := NewXsrfMiddleware(responder, properties)
-	router.HandleFunc("/", allowedTest).Methods("GET", "POST")
+	router.HandleFunc("/", utils.AllowedTest).Methods("GET", "POST")
 	router.Use(xMiddle.Process)
 	ts := httptest.NewServer(router)
 	defer ts.Close()

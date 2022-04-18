@@ -24,7 +24,7 @@ func TestJwtAuth(t *testing.T) {
 	responder := controller.NewJsonResponder(false)
 	jaMiddle := NewJwtAuth(responder, properties)
 	saveSessionMiddle := NewSaveSession(responder, nil)
-	router.HandleFunc("/", allowedTest).Methods("GET")
+	router.HandleFunc("/", utils.AllowedTest).Methods("GET")
 	router.Use(jaMiddle.Process)
 	router.Use(saveSessionMiddle.Process)
 	gob.Register(map[string]interface{}{})

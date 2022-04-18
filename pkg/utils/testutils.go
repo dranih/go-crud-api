@@ -268,3 +268,7 @@ func JsonEqual(vx, vy interface{}) bool {
 		return vx == vy
 	}
 }
+
+func AllowedTest(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Allowed")
+}

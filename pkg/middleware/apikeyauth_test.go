@@ -20,7 +20,7 @@ func TestApiKeyAuth(t *testing.T) {
 	router := mux.NewRouter()
 	responder := controller.NewJsonResponder(false)
 	akamMiddle := NewApiKeyAuth(responder, properties)
-	router.HandleFunc("/", allowedTest).Methods("GET")
+	router.HandleFunc("/", utils.AllowedTest).Methods("GET")
 	router.Use(akamMiddle.Process)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
