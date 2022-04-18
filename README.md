@@ -118,7 +118,7 @@ See [php-crud-api#treeql-a-pragmatic-graphql](https://github.com/mevdschee/php-c
 ## Middlewares
 See [php-crud-api#middleware](https://github.com/mevdschee/php-crud-api#middleware)
 
-The main difference with the **PHP-CRUD-API** is that handlers have to be coded usinng [gotemplate](https://golangdocs.com/templates-in-golang) syntax because go code cannot be easily compiled at runtime.
+One of the main drawback of **GO-CRUD-API** compared to **PHP-CRUD-API** is the use of [gotemplate](https://golangdocs.com/templates-in-golang) syntax for the user provided handlers which is more complex and less powerful than php (or go) code.
 
 The middlewares options have to be configured in the yaml configuration file, ex :
 ```yaml
