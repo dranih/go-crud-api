@@ -15,7 +15,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: linux
           goarch: amd64
-          goversion: 1.17
+          goversion: 1.18
           ldflags: "-s -w"
           project_path: "./cmd/gocrudapi"
           binary_name: "gocrudapi"
