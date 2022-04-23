@@ -193,7 +193,7 @@ Those go packages are used :
 - [ ] Add a github workflow
   - [X] Init
   - [X] Add pgsql, mysql and sqlserver testing
-  - [ ] Find why somes linters are not working
+  - [ ] Find why somes linters are not working : linked to https://github.com/golang/go/issues/26863, should rewrite condition interface. See also https://github.com/golang/go/issues/28254#issuecomment-996822778
   - [X] Release pipeline
 - [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)
 - [X] Review packages structure

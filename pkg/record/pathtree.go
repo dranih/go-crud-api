@@ -1,33 +1,25 @@
 package record
 
-import "github.com/dranih/go-crud-api/pkg/database"
-
-type PathTree struct {
-	tree *tree
-}
-type tree struct {
-	branches map[string]*tree
-	values   []interface{ database.Condition }
+type Tree struct {
+	branches map[string]*Tree
+	values   []interface{}
 }
 
 const WILDCARD = `*`
 
-func NewPathTree(tree *tree) *PathTree {
-	pathTree := &PathTree{}
+func NewPathTree(tree *Tree) *Tree {
 	if tree != nil {
-		pathTree.tree = tree
+		return tree
 	} else {
-		pathTree.tree = NewTree()
+		return NewTree()
 	}
-
-	return pathTree
 }
 
-func NewTree() *tree {
-	return &tree{map[string]*tree{}, []interface{ database.Condition }{}}
+func NewTree() *Tree {
+	return &Tree{map[string]*Tree{}, []interface{}{}}
 }
 
-func (t *tree) GetKeys() []string {
+func (t *Tree) GetKeys() []string {
 	keys := []string{}
 	for key := range t.branches {
 		keys = append(keys, key)
@@ -35,11 +27,11 @@ func (t *tree) GetKeys() []string {
 	return keys
 }
 
-func (t *tree) GetValues() []interface{ database.Condition } {
+func (t *Tree) GetValues() []interface{} {
 	return t.values
 }
 
-func (t *tree) Get(key string) *PathTree {
+func (t *Tree) Get(key string) *Tree {
 	if _, exists := t.branches[key]; !exists {
 		return nil
 	} else {
@@ -47,8 +39,8 @@ func (t *tree) Get(key string) *PathTree {
 	}
 }
 
-func (pt *PathTree) Put(path []string, value interface{ database.Condition }) {
-	tree := pt.tree
+func (t *Tree) Put(path []string, value interface{}) {
+	tree := t
 	for _, key := range path {
 		if key == `` {
 			key = `0`
