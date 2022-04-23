@@ -9,7 +9,7 @@ import (
 type FilterInfo struct {
 }
 
-func (ft *FilterInfo) getConditionsAsPathTree(table *database.ReflectedTable, params map[string][]string) *Tree {
+func (ft *FilterInfo) getConditionsAsPathTree(table *database.ReflectedTable, params map[string][]string) *PathTree {
 	conditions := NewPathTree(nil)
 	for key, filters := range params {
 		if len(key) >= 6 && key[0:6] == `filter` {
@@ -35,19 +35,12 @@ func (ft *FilterInfo) getConditionsAsPathTree(table *database.ReflectedTable, pa
 	return conditions
 }
 
-func (ft *FilterInfo) combinePathTreeOfConditions(tree *Tree) interface{ database.Condition } {
-	conditions := tree.GetValues()
-	andConditions := []interface{ database.Condition }{}
-	for _, condition := range conditions {
-		switch c := condition.(type) {
-		case database.Condition:
-			andConditions = append(andConditions, c)
-		}
-	}
+func (ft *FilterInfo) combinePathTreeOfConditions(tree *PathTree) interface{ database.Condition } {
+	andConditions := tree.tree.GetValues()
 	and := database.AndConditionFromArray(andConditions)
 	orConditions := []interface{ database.Condition }{}
-	for _, p := range tree.GetKeys() {
-		if pt := tree.Get(p); pt != nil {
+	for _, p := range tree.tree.GetKeys() {
+		if pt := tree.tree.Get(p); pt.tree != nil {
 			orConditions = append(orConditions, ft.combinePathTreeOfConditions(pt))
 		}
 	}

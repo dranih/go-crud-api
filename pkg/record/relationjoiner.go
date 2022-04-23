@@ -57,7 +57,7 @@ func (rj *RelationJoiner) AddMandatoryColumns(table *database.ReflectedTable, pa
 	}
 }
 
-func (rj *RelationJoiner) getJoinsAsPathTree(params map[string][]string) *Tree {
+func (rj *RelationJoiner) getJoinsAsPathTree(params map[string][]string) *PathTree {
 	joins := NewPathTree(nil)
 	if join, exists := params["join"]; exists {
 		for _, tableNames := range join {
@@ -92,8 +92,8 @@ func (rj *RelationJoiner) hasAndBelongsToMany(t1, t2 *database.ReflectedTable) *
 	return nil
 }
 
-func (rj *RelationJoiner) addJoinsForTables(t1 *database.ReflectedTable, joins *Tree, records *[]map[string]interface{}, params map[string][]string, db *database.GenericDB) {
-	for _, t2Name := range joins.GetKeys() {
+func (rj *RelationJoiner) addJoinsForTables(t1 *database.ReflectedTable, joins *PathTree, records *[]map[string]interface{}, params map[string][]string, db *database.GenericDB) {
+	for _, t2Name := range joins.tree.GetKeys() {
 		t2 := rj.reflection.GetTable(t2Name)
 		belongsTo := len(t1.GetFksTo(t2.GetName())) > 0
 		hasMany := len(t2.GetFksTo(t1.GetName())) > 0
@@ -121,7 +121,7 @@ func (rj *RelationJoiner) addJoinsForTables(t1 *database.ReflectedTable, joins *
 			rj.addFkRecords(t2, habtmValues.FkValues, params, db, &newRecords)
 		}
 
-		rj.addJoinsForTables(t2, joins.Get(t2Name), &newRecords, params, db)
+		rj.addJoinsForTables(t2, joins.tree.Get(t2Name), &newRecords, params, db)
 
 		if fkValues != nil {
 			rj.fillFkValues(t2, newRecords, &fkValues)
