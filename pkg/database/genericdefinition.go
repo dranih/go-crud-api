@@ -14,8 +14,8 @@ type GenericDefinition struct {
 	reflection    *GenericReflection
 }
 
-func NewGenericDefinition(pdo *LazyPdo, driver, database string, tables map[string]bool) *GenericDefinition {
-	return &GenericDefinition{pdo, driver, database, NewTypeConverter(driver), NewGenericReflection(pdo, driver, database, tables)}
+func NewGenericDefinition(pdo *LazyPdo, driver, database string, tables map[string]bool, mapper *RealNameMapper) *GenericDefinition {
+	return &GenericDefinition{pdo, driver, database, NewTypeConverter(driver), NewGenericReflection(pdo, driver, database, tables, mapper)}
 }
 
 func (gd *GenericDefinition) quote(identifier string) string {
@@ -114,7 +114,7 @@ func (gd *GenericDefinition) getTableRenameSQL(tableName, newTableName string) s
 func (gd *GenericDefinition) getColumnRenameSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
 	p1 := gd.quote(tableName)
 	p2 := gd.quote(columnName)
-	p3 := gd.quote(newColumn.GetName())
+	p3 := gd.quote(newColumn.GetRealName())
 
 	switch gd.driver {
 	case "mysql":
@@ -134,7 +134,7 @@ func (gd *GenericDefinition) getColumnRenameSQL(tableName, columnName string, ne
 func (gd *GenericDefinition) getColumnRetypeSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
 	p1 := gd.quote(tableName)
 	p2 := gd.quote(columnName)
-	p3 := gd.quote(newColumn.GetName())
+	p3 := gd.quote(newColumn.GetRealName())
 	p4 := gd.GetColumnType(newColumn, true)
 
 	switch gd.driver {
@@ -151,7 +151,7 @@ func (gd *GenericDefinition) getColumnRetypeSQL(tableName, columnName string, ne
 func (gd *GenericDefinition) getSetColumnNullableSQL(tableName, columnName string, newColumn *ReflectedColumn) string {
 	p1 := gd.quote(tableName)
 	p2 := gd.quote(columnName)
-	p3 := gd.quote(newColumn.GetName())
+	p3 := gd.quote(newColumn.GetRealName())
 	p4 := gd.GetColumnType(newColumn, true)
 
 	switch gd.driver {
@@ -243,7 +243,7 @@ func (gd *GenericDefinition) getSetColumnPkDefaultSQL(tableName, columnName stri
 
 	switch gd.driver {
 	case "mysql":
-		p3 := gd.quote(newColumn.GetName())
+		p3 := gd.quote(newColumn.GetRealName())
 		p4 := gd.GetColumnType(newColumn, true)
 		return fmt.Sprintf("ALTER TABLE %s CHANGE %s %s %s", p1, p2, p3, p4)
 	case "pgsql":
@@ -291,7 +291,7 @@ func (gd *GenericDefinition) getRemoveColumnFkConstraintSQL(tableName, columnNam
 }
 
 func (gd *GenericDefinition) getAddTableSQL(newTable *ReflectedTable) string {
-	tableName := newTable.GetName()
+	tableName := newTable.GetRealName()
 	p1 := gd.quote(tableName)
 	fields := []string{}
 	constraints := []string{}
@@ -329,7 +329,7 @@ func (gd *GenericDefinition) getAddTableSQL(newTable *ReflectedTable) string {
 
 func (gd *GenericDefinition) getAddColumnSQL(tableName string, newColumn *ReflectedColumn) string {
 	p1 := gd.quote(tableName)
-	p2 := gd.quote(newColumn.GetName())
+	p2 := gd.quote(newColumn.GetRealName())
 	p3 := gd.GetColumnType(newColumn, false)
 
 	switch gd.driver {

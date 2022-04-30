@@ -14,16 +14,16 @@ func NewDefinitionService(db *GenericDB, reflection *ReflectionService) *Definit
 func (ds *DefinitionService) UpdateTable(tableName string, changes map[string]interface{}) bool {
 	table := ds.reflection.GetTable(tableName)
 	newTable := NewReflectedTableFromJson(mergeMaps(table.JsonSerialize(), changes))
-	if table.GetName() != newTable.GetName() {
-		if err := ds.db.Definition().RenameTable(table.GetName(), newTable.GetName()); err != nil {
+	if table.GetRealName() != newTable.GetRealName() {
+		if err := ds.db.Definition().RenameTable(table.GetRealName(), newTable.GetRealName()); err != nil {
 			log.Printf("Error : %v", err)
 			return false
 		}
 		if ds.db.tables != nil {
-			delete(ds.db.tables, table.GetName())
-			ds.db.tables[newTable.GetName()] = true
-			delete(ds.reflection.tables, table.GetName())
-			ds.reflection.tables[newTable.GetName()] = newTable
+			delete(ds.db.tables, table.GetRealName())
+			ds.db.tables[newTable.GetRealName()] = true
+			delete(ds.reflection.tables, table.GetRealName())
+			ds.reflection.tables[newTable.GetRealName()] = newTable
 		}
 	}
 	return true
@@ -45,10 +45,10 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 	newColumn := NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), changes))
 	if newColumn.GetPk() != column.GetPk() && table.HasPk() {
 		oldColumn := table.GetPk()
-		if oldColumn.GetName() != columnName {
+		if oldColumn.GetRealName() != columnName {
 			oldColumn.SetPk(false)
-			if err := ds.db.definition.RemoveColumnPrimaryKey(table.GetName(), oldColumn.GetName(), oldColumn); err != nil {
-				log.Printf("Error removing primary key for column %s : %v", oldColumn.GetName(), err)
+			if err := ds.db.definition.RemoveColumnPrimaryKey(table.GetRealName(), oldColumn.GetRealName(), oldColumn); err != nil {
+				log.Printf("Error removing primary key for column %s : %v", oldColumn.GetRealName(), err)
 				return false
 			}
 		}
@@ -57,14 +57,14 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 	// remove constraints
 	newColumn = NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), map[string]interface{}{"pk": false, "fk": ""}))
 	if newColumn.GetPk() != column.GetPk() && !newColumn.GetPk() {
-		if err := ds.db.definition.RemoveColumnPrimaryKey(table.GetName(), column.GetName(), newColumn); err != nil {
-			log.Printf("Error removing primary key for column %s : %v", column.GetName(), err)
+		if err := ds.db.definition.RemoveColumnPrimaryKey(table.GetRealName(), column.GetRealName(), newColumn); err != nil {
+			log.Printf("Error removing primary key for column %s : %v", column.GetRealName(), err)
 			return false
 		}
 	}
 	if newColumn.GetFk() != column.GetFk() && newColumn.GetFk() == "" {
-		if err := ds.db.definition.RemoveColumnForeignKey(table.GetName(), column.GetName(), newColumn); err != nil {
-			log.Printf("Error removing foreign key for column %s : %v", column.GetName(), err)
+		if err := ds.db.definition.RemoveColumnForeignKey(table.GetRealName(), column.GetRealName(), newColumn); err != nil {
+			log.Printf("Error removing foreign key for column %s : %v", column.GetRealName(), err)
 			return false
 		}
 	}
@@ -73,9 +73,9 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 	newColumn = NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), changes))
 	newColumn.SetPk(false)
 	newColumn.SetFk("")
-	if newColumn.GetName() != column.GetName() {
-		if err := ds.db.definition.RenameColumn(table.GetName(), column.GetName(), newColumn); err != nil {
-			log.Printf("Error rename column %s : %v", column.GetName(), err)
+	if newColumn.GetRealName() != column.GetRealName() {
+		if err := ds.db.definition.RenameColumn(table.GetRealName(), column.GetRealName(), newColumn); err != nil {
+			log.Printf("Error rename column %s : %v", column.GetRealName(), err)
 			return false
 		}
 	}
@@ -83,14 +83,14 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 		newColumn.GetLength() != column.GetLength() ||
 		newColumn.GetPrecision() != column.GetPrecision() ||
 		newColumn.GetScale() != column.GetScale() {
-		if err := ds.db.definition.RetypeColumn(table.GetName(), newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error changing type for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.RetypeColumn(table.GetRealName(), newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error changing type for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
 	if newColumn.GetNullable() != column.GetNullable() {
-		if err := ds.db.definition.SetColumnNullable(table.GetName(), newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error changing nullable for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.SetColumnNullable(table.GetRealName(), newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error changing nullable for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
@@ -98,14 +98,14 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 	// add constraints
 	newColumn = NewReflectedColumnFromJson(mergeMaps(column.JsonSerialize(), changes))
 	if newColumn.GetFk() != "" {
-		if err := ds.db.definition.AddColumnForeignKey(table.GetName(), newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error adding foreign key for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.AddColumnForeignKey(table.GetRealName(), newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error adding foreign key for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
 	if newColumn.GetPk() {
-		if err := ds.db.definition.AddColumnPrimaryKey(table.GetName(), newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error adding primary key for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.AddColumnPrimaryKey(table.GetRealName(), newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error adding primary key for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
@@ -116,12 +116,12 @@ func (ds *DefinitionService) UpdateColumn(tableName, columnName string, changes 
 func (ds *DefinitionService) AddTable(definition map[string]interface{}) bool {
 	newTable := NewReflectedTableFromJson(definition)
 	if err := ds.db.definition.AddTable(newTable); err != nil {
-		log.Printf("Error adding table %s : %v", newTable.GetName(), err)
+		log.Printf("Error adding table %s : %v", newTable.GetRealName(), err)
 		return false
 	}
 	if ds.db.tables != nil {
-		ds.db.tables[newTable.GetName()] = true
-		ds.reflection.tables[newTable.GetName()] = newTable
+		ds.db.tables[newTable.GetRealName()] = true
+		ds.reflection.tables[newTable.GetRealName()] = newTable
 	}
 	return true
 }
@@ -129,18 +129,18 @@ func (ds *DefinitionService) AddTable(definition map[string]interface{}) bool {
 func (ds *DefinitionService) AddColumn(tableName string, definition map[string]interface{}) bool {
 	newColumn := NewReflectedColumnFromJson(definition)
 	if err := ds.db.definition.AddColumn(tableName, newColumn); err != nil {
-		log.Printf("Error adding column %s : %v", newColumn.GetName(), err)
+		log.Printf("Error adding column %s : %v", newColumn.GetRealName(), err)
 		return false
 	}
 	if newColumn.GetFk() != "" {
-		if err := ds.db.definition.AddColumnForeignKey(tableName, newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error adding foreign key for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.AddColumnForeignKey(tableName, newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error adding foreign key for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
 	if newColumn.GetPk() {
-		if err := ds.db.definition.AddColumnPrimaryKey(tableName, newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error adding primary key for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.AddColumnPrimaryKey(tableName, newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error adding primary key for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
@@ -164,20 +164,20 @@ func (ds *DefinitionService) RemoveColumn(tableName, columnName string) bool {
 	newColumn := table.GetColumn(columnName)
 	if newColumn.GetPk() {
 		newColumn.SetPk(false)
-		if err := ds.db.definition.RemoveColumnPrimaryKey(table.GetName(), newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error removing primary key for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.RemoveColumnPrimaryKey(table.GetRealName(), newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error removing primary key for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
 	if newColumn.GetFk() != "" {
 		newColumn.SetFk("")
-		if err := ds.db.definition.RemoveColumnForeignKey(tableName, newColumn.GetName(), newColumn); err != nil {
-			log.Printf("Error removing foreign key for column %s : %v", newColumn.GetName(), err)
+		if err := ds.db.definition.RemoveColumnForeignKey(tableName, newColumn.GetRealName(), newColumn); err != nil {
+			log.Printf("Error removing foreign key for column %s : %v", newColumn.GetRealName(), err)
 			return false
 		}
 	}
 	if err := ds.db.definition.RemoveColumn(tableName, columnName); err != nil {
-		log.Printf("Error removing column %s : %v", newColumn.GetName(), err)
+		log.Printf("Error removing column %s : %v", newColumn.GetRealName(), err)
 		return false
 	}
 	return true

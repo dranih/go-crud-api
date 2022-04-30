@@ -25,6 +25,7 @@ func TestApiKeyDbAuth(t *testing.T) {
 		0,
 		"go-crud-api",
 		nil,
+		nil,
 		"go-crud-api",
 		"go-crud-api")
 	defer db.PDO().CloseConn()

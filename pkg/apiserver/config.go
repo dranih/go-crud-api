@@ -21,6 +21,7 @@ type ApiConfig struct {
 	Password              string
 	Database              string
 	Tables                string
+	Mapping               map[string]string
 	Middlewares           map[string]map[string]interface{}
 	Controllers           string
 	CustomControllers     string

@@ -5,16 +5,18 @@ import (
 )
 
 type ReflectedDatabase struct {
-	tableTypes map[string]string
+	tableTypes     map[string]string
+	tableRealNames map[string]string
 }
 
-func NewReflectedDatabase(tableTypes map[string]string) *ReflectedDatabase {
-	return &ReflectedDatabase{tableTypes}
+func NewReflectedDatabase(tableTypes, tableRealNames map[string]string) *ReflectedDatabase {
+	return &ReflectedDatabase{tableTypes, tableRealNames}
 }
 
 // done
 func NewReflectedDatabaseFromReflection(reflection *GenericReflection) *ReflectedDatabase {
 	tableTypes := map[string]string{}
+	tableRealNames := map[string]string{}
 	for _, table := range reflection.GetTables() {
 		tableName := table["TABLE_NAME"]
 		tableType := table["TABLE_TYPE"]
@@ -28,16 +30,20 @@ func NewReflectedDatabaseFromReflection(reflection *GenericReflection) *Reflecte
 			continue
 		}
 		tableTypes[tableName.(string)] = tableType.(string)
+		tableRealNames[tableName.(string)] = table["TABLE_REAL_NAME"].(string)
 	}
-	return NewReflectedDatabase(tableTypes)
+	return NewReflectedDatabase(tableTypes, tableRealNames)
 }
 
 func NewReflectedDatabaseFromJson(data string) *ReflectedDatabase {
-	var tableTypes map[string]string
-	if err := json.Unmarshal([]byte(data), &tableTypes); err != nil {
+	var wants struct {
+		Types     map[string]string
+		RealNames map[string]string
+	}
+	if err := json.Unmarshal([]byte(data), &wants); err != nil {
 		return nil
 	} else {
-		return NewReflectedDatabase(tableTypes)
+		return NewReflectedDatabase(wants.Types, wants.RealNames)
 	}
 }
 
@@ -63,6 +69,13 @@ func (rd *ReflectedDatabase) GetType(tableName string) string {
 	return ""
 }
 
+func (rd *ReflectedDatabase) GetRealName(tableName string) string {
+	if trns, exists := rd.tableRealNames[tableName]; exists {
+		return trns
+	}
+	return ""
+}
+
 func (rd *ReflectedDatabase) GetTableNames() []string {
 	i, keys := 0, make([]string, len(rd.tableTypes))
 	for key := range rd.tableTypes {
@@ -77,12 +90,14 @@ func (rd *ReflectedDatabase) RemoveTable(tableName string) bool {
 		return false
 	}
 	delete(rd.tableTypes, tableName)
+	delete(rd.tableRealNames, tableName)
 	return true
 }
 
 func (rd *ReflectedDatabase) Serialize() map[string]interface{} {
 	return map[string]interface{}{
-		"tables": rd.tableTypes,
+		"types":     rd.tableTypes,
+		"realNames": rd.tableRealNames,
 	}
 }
 

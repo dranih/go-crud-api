@@ -24,6 +24,7 @@ func TestRecordController(t *testing.T) {
 		0,
 		"go-crud-api",
 		nil,
+		nil,
 		"go-crud-api",
 		"go-crud-api",
 	)

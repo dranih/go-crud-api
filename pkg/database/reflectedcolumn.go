@@ -10,6 +10,7 @@ import (
 
 type ReflectedColumn struct {
 	name       string
+	realName   string
 	columnType string
 	length     int
 	precision  int
@@ -26,8 +27,8 @@ const (
 )
 
 // done
-func NewReflectedColumn(name string, columnType string, length int, precision int, scale int, nullable bool, pk bool, fk string) *ReflectedColumn {
-	r := &ReflectedColumn{name, columnType, length, precision, scale, nullable, pk, fk}
+func NewReflectedColumn(name, realName, columnType string, length, precision, scale int, nullable, pk bool, fk string) *ReflectedColumn {
+	r := &ReflectedColumn{name, realName, columnType, length, precision, scale, nullable, pk, fk}
 	r.sanitize()
 	return r
 }
@@ -91,6 +92,7 @@ func getDataSize(length, precision, scale int) string {
 // done
 func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResult map[string]interface{}) *ReflectedColumn {
 	name := columnResult["COLUMN_NAME"].(string)
+	realName := columnResult["COLUMN_REAL_NAME"].(string)
 	dataType := columnResult["DATA_TYPE"].(string)
 	length, err := strconv.Atoi(fmt.Sprint(columnResult["CHARACTER_MAXIMUM_LENGTH"]))
 	if err != nil {
@@ -118,11 +120,16 @@ func NewReflectedColumnFromReflection(reflection *GenericReflection, columnResul
 	}
 	pk := false
 	fk := ""
-	return NewReflectedColumn(name, jdbcType, length, precision, scale, nullable, pk, fk)
+	return NewReflectedColumn(name, realName, jdbcType, length, precision, scale, nullable, pk, fk)
 }
 
 func NewReflectedColumnFromJson(json map[string]interface{}) *ReflectedColumn {
+	a, gotAlias := json["alias"]
 	name := fmt.Sprint(json["name"])
+	realName := name
+	if gotAlias && a != nil {
+		name = fmt.Sprint(a)
+	}
 	columnType := fmt.Sprint(json["type"])
 	length := 0
 	if l, exists := json["length"]; exists {
@@ -164,7 +171,7 @@ func NewReflectedColumnFromJson(json map[string]interface{}) *ReflectedColumn {
 		fk = fmt.Sprint(l)
 	}
 
-	return NewReflectedColumn(name, columnType, length, precision, scale, nullable, pk, fk)
+	return NewReflectedColumn(name, realName, columnType, length, precision, scale, nullable, pk, fk)
 }
 
 func (rc *ReflectedColumn) sanitize() {
@@ -187,6 +194,10 @@ func (rc *ReflectedColumn) sanitize() {
 
 func (rc *ReflectedColumn) GetName() string {
 	return rc.name
+}
+
+func (rc *ReflectedColumn) GetRealName() string {
+	return rc.realName
 }
 
 func (rc *ReflectedColumn) GetNullable() bool {
@@ -278,9 +289,15 @@ func (rc *ReflectedColumn) GetFk() string {
 }
 
 func (rc *ReflectedColumn) Serialize() map[string]interface{} {
+	var a interface{}
+	if rc.name != rc.realName {
+		a = rc.name
+	}
+
 	res := map[string]interface{}{
-		"name": rc.name,
-		"type": rc.columnType,
+		"name":  rc.realName,
+		"alias": a,
+		"type":  rc.columnType,
 	}
 	if rc.length > 0 {
 		res["length"] = rc.length

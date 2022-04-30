@@ -89,7 +89,8 @@ func (rs *ReflectionService) loadTable(tableName string, useCache bool) *Reflect
 	}
 	if table == nil {
 		tableType := rs.getDatabase().GetType(tableName)
-		table = NewReflectedTableFromReflection(rs.db.Reflection(), tableName, tableType)
+		tableRealName := rs.getDatabase().GetRealName(tableName)
+		table = NewReflectedTableFromReflection(rs.db.Reflection(), tableName, tableRealName, tableType)
 		if jsonData, err := json.Marshal(table); err == nil {
 			if data, err := utils.GzCompress(string(jsonData)); err == nil {
 				rs.cache.Set(key, data, rs.ttl)

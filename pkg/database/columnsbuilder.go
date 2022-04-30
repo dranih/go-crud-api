@@ -35,9 +35,9 @@ func (cb *ColumnsBuilder) GetOffsetLimit(offset, limit int) string {
 func (cb *ColumnsBuilder) quoteColumnName(column *ReflectedColumn) string {
 	switch cb.driver {
 	case "mysql":
-		return "`" + column.GetName() + "`"
+		return "`" + column.GetRealName() + "`"
 	default:
-		return `"` + column.GetName() + `"`
+		return `"` + column.GetRealName() + `"`
 	}
 }
 

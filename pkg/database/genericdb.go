@@ -19,9 +19,11 @@ type GenericDB struct {
 	port          int
 	database      string
 	tables        map[string]bool
+	mapping       map[string]string
 	username      string
 	password      string
 	pdo           *LazyPdo
+	mapper        *RealNameMapper
 	reflection    *GenericReflection
 	definition    *GenericDefinition
 	conditions    *ConditionsBuilder
@@ -96,8 +98,9 @@ func (g *GenericDB) initPdo() bool {
 		g.pdo.AddInitCommand(command)
 	}
 
-	g.reflection = NewGenericReflection(g.pdo, g.driver, g.database, g.tables)
-	g.definition = NewGenericDefinition(g.pdo, g.driver, g.database, g.tables)
+	g.mapper = NewRealNameMapper(g.mapping)
+	g.reflection = NewGenericReflection(g.pdo, g.driver, g.database, g.tables, g.mapper)
+	g.definition = NewGenericDefinition(g.pdo, g.driver, g.database, g.tables, g.mapper)
 	g.conditions = NewConditionsBuilder(g.driver)
 	g.columns = NewColumnsBuilder(g.driver)
 	g.converter = NewDataConverter(g.driver)
@@ -105,13 +108,14 @@ func (g *GenericDB) initPdo() bool {
 	return result
 }
 
-func NewGenericDB(driver string, address string, port int, database string, tables map[string]bool, username string, password string) *GenericDB {
+func NewGenericDB(driver string, address string, port int, database string, tables map[string]bool, mapping map[string]string, username string, password string) *GenericDB {
 	g := &GenericDB{}
 	g.driver = driver
 	g.address = address
 	g.port = port
 	g.database = database
 	g.tables = tables
+	g.mapping = mapping
 	g.username = username
 	g.password = password
 	g.VariableStore = utils.VStore
@@ -119,7 +123,7 @@ func NewGenericDB(driver string, address string, port int, database string, tabl
 	return g
 }
 
-func (g *GenericDB) Reconstruct(driver, address string, port int, database string, tables map[string]bool, username string, password string) bool {
+func (g *GenericDB) Reconstruct(driver, address string, port int, database string, tables map[string]bool, mapping map[string]string, username string, password string) bool {
 	if driver != "" {
 		g.driver = driver
 	}
@@ -134,6 +138,9 @@ func (g *GenericDB) Reconstruct(driver, address string, port int, database strin
 	}
 	if tables != nil {
 		g.tables = tables
+	}
+	if mapping != nil {
+		g.mapping = mapping
 	}
 	if username != "" {
 		g.username = username
@@ -194,10 +201,10 @@ func (g *GenericDB) getQuote() string {
 func (g *GenericDB) CreateSingle(tx *sql.Tx, table *ReflectedTable, columnValues map[string]interface{}) (interface{}, error) {
 	g.converter.ConvertColumnValues(table, &columnValues)
 	insertColumns, parameters := g.columns.GetInsert(table, columnValues)
-	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	pkName := table.GetPk().GetName()
 	quote := g.getQuote()
-	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableName, quote, insertColumns)
+	sql := fmt.Sprintf("INSERT INTO %s%s%s %s", quote, tableRealName, quote, insertColumns)
 	//For pgsql and sqlsrv, get id from returning value
 	if g.driver == "pgsql" || g.driver == "sqlsrv" {
 		res, err := g.queryRowSingleColumn(tx, sql, parameters...)
@@ -251,17 +258,19 @@ func (g *GenericDB) CreateSingle(tx *sql.Tx, table *ReflectedTable, columnValues
 func (g *GenericDB) SelectSingle(tx *sql.Tx, table *ReflectedTable, columnNames []string, id string) []map[string]interface{} {
 	selectColumns := g.columns.GetSelect(table, columnNames)
 	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	var condition interface{ Condition }
 	condition = NewColumnCondition(table.GetPk(), `eq`, id)
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
-	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableName, quote, whereClause)
+	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableRealName, quote, whereClause)
 	records, _ := g.query(tx, sql, parameters...)
 	if len(records) <= 0 {
 		return nil
 	}
+	records = g.mapRecords(tableRealName, records)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records[:1]
 }
@@ -274,14 +283,16 @@ func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []str
 	}
 	selectColumns := g.columns.GetSelect(table, columnNames)
 	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	var condition interface{ Condition }
 	condition = NewColumnCondition(table.GetPk(), `in`, strings.Join(ids, `,`))
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
-	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableName, quote, whereClause)
+	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s", selectColumns, quote, tableRealName, quote, whereClause)
 	records, _ = g.query(nil, sql, parameters...)
+	records = g.mapRecords(tableRealName, records)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
@@ -289,11 +300,12 @@ func (g *GenericDB) SelectMultiple(table *ReflectedTable, columnNames, ids []str
 // Should check error
 func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Condition }) int {
 	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
-	sql := fmt.Sprintf("SELECT COUNT(*) as c FROM %s%s%s %s", quote, tableName, quote, whereClause)
+	sql := fmt.Sprintf("SELECT COUNT(*) as c FROM %s%s%s %s", quote, tableRealName, quote, whereClause)
 	stmt, _ := g.queryRowSingleColumn(nil, sql, parameters...)
 	switch ct := stmt.(type) {
 	case int:
@@ -313,6 +325,18 @@ func (g *GenericDB) SelectCount(table *ReflectedTable, condition interface{ Cond
 	return 0
 }
 
+func (g *GenericDB) mapRecords(tableRealName string, records []map[string]interface{}) []map[string]interface{} {
+	mappedRecords := []map[string]interface{}{}
+	for _, record := range records {
+		mappedRecord := map[string]interface{}{}
+		for columRealName, columnValue := range record {
+			mappedRecord[g.mapper.GetColumnName(tableRealName, columRealName)] = columnValue
+		}
+		mappedRecords = append(mappedRecords, mappedRecord)
+	}
+	return mappedRecords
+}
+
 // Should check error
 func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condition interface{ Condition }, columnOrdering [][2]string, offset, limit int) []map[string]interface{} {
 	if limit == 0 {
@@ -320,14 +344,16 @@ func (g *GenericDB) SelectAll(table *ReflectedTable, columnNames []string, condi
 	}
 	selectColumns := g.columns.GetSelect(table, columnNames)
 	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	condition = g.addMiddlewareConditions(tableName, condition)
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	orderBy := g.columns.GetOrderBy(table, columnOrdering)
 	offsetLimit := g.columns.GetOffsetLimit(offset, limit)
 	quote := g.getQuote()
-	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s %s %s", selectColumns, quote, tableName, quote, whereClause, orderBy, offsetLimit)
+	sql := fmt.Sprintf("SELECT %s FROM %s%s%s %s %s %s", selectColumns, quote, tableRealName, quote, whereClause, orderBy, offsetLimit)
 	records, _ := g.query(nil, sql, parameters...)
+	records = g.mapRecords(tableRealName, records)
 	g.converter.ConvertRecords(table, columnNames, &records)
 	return records
 }
@@ -339,13 +365,14 @@ func (g *GenericDB) UpdateSingle(tx *sql.Tx, table *ReflectedTable, columnValues
 	g.converter.ConvertColumnValues(table, &columnValues)
 	updateColumns, parameters := g.columns.GetUpdate(table, columnValues)
 	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	var condition interface{ Condition }
 	pk := table.GetPk()
 	condition = NewColumnCondition(pk, `eq`, id)
 	condition = g.addMiddlewareConditions(tableName, condition)
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
-	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableName, quote, updateColumns, whereClause)
+	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableRealName, quote, updateColumns, whereClause)
 	res, err := g.exec(tx, sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -361,6 +388,7 @@ func (g *GenericDB) UpdateSingle(tx *sql.Tx, table *ReflectedTable, columnValues
 
 func (g *GenericDB) DeleteSingle(tx *sql.Tx, table *ReflectedTable, id string) (int64, error) {
 	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	var condition interface{ Condition }
 	pk := table.GetPk()
 	condition = NewColumnCondition(pk, `eq`, id)
@@ -368,7 +396,7 @@ func (g *GenericDB) DeleteSingle(tx *sql.Tx, table *ReflectedTable, id string) (
 	parameters := []interface{}{}
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
-	sql := fmt.Sprintf("DELETE FROM %s%s%s %s", quote, tableName, quote, whereClause)
+	sql := fmt.Sprintf("DELETE FROM %s%s%s %s", quote, tableRealName, quote, whereClause)
 	res, err := g.exec(tx, sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -392,13 +420,14 @@ func (g *GenericDB) IncrementSingle(tx *sql.Tx, table *ReflectedTable, columnVal
 		return 0, nil
 	}
 	tableName := table.GetName()
+	tableRealName := table.GetRealName()
 	var condition interface{ Condition }
 	pk := table.GetPk()
 	condition = NewColumnCondition(pk, `eq`, id)
 	condition = g.addMiddlewareConditions(tableName, condition)
 	whereClause := g.conditions.GetWhereClause(condition, &parameters)
 	quote := g.getQuote()
-	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableName, quote, updateColumns, whereClause)
+	sql := fmt.Sprintf("UPDATE %s%s%s SET %s %s", quote, tableRealName, quote, updateColumns, whereClause)
 	res, err := g.exec(tx, sql, parameters...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -446,6 +475,7 @@ func (g *GenericDB) GetCacheKey() string {
 		"port":     g.port,
 		"database": g.database,
 		"tables":   g.tables,
+		"mapping":  g.mapping,
 		"username": g.username,
 	})
 	return fmt.Sprintf("%x", md5.Sum(gMap))

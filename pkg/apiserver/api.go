@@ -39,6 +39,7 @@ func NewApi(globalConfig *Config) *Api {
 		config.Port,
 		config.Database,
 		config.GetTables(),
+		config.Mapping,
 		config.Username,
 		config.Password)
 	prefix := fmt.Sprintf("gocrudapi-%d-", os.Getpid())
