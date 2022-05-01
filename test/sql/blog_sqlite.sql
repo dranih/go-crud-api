@@ -25,21 +25,21 @@ CREATE TABLE "users" (
 INSERT INTO "users" ("id", "username", "password", "api_key", "location") VALUES (1, 'user1', 'pass1', '123456789abc', NULL);
 INSERT INTO "users" ("id", "username", "password", "api_key", "location") VALUES (2, 'user2', '$2y$10$cg7/nswxVZ0cmVIsMB/pVOh1OfcHScBJGq7Xu4KF9dFEQgRZ8HWe.', NULL, NULL);
 
-DROP TABLE IF EXISTS "posts";
-CREATE TABLE "posts" (
-  "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-  "user_id" integer NOT NULL,
-  "category_id" integer NOT NULL,
-  "content" varchar(255) NOT NULL,
-  FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
-  FOREIGN KEY ("category_id") REFERENCES "categories" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
+DROP TABLE IF EXISTS "abc_posts";
+CREATE TABLE "abc_posts" (
+  "abc_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "abc_user_id" integer NOT NULL,
+  "abc_category_id" integer NOT NULL,
+  "abc_content" varchar(255) NOT NULL,
+  FOREIGN KEY ("abc_user_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
+  FOREIGN KEY ("abc_category_id") REFERENCES "categories" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
-CREATE INDEX "posts_user_id" ON "posts" ("user_id");
-CREATE INDEX "posts_category_id" ON "posts" ("category_id");
+CREATE INDEX "posts_user_id" ON "abc_posts" ("abc_user_id");
+CREATE INDEX "posts_category_id" ON "abc_posts" ("abc_category_id");
 
-INSERT INTO "posts" ("id", "user_id", "category_id", "content") VALUES (1, 1, 1, 'blog started');
-INSERT INTO "posts" ("id", "user_id", "category_id", "content") VALUES (2, 1, 2, 'It works!');
+INSERT INTO "abc_posts" ("abc_id", "abc_user_id", "abc_category_id", "abc_content") VALUES (1, 1, 1, 'blog started');
+INSERT INTO "abc_posts" ("abc_id", "abc_user_id", "abc_category_id", "abc_content") VALUES (2, 1, 2, 'It works!');
 
 DROP TABLE IF EXISTS "comments";
 CREATE TABLE "comments" (
@@ -47,7 +47,7 @@ CREATE TABLE "comments" (
   "post_id" integer NOT NULL,
   "message" VARCHAR(255) NOT NULL,
   "category_id" integer NOT NULL,
-  FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
+  FOREIGN KEY ("post_id") REFERENCES "abc_posts" ("abc_id") ON DELETE RESTRICT ON UPDATE RESTRICT,
   FOREIGN KEY ("category_id") REFERENCES "categories" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
@@ -75,7 +75,7 @@ CREATE TABLE "post_tags" (
   "post_id" integer NOT NULL,
   "tag_id" integer NOT NULL,
   FOREIGN KEY ("tag_id") REFERENCES "tags" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
-  FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
+  FOREIGN KEY ("post_id") REFERENCES "abc_posts" ("abc_id") ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 
 CREATE UNIQUE INDEX "post_tags_post_id_tag_id" ON "post_tags" ("post_id", "tag_id");

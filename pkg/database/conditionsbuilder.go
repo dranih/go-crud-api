@@ -56,9 +56,9 @@ func (cb *ConditionsBuilder) getNotConditionSql(not *NotCondition, arguments *[]
 func (cb *ConditionsBuilder) quoteColumnName(column *ReflectedColumn) string {
 	switch cb.driver {
 	case "mysql":
-		return "`" + column.GetName() + "`"
+		return "`" + column.GetRealName() + "`"
 	default:
-		return `"` + column.GetName() + `"`
+		return `"` + column.GetRealName() + `"`
 	}
 }
 

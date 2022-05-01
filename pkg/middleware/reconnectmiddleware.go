@@ -75,10 +75,11 @@ func (rm *ReconnectMiddleware) Process(next http.Handler) http.Handler {
 				tables[table] = true
 			}
 		}
+		mapping := rm.getMapProperty("mappingHandler", "")
 		username := rm.getStringFromHandler("usernameHandler")
 		password := rm.getStringFromHandler("passwordHandler")
-		if driver != "" || address != "" || port > 0 || database != "" || tables != nil || username != "" || password != "" {
-			rm.db.Reconstruct(driver, address, port, database, tables, username, password)
+		if driver != "" || address != "" || port > 0 || database != "" || tables != nil || mapping != nil || username != "" || password != "" {
+			rm.db.Reconstruct(driver, address, port, database, tables, mapping, username, password)
 		}
 		next.ServeHTTP(w, r)
 	})

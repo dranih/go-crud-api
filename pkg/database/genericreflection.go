@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -11,11 +12,12 @@ type GenericReflection struct {
 	driver        string
 	database      string
 	tables        map[string]bool
+	mapper        *RealNameMapper
 	typeConverter *TypeConverter
 }
 
-func NewGenericReflection(pdo *LazyPdo, driver string, database string, tables map[string]bool) *GenericReflection {
-	return &GenericReflection{pdo, driver, database, tables, NewTypeConverter(driver)}
+func NewGenericReflection(pdo *LazyPdo, driver string, database string, tables map[string]bool, mapper *RealNameMapper) *GenericReflection {
+	return &GenericReflection{pdo, driver, database, tables, mapper, NewTypeConverter(driver)}
 }
 
 func (r *GenericReflection) GetIgnoredTables() []string {
@@ -121,6 +123,8 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 		results = _results
 	}
 	for index := range results {
+		results[index]["TABLE_REAL_NAME"] = results[index]["TABLE_NAME"]
+		results[index]["TABLE_NAME"] = r.mapper.GetTableName(results[index]["TABLE_REAL_NAME"].(string))
 		if tableType, isString := results[index]["TABLE_TYPE"].(string); isString {
 			results[index]["TABLE_TYPE"] = mapArr[strings.TrimSpace(tableType)]
 		}
@@ -129,8 +133,13 @@ func (r *GenericReflection) GetTables() []map[string]interface{} {
 }
 
 func (r *GenericReflection) GetTableColumns(tableName string, viewType string) []map[string]interface{} {
+	tableRealName := r.mapper.GetTableRealName(tableName)
 	sql := r.getTableColumnsSQL()
-	results := r.query(sql, tableName, r.database)
+	results := r.query(sql, tableRealName, r.database)
+	for i := range results {
+		results[i]["COLUMN_REAL_NAME"] = results[i]["COLUMN_NAME"]
+		results[i]["COLUMN_NAME"] = r.mapper.GetColumnName(tableRealName, fmt.Sprint(results[i]["COLUMN_REAL_NAME"]))
+	}
 	if viewType == "view" {
 		for index := range results {
 			results[index]["IS_NULLABLE"] = false
@@ -174,21 +183,25 @@ func (r *GenericReflection) GetTableColumns(tableName string, viewType string) [
 }
 
 func (r *GenericReflection) GetTablePrimaryKeys(tableName string) []string {
+	tableRealName := r.mapper.GetTableRealName(tableName)
 	sql := r.getTablePrimaryKeysSQL()
-	results := r.query(sql, tableName, r.database)
+	results := r.query(sql, tableRealName, r.database)
 	var primaryKeys []string
 	for _, result := range results {
-		primaryKeys = append(primaryKeys, result["COLUMN_NAME"].(string))
+		primaryKeys = append(primaryKeys, r.mapper.GetColumnName(tableRealName, result["COLUMN_NAME"].(string)))
 	}
 	return primaryKeys
 }
 
 func (r *GenericReflection) GetTableForeignKeys(tableName string) map[string]string {
+	tableRealName := r.mapper.GetTableRealName(tableName)
 	sql := r.getTableForeignKeysSQL()
-	results := r.query(sql, tableName, r.database)
+	results := r.query(sql, tableRealName, r.database)
 	foreignKeys := map[string]string{}
 	for _, result := range results {
-		foreignKeys[result["COLUMN_NAME"].(string)] = result["REFERENCED_TABLE_NAME"].(string)
+		columnName := r.mapper.GetColumnName(tableRealName, result["COLUMN_NAME"].(string))
+		otherTableName := r.mapper.GetTableName(result["REFERENCED_TABLE_NAME"].(string))
+		foreignKeys[columnName] = otherTableName
 	}
 	return foreignKeys
 }

@@ -8,14 +8,15 @@ import (
 
 type ReflectedTable struct {
 	name      string
+	realName  string
 	tableType string
 	columns   map[string]*ReflectedColumn
 	pk        *ReflectedColumn
 	fks       map[string]string
 }
 
-func NewReflectedTable(name, tableType string, columns map[string]*ReflectedColumn) *ReflectedTable {
-	r := &ReflectedTable{name, tableType, map[string]*ReflectedColumn{}, nil, map[string]string{}}
+func NewReflectedTable(name, realName, tableType string, columns map[string]*ReflectedColumn) *ReflectedTable {
+	r := &ReflectedTable{name, realName, tableType, map[string]*ReflectedColumn{}, nil, map[string]string{}}
 	// set columns
 	for _, column := range columns {
 		columnName := column.GetName()
@@ -39,7 +40,7 @@ func NewReflectedTable(name, tableType string, columns map[string]*ReflectedColu
 }
 
 // done
-func NewReflectedTableFromReflection(reflection *GenericReflection, name, viewType string) *ReflectedTable {
+func NewReflectedTableFromReflection(reflection *GenericReflection, name, realName, viewType string) *ReflectedTable {
 	// set columns
 	columns := map[string]*ReflectedColumn{}
 	for _, tableColumn := range reflection.GetTableColumns(name, viewType) {
@@ -79,12 +80,17 @@ func NewReflectedTableFromReflection(reflection *GenericReflection, name, viewTy
 			columns[columnName].SetFk(table)
 		}
 	}
-	return NewReflectedTable(name, viewType, columns)
+	return NewReflectedTable(name, realName, viewType, columns)
 }
 
 func NewReflectedTableFromJson(json map[string]interface{}) *ReflectedTable {
+	a, gotAlias := json["alias"]
 	if n, exists := json["name"]; exists {
 		name := fmt.Sprint(n)
+		if gotAlias && a != nil {
+			name = fmt.Sprint(a)
+		}
+		realName := fmt.Sprint(n)
 		tableType := "table"
 		if tt, exists := json["type"]; exists {
 			tableType = fmt.Sprint(tt)
@@ -105,7 +111,7 @@ func NewReflectedTableFromJson(json map[string]interface{}) *ReflectedTable {
 				}
 			}
 		}
-		return NewReflectedTable(name, tableType, columns)
+		return NewReflectedTable(name, realName, tableType, columns)
 	}
 	return nil
 }
@@ -125,6 +131,10 @@ func (rt *ReflectedTable) GetPk() *ReflectedColumn {
 
 func (rt *ReflectedTable) GetName() string {
 	return rt.name
+}
+
+func (rt *ReflectedTable) GetRealName() string {
+	return rt.realName
 }
 
 func (rt *ReflectedTable) GetType() string {
@@ -174,11 +184,17 @@ func (rt *ReflectedTable) Serialize() map[string]interface{} {
 		columns = append(columns, rt.columns[k])
 	}
 
-	return map[string]interface{}{
-		"name":    rt.name,
+	res := map[string]interface{}{
+		"name":    rt.realName,
 		"type":    rt.tableType,
 		"columns": columns,
 	}
+
+	if rt.name != rt.realName {
+		res["alias"] = rt.name
+	}
+
+	return res
 }
 
 func (rt *ReflectedTable) JsonSerialize() map[string]interface{} {
