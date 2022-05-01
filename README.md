@@ -76,6 +76,7 @@ These are all the configuration options and their default value :
   | password | Username of the user connecting to the database | no default |
   | database | Database the connecting is made to | no default |
   | tables | Comma separated list of tables to publish | defaults to 'all' |
+  | mapping | List of table/column mappings | no mapping |
   | middlewares | List of middlewares to load (see  [Middlewares](#middlewares) for configuration) | `cors` |
   | controllers | List of controllers to load | `records,geojson,openapi,status` |
   | customControllers | Not implemented yet | N/A |
@@ -193,7 +194,7 @@ Those go packages are used :
 - [ ] Add a github workflow
   - [X] Init
   - [X] Add pgsql, mysql and sqlserver testing
-  - [ ] Find why somes linters are not working
+  - [ ] Find why somes linters are not working  : linked to https://github.com/golang/go/issues/26863, should rewrite condition interface. See also https://github.com/golang/go/issues/28254#issuecomment-996822778
   - [X] Release pipeline
 - [ ] Add an alter table function for sqlite (create new table, copy data, drop old table)
 - [X] Review packages structure

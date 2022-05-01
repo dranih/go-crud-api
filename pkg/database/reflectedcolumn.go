@@ -289,15 +289,12 @@ func (rc *ReflectedColumn) GetFk() string {
 }
 
 func (rc *ReflectedColumn) Serialize() map[string]interface{} {
-	var a interface{}
-	if rc.name != rc.realName {
-		a = rc.name
-	}
-
 	res := map[string]interface{}{
-		"name":  rc.realName,
-		"alias": a,
-		"type":  rc.columnType,
+		"name": rc.realName,
+		"type": rc.columnType,
+	}
+	if rc.name != rc.realName {
+		res["alias"] = rc.name
 	}
 	if rc.length > 0 {
 		res["length"] = rc.length

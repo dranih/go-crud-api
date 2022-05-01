@@ -18,13 +18,18 @@ import (
 // To rewrite
 func TestRecordController(t *testing.T) {
 	db_path := utils.SelectConfig(true)
+	mapping := map[string]string{
+		"abc_posts.abc_id":          "posts.id",
+		"abc_posts.abc_user_id":     "posts.user_id",
+		"abc_posts.abc_category_id": "posts.category_id",
+		"abc_posts.abc_content":     "posts.content"}
 	db := database.NewGenericDB(
 		"sqlite",
 		db_path,
 		0,
 		"go-crud-api",
 		nil,
-		nil,
+		mapping,
 		"go-crud-api",
 		"go-crud-api",
 	)

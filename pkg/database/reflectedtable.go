@@ -184,17 +184,17 @@ func (rt *ReflectedTable) Serialize() map[string]interface{} {
 		columns = append(columns, rt.columns[k])
 	}
 
-	var a interface{}
-	if rt.name != rt.realName {
-		a = rt.name
-	}
-
-	return map[string]interface{}{
+	res := map[string]interface{}{
 		"name":    rt.realName,
-		"alias":   a,
 		"type":    rt.tableType,
 		"columns": columns,
 	}
+
+	if rt.name != rt.realName {
+		res["alias"] = rt.name
+	}
+
+	return res
 }
 
 func (rt *ReflectedTable) JsonSerialize() map[string]interface{} {

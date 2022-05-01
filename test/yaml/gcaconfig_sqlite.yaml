@@ -8,11 +8,11 @@ api:
   database: "go-crud-api"
   username: "go-crud-api"
   password: "go-crud-api"
-  #mapping:
-  #  - abc_posts.abc_id: "posts.id"
-  #  - abc_posts.abc_user_id: "posts.user_id"
-  #  - abc_posts.abc_category_id: "posts.category_id"
-  #  - abc_posts.abc_content: "posts.content"
+  mapping:
+    - abc_posts.abc_id: "posts.id"
+    - abc_posts.abc_user_id: "posts.user_id"
+    - abc_posts.abc_category_id: "posts.category_id"
+    - abc_posts.abc_content: "posts.content"
 
   middlewares:
   - apiKeyAuth:
