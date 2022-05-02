@@ -49,7 +49,7 @@ func (cb *ConditionsBuilder) getOrConditionSql(or *OrCondition, arguments *[]int
 }
 
 func (cb *ConditionsBuilder) getNotConditionSql(not *NotCondition, arguments *[]interface{}) string {
-	condition := not.GetCondition()
+	condition := not.GetCondition().(interface{ Condition })
 	return "(NOT " + cb.getConditionSql(condition, arguments) + ")"
 }
 

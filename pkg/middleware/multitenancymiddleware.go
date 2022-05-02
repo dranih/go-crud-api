@@ -31,7 +31,7 @@ func (mt *MultiTenancy) getCondition(tableName string, pairs map[string]string) 
 	condition = database.NewNoCondition()
 	table := mt.reflection.GetTable(tableName)
 	for k, v := range pairs {
-		condition = condition.And(database.NewColumnCondition(table.GetColumn(k), "eq", v))
+		condition = condition.And(database.NewColumnCondition(table.GetColumn(k), "eq", v)).(interface{ database.Condition })
 	}
 	return condition
 }

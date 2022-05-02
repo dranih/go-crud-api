@@ -6,39 +6,41 @@ import (
 
 // Condition interface
 type Condition interface {
-	GetCondition() interface{ Condition }
-	And(condition interface{ Condition }) interface{ Condition }
-	Or(condition interface{ Condition }) interface{ Condition }
-	Not() interface{ Condition }
+	GetCondition() interface{}
+	And(condition interface{}) interface{}
+	Or(condition interface{}) interface{}
+	Not() interface{}
 }
 
 type GenericCondition struct {
 	condition interface{ Condition }
 }
 
-func (gc *GenericCondition) And(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (gc *GenericCondition) And(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return gc.condition
-	default:
-		return NewAndCondition(gc.condition, condition)
+	case interface{ Condition }:
+		return NewAndCondition(gc.condition, c)
 	}
+	return nil
 }
 
-func (gc *GenericCondition) Or(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (gc *GenericCondition) Or(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return gc.condition
-	default:
-		return NewOrCondition(gc.condition, condition)
+	case interface{ Condition }:
+		return NewOrCondition(gc.condition, c)
 	}
+	return nil
 }
 
-func (gc *GenericCondition) Not() interface{ Condition } {
+func (gc *GenericCondition) Not() interface{} {
 	return NewNotCondition(gc.condition)
 }
 
-func (gc *GenericCondition) GetCondition() interface{ Condition } {
+func (gc *GenericCondition) GetCondition() interface{} {
 	return nil
 }
 
@@ -76,7 +78,7 @@ func ConditionFromString(table *ReflectedTable, value string) interface{ Conditi
 		condition = NewColumnCondition(field, command, parts[2])
 	}
 	if negate {
-		condition = condition.Not()
+		condition = condition.Not().(interface{ Condition })
 	}
 	return condition
 }
@@ -92,19 +94,19 @@ func NewNoCondition() *NoCondition {
 
 }
 
-func (nc *NoCondition) GetCondition() interface{ Condition } {
+func (nc *NoCondition) GetCondition() interface{} {
 	return nil
 }
 
-func (nc *NoCondition) And(condition interface{ Condition }) interface{ Condition } {
+func (nc *NoCondition) And(condition interface{}) interface{} {
 	return condition
 }
 
-func (nc *NoCondition) Or(condition interface{ Condition }) interface{ Condition } {
+func (nc *NoCondition) Or(condition interface{}) interface{} {
 	return condition
 }
 
-func (nc *NoCondition) Not() interface{ Condition } {
+func (nc *NoCondition) Not() interface{} {
 	return nc
 }
 
@@ -120,25 +122,27 @@ func NewNotCondition(condition interface{ Condition }) *NotCondition {
 	return &NotCondition{condition, GenericCondition{condition}}
 }
 
-func (nc *NotCondition) And(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (nc *NotCondition) And(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return nc
-	default:
-		return NewAndCondition(nc, condition)
+	case interface{ Condition }:
+		return NewAndCondition(nc, c)
 	}
+	return nil
 }
 
-func (nc *NotCondition) Or(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (nc *NotCondition) Or(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return nc
-	default:
-		return NewOrCondition(nc, condition)
+	case interface{ Condition }:
+		return NewOrCondition(nc, c)
 	}
+	return nil
 }
 
-func (nc *NotCondition) GetCondition() interface{ Condition } {
+func (nc *NotCondition) GetCondition() interface{} {
 	return nc.condition
 }
 
@@ -154,23 +158,25 @@ func NewOrCondition(condition1, condition2 interface{ Condition }) *OrCondition 
 	return &OrCondition{[]interface{ Condition }{condition1, condition2}, GenericCondition{}}
 }
 
-func (oc *OrCondition) Or(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (oc *OrCondition) Or(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return oc
-	default:
-		oc.conditions = append(oc.conditions, condition)
+	case interface{ Condition }:
+		oc.conditions = append(oc.conditions, c)
 		return oc
 	}
+	return nil
 }
 
-func (oc *OrCondition) And(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (oc *OrCondition) And(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return oc
-	default:
-		return NewAndCondition(oc, condition)
+	case interface{ Condition }:
+		return NewAndCondition(oc, c)
 	}
+	return nil
 }
 
 func (ac *OrCondition) GetConditions() []interface{ Condition } {
@@ -181,7 +187,9 @@ func OrConditionFromArray(conditions []interface{ Condition }) interface{ Condit
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	for _, c := range conditions {
-		condition = condition.Or(c)
+		if ct, ok := condition.Or(c).(interface{ Condition }); ok {
+			condition = ct
+		}
 	}
 	return condition
 }
@@ -198,23 +206,25 @@ func NewAndCondition(condition1, condition2 interface{ Condition }) *AndConditio
 	return &AndCondition{[]interface{ Condition }{condition1, condition2}, GenericCondition{}}
 }
 
-func (ac *AndCondition) And(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (ac *AndCondition) And(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return ac
-	default:
-		ac.conditions = append(ac.conditions, condition)
+	case interface{ Condition }:
+		ac.conditions = append(ac.conditions, c)
 		return ac
 	}
+	return nil
 }
 
-func (ac *AndCondition) Or(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (ac *AndCondition) Or(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return ac
-	default:
-		return NewOrCondition(ac, condition)
+	case interface{ Condition }:
+		return NewOrCondition(ac, c)
 	}
+	return nil
 }
 
 func (ac *AndCondition) GetConditions() []interface{ Condition } {
@@ -225,7 +235,9 @@ func AndConditionFromArray(conditions []interface{ Condition }) interface{ Condi
 	var condition interface{ Condition }
 	condition = NewNoCondition()
 	for _, c := range conditions {
-		condition = condition.And(c)
+		if ct, ok := condition.And(c).(interface{ Condition }); ok {
+			condition = ct
+		}
 	}
 	return condition
 }
@@ -273,20 +285,22 @@ func NewSpatialCondition(column *ReflectedColumn, operator, value string) *Spati
 	return &SpatialCondition{*condition}
 }
 
-func (sc *SpatialCondition) And(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (sc *SpatialCondition) And(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return sc
-	default:
-		return NewAndCondition(sc, condition)
+	case interface{ Condition }:
+		return NewAndCondition(sc, c)
 	}
+	return nil
 }
 
-func (sc *SpatialCondition) Or(condition interface{ Condition }) interface{ Condition } {
-	switch condition.(type) {
+func (sc *SpatialCondition) Or(condition interface{}) interface{} {
+	switch c := condition.(type) {
 	case *NoCondition:
 		return sc
-	default:
-		return NewOrCondition(sc, condition)
+	case interface{ Condition }:
+		return NewOrCondition(sc, c)
 	}
+	return nil
 }

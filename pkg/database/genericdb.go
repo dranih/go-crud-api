@@ -179,11 +179,11 @@ func (g *GenericDB) RollBackTransaction(tx *sql.Tx) error {
 func (g *GenericDB) addMiddlewareConditions(tableName string, condition interface{ Condition }) interface{ Condition } {
 	condition1 := g.VariableStore.Get("authorization.conditions." + tableName)
 	if condition1 != nil {
-		condition = condition.And(condition1.(interface{ Condition }))
+		condition = condition.And(condition1).(interface{ Condition })
 	}
 	condition2 := g.VariableStore.Get("multiTenancy.conditions." + tableName)
 	if condition2 != nil {
-		condition = condition.And(condition2.(interface{ Condition }))
+		condition = condition.And(condition2).(interface{ Condition })
 	}
 	return condition
 }
