@@ -19,8 +19,6 @@ import (
 	"github.com/dranih/go-crud-api/pkg/database"
 	"github.com/dranih/go-crud-api/pkg/record"
 	"github.com/dranih/go-crud-api/pkg/utils"
-
-	"github.com/carmo-evan/strtotime"
 )
 
 type ValidationMiddleware struct {
@@ -122,7 +120,7 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 				}
 			case "decimal":
 				var whole, decimals string
-				if strings.Index(v, ".") != -1 {
+				if strings.Contains(v, ".") {
 					a := strings.SplitN(strings.TrimLeft(v, "-"), ".", 2)
 					whole = a[0]
 					decimals = a[1]
@@ -173,7 +171,6 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 				if column.HasLength() && utf8.RuneCountInString(v) > column.GetLength() {
 					return "string too long", false
 				}
-				break
 			case "blob", "varbinary":
 				padVal := strings.ReplaceAll(v, `-`, `+`)
 				padVal = strings.ReplaceAll(padVal, `_`, `/`)
@@ -184,10 +181,8 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 				} else if column.HasLength() && len(val) > column.GetLength() {
 					return "string too long", false
 				}
-				break
 			case "geometry":
 				// no checks yet
-				break
 			}
 		} else { // check non-string types
 			switch column.GetType() {
@@ -237,64 +232,6 @@ func (vm *ValidationMiddleware) validateType(table *database.ReflectedTable, col
 		}
 	}
 	return "", true
-}
-
-func (vm *ValidationMiddleware) sanitizeType(table *database.ReflectedTable, column *database.ReflectedColumn, value string) interface{} {
-	var newValue interface{}
-	tables := vm.getArrayProperty("tables", "all")
-	types := vm.getArrayProperty("types", "all")
-	if (tables["all"] || tables[table.GetName()]) && (types["all"] || types[column.GetType()]) {
-		if value == "" {
-			return value
-		}
-		newValue = value
-		switch column.GetType() {
-		case "integer", "bigint":
-			if v, err := strconv.ParseFloat(value, 0); err == nil {
-				newValue = v
-			}
-		case "decimal":
-			if v, err := strconv.ParseFloat(value, 64); err == nil {
-				newValue = strconv.FormatFloat(v, 'g', column.GetScale(), 64)
-			}
-		case "float":
-			if v, err := strconv.ParseFloat(value, 32); err == nil {
-				newValue = v
-			}
-		case "double":
-			if v, err := strconv.ParseFloat(value, 64); err == nil {
-				newValue = v
-			}
-		case "boolean":
-			if v, err := strconv.ParseBool(value); err == nil {
-				newValue = v
-			}
-		case "date":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err == nil {
-				t := time.Unix(v, 0).Local().UTC()
-				newValue = fmt.Sprintf("%d-%02d-%02d", t.Year(), int(t.Month()), t.Day())
-			}
-		case "time":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err == nil {
-				t := time.Unix(v, 0).Local().UTC()
-				newValue = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), int(t.Minute()), t.Second())
-			}
-		case "timestamp":
-			if v, err := strtotime.Parse(value, time.Now().Unix()); err == nil {
-				t := time.Unix(v, 0).Local().UTC()
-				newValue = fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), int(t.Month()), t.Day(), t.Hour(), int(t.Minute()), t.Second())
-			}
-		case "blob", "varbinary":
-			// allow base64url format
-			v := strings.ReplaceAll(strings.TrimSpace(value), `-`, `+`)
-			newValue = strings.ReplaceAll(v, `_`, `/`)
-		case "clob", "varchar":
-			newValue = value
-		case "geometry":
-			newValue = strings.TrimSpace(value)
-		}
-	}
-	return newValue
 }
 
 func (vm *ValidationMiddleware) Process(next http.Handler) http.Handler {

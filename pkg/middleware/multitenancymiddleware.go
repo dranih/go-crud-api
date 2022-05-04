@@ -86,7 +86,7 @@ func (mt *MultiTenancy) handleRecord(r *http.Request, operation string, pairs ma
 		for column, value := range pairs {
 			if operation == "create" {
 				records[i][column] = value
-			} else if _, exists := records[i][column]; exists {
+			} else {
 				delete(records[i], column)
 			}
 		}

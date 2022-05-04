@@ -147,7 +147,7 @@ func (ja *JwtAuthMiddleware) getVerifiedClaims(token string, time int64, leeway,
 	}
 
 	for field, values := range requirements {
-		if values != nil && len(values) > 0 {
+		if len(values) > 0 {
 			if field == "alg" {
 				cfield, exists := claims[field]
 				if !exists {

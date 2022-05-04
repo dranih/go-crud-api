@@ -80,7 +80,7 @@ func (rs *RecordService) Read(tx *sql.Tx, tableName string, params map[string][]
 	rs.joiner.AddMandatoryColumns(table, &params)
 	columnNames := rs.columns.GetNames(table, true, params)
 	records := rs.db.SelectSingle(tx, table, columnNames, fmt.Sprint(id[0]))
-	if records == nil || len(records) < 0 {
+	if len(records) == 0 {
 		return nil, nil
 	}
 	rs.joiner.AddJoins(table, &records, params, rs.db)
@@ -89,7 +89,7 @@ func (rs *RecordService) Read(tx *sql.Tx, tableName string, params map[string][]
 
 func (rs *RecordService) Update(tx *sql.Tx, tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	if len(args) < 2 {
-		return 0, fmt.Errorf("Not enought arguments : %v", args)
+		return 0, fmt.Errorf("not enought arguments : %v", args)
 	}
 	id := fmt.Sprint(args[0])
 	record := args[1]
@@ -106,7 +106,7 @@ func (rs *RecordService) Delete(tx *sql.Tx, tableName string, params map[string]
 
 func (rs *RecordService) Increment(tx *sql.Tx, tableName string, params map[string][]string, args ...interface{}) (interface{}, error) {
 	if len(args) < 2 {
-		return 0, fmt.Errorf("Not enought arguments : %v", args)
+		return 0, fmt.Errorf("not enought arguments : %v", args)
 	}
 	id := fmt.Sprint(args[0])
 	record := args[1]

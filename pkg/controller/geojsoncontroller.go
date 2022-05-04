@@ -34,7 +34,6 @@ func (gc *GeoJsonController) list(w http.ResponseWriter, r *http.Request) {
 	} else {
 		gc.responder.Success(result, w)
 	}
-	return
 }
 
 func (gc *GeoJsonController) read(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +48,7 @@ func (gc *GeoJsonController) read(w http.ResponseWriter, r *http.Request) {
 	}
 	params := utils.GetRequestParams(r)
 	id := mux.Vars(r)["id"]
-	if strings.Index(id, ",") != -1 {
+	if strings.Contains(id, ",") {
 		ids := strings.Split(id, `,`)
 		results := struct {
 			Type     string `json:"type"`

@@ -30,7 +30,7 @@ func (pm *PageLimitsMiddleware) Process(next http.Handler) http.Handler {
 			if v, ok := params["page"]; ok && len(v) > 0 && maxPage > 0 {
 				var page int
 				var err error
-				if strings.Index(v[0], ",") == -1 {
+				if !strings.Contains(v[0], ",") {
 					page, err = strconv.Atoi(v[0])
 				} else {
 					page, err = strconv.Atoi(strings.SplitN(v[0], ",", 2)[0])

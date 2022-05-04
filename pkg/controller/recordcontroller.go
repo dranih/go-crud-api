@@ -38,7 +38,6 @@ func (rc *RecordController) list(w http.ResponseWriter, r *http.Request) {
 	}
 	result := rc.service.List(table, params)
 	rc.responder.Success(result, w)
-	return
 }
 
 type argumentList struct {
@@ -56,7 +55,7 @@ func (rc *RecordController) read(w http.ResponseWriter, r *http.Request) {
 	}
 	params := utils.GetRequestParams(r)
 	id := mux.Vars(r)["id"]
-	if strings.Index(id, ",") != -1 {
+	if strings.Contains(id, ",") {
 		ids := strings.Split(id, `,`)
 		var argumentLists []*argumentList
 		for i := 0; i < len(ids); i++ {
@@ -195,7 +194,7 @@ func (rc *RecordController) delete(w http.ResponseWriter, r *http.Request) {
 	}
 	params := utils.GetRequestParams(r)
 	id := mux.Vars(r)["id"]
-	if strings.Index(id, ",") != -1 {
+	if strings.Contains(id, ",") {
 		ids := strings.Split(id, `,`)
 		var argumentLists []*argumentList
 		for i := 0; i < len(ids); i++ {

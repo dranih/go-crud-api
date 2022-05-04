@@ -70,9 +70,8 @@ func (cb *ConditionsBuilder) escapeLikeValue(value string) string {
 // Addcslashes - Quote string with slashes in a C style
 func (cb *ConditionsBuilder) addcslashes(s string, c string) string {
 	var tmpRune []rune
-	strRune := []rune(s)
 	list := []rune(c)
-	for _, ch := range strRune {
+	for _, ch := range s {
 		for _, v := range list {
 			if ch == v {
 				tmpRune = append(tmpRune, '\\')
