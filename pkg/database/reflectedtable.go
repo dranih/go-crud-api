@@ -69,8 +69,8 @@ func NewReflectedTableFromReflection(reflection *GenericReflection, name, realNa
 					tableName := table["TABLE_NAME"].(string)
 					suffix := tableName + "_id"
 					if columnName[len(columnName)-len(suffix):] == suffix {
+						column.SetFk(tableName)
 					}
-					column.SetFk(tableName)
 				}
 			}
 		}

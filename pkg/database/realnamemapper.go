@@ -15,7 +15,7 @@ func NewRealNameMapper(mapping map[string]string) *RealNameMapper {
 	columnMapping := map[string]map[string]string{}
 	reverseColumnMapping := map[string]map[string]string{}
 	for name, realName := range mapping {
-		if strings.Index(name, ".") >= 0 && strings.Index(realName, ".") >= 0 {
+		if strings.Contains(name, ".") && strings.Contains(realName, ".") {
 			nameSplit := strings.SplitN(name, ".", 2)
 			realNameSplit := strings.SplitN(realName, ".", 2)
 			tableMapping[nameSplit[0]] = realNameSplit[0]

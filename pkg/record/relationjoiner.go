@@ -158,9 +158,7 @@ func (rj *RelationJoiner) addFkRecords(t2 *database.ReflectedTable, fkValues map
 	for key := range fkValues {
 		fkIds = append(fkIds, key)
 	}
-	for _, record := range db.SelectMultiple(t2, columnNames, fkIds) {
-		*records = append(*records, record)
-	}
+	*records = append(*records, db.SelectMultiple(t2, columnNames, fkIds)...)
 }
 
 func (rj *RelationJoiner) fillFkValues(t2 *database.ReflectedTable, fkRecords []map[string]interface{}, fkValues *map[string]map[string]interface{}) {
@@ -218,9 +216,7 @@ func (rj *RelationJoiner) addPkRecords(t1, t2 *database.ReflectedTable, pkValues
 			limitInt = -1
 		}
 	}
-	for _, record := range db.SelectAll(t2, columnNames, condition, columnOrdering, 0, limitInt) {
-		*records = append(*records, record)
-	}
+	*records = append(*records, db.SelectAll(t2, columnNames, condition, columnOrdering, 0, limitInt)...)
 }
 
 func (rj *RelationJoiner) fillPkValues(t1, t2 *database.ReflectedTable, pkRecords []map[string]interface{}, pkValues *map[string][]map[string]interface{}) {

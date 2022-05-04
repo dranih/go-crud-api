@@ -69,10 +69,10 @@ func (oacb *OpenApiColumnsBuilder) setPaths() {
 					path = "/columns/{table}/{column}"
 				}
 			}
-			if strings.Index(path, "{table}") >= 0 {
+			if strings.Contains(path, "{table}") {
 				parameters = append(parameters, "table")
 			}
-			if strings.Index(path, "{column}") >= 0 {
+			if strings.Contains(path, "{column}") {
 				parameters = append(parameters, "column")
 			}
 			for p, parameter := range parameters {
@@ -135,7 +135,6 @@ func (oacb *OpenApiColumnsBuilder) setComponentSchema() {
 				oacb.openapi.Set(fmt.Sprintf("%s|properties|nullable|type", prefix), "boolean")
 				oacb.openapi.Set(fmt.Sprintf("%s|properties|pk|type", prefix), "boolean")
 				oacb.openapi.Set(fmt.Sprintf("%s|properties|fk|type", prefix), "string")
-				break
 			}
 		}
 	}

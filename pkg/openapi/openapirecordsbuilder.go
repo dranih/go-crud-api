@@ -181,14 +181,14 @@ func (oarb *OpenApiRecordsBuilder) setPath(tableName string) {
 			oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), fmt.Sprintf("/components/responses/%s-%s", operation, normalizedTableName))
 		case "create":
 			if pk.GetType() == "integer" {
-				oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), fmt.Sprintf("/components/responses/pk_integer"))
+				oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), "/components/responses/pk_integer")
 			} else {
-				oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), fmt.Sprintf("/components/responses/pk_string"))
+				oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), "/components/responses/pk_string")
 			}
 		case "read":
 			oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), fmt.Sprintf("/components/responses/%s-%s", operation, normalizedTableName))
 		case "update", "delete", "increment":
-			oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), fmt.Sprintf("/components/responses/rows_affected"))
+			oarb.openapi.Set(fmt.Sprintf(`paths|%s|%s|responses|200|$ref`, path, method), "/components/responses/rows_affected")
 		}
 	}
 }

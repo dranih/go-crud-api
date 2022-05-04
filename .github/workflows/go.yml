@@ -3,7 +3,7 @@ name: Build and test
 on:
   push:
     branches: 
-    - main
+    - '*'
   pull_request:
     branches:
     - main
@@ -25,8 +25,6 @@ jobs:
 
     - name: Run linters
       uses: golangci/golangci-lint-action@v2
-      with:
-          args: -D unused -D staticcheck -D gosimple
 
   build:
     runs-on: ubuntu-latest
@@ -61,6 +59,7 @@ jobs:
   
   #Trying https://docs.github.com/en/actions/using-containerized-services/creating-postgresql-service-containers
   test-postgresql:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     
     services:
@@ -104,6 +103,7 @@ jobs:
           GCA_CONFIG_FILE: ${{ github.workspace }}/test/yaml/gcaconfig_pgsql.yaml
 
   test-mysql:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     
     services:
@@ -148,6 +148,7 @@ jobs:
           GCA_API_PORT: ${{ job.services.mysqldb.ports['3306'] }}
 
   test-sqlserver:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     
     services:

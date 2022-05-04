@@ -46,7 +46,7 @@ func (ft *FilterInfo) combinePathTreeOfConditions(tree *PathTree) interface{ dat
 	}
 	or := database.OrConditionFromArray(orConditions)
 	cond := and.And(or)
-	return cond
+	return cond.(interface{ database.Condition })
 }
 
 func (ft *FilterInfo) GetCombinedConditions(table *database.ReflectedTable, params map[string][]string) interface{ database.Condition } {

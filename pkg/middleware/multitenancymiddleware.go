@@ -31,7 +31,7 @@ func (mt *MultiTenancy) getCondition(tableName string, pairs map[string]string) 
 	condition = database.NewNoCondition()
 	table := mt.reflection.GetTable(tableName)
 	for k, v := range pairs {
-		condition = condition.And(database.NewColumnCondition(table.GetColumn(k), "eq", v))
+		condition = condition.And(database.NewColumnCondition(table.GetColumn(k), "eq", v)).(interface{ database.Condition })
 	}
 	return condition
 }
@@ -86,7 +86,7 @@ func (mt *MultiTenancy) handleRecord(r *http.Request, operation string, pairs ma
 		for column, value := range pairs {
 			if operation == "create" {
 				records[i][column] = value
-			} else if _, exists := records[i][column]; exists {
+			} else {
 				delete(records[i], column)
 			}
 		}

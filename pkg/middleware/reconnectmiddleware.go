@@ -69,7 +69,7 @@ func (rm *ReconnectMiddleware) Process(next http.Handler) http.Handler {
 		port := rm.getIntFromHandler("portHandler")
 		database := rm.getStringFromHandler("databaseHandler")
 		//We expect tables in a csv string and convert to map[string]bool
-		var tables map[string]bool
+		tables := map[string]bool{}
 		if tablesStr := rm.getStringFromHandler("tablesHandler"); tablesStr != "" {
 			for _, table := range strings.Split(tablesStr, ",") {
 				tables[table] = true
